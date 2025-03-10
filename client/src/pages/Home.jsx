@@ -17,10 +17,12 @@ export default function Home() {
   return (
     <div>
       <div className='flex flex-col gap-6 p-28 px-3 max-w-6xl mx-auto '>
-        <h1 className='text-3xl font-bold lg:text-6xl'>Welcome to my Blog</h1>
+        <h1 className='text-3xl font-bold lg:text-6xl'>Citizen's Charter for Passport</h1>
         <p className='text-gray-500 text-xs sm:text-sm'>
-          Here you'll find a variety of articles and tutorials on topics such as
-          web development, software engineering, and programming languages.
+          A citizen's charter is a document that outlines an organization's
+          aims, values, and standards of service. It also includes information
+          about how the organization will provide services to the public and
+          what the public can expect from the organization
         </p>
         <Link
           to='/search'

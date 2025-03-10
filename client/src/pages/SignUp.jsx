@@ -1,128 +1,120 @@
-import React, { useState } from 'react';
+import { Alert, Button, Label, Spinner, TextInput } from 'flowbite-react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import OAuth from '../components/OAuth';
 
-const SignUp = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
-  });
-  const [errors, setErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export default function SignUp() {
+  const [formData, setFormData] = useState({});
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-
-    if (errors[name]) {
-      setErrors({ ...errors, [name]: '' });
-    }
+    setFormData({ ...formData, [e.target.id]: e.target.value.trim() });
   };
-
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.name) newErrors.name = 'Name is required';
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email address is invalid';
-    }
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-
-    return newErrors;
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const newErrors = validateForm();
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
+    if (!formData.username || !formData.email || !formData.password) {
+      return setErrorMessage('Please fill out all fields.');
     }
-    setIsSubmitting(true);
-
-    setTimeout(() => {
-      console.log('User Registered:', formData);
-      setIsSubmitting(false);
-      alert('Sign up successful!');
-      navigate('/sign-in');
-    }, 1500);
+    try {
+      setLoading(true);
+      setErrorMessage(null);
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json();
+      if (data.success === false) {
+        return setErrorMessage(data.message);
+      }
+      setLoading(false);
+      if(res.ok) {
+        navigate('/sign-in');
+      }
+    } catch (error) {
+      setErrorMessage(error.message);
+      setLoading(false);
+    }
   };
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="max-w-md w-full p-6 bg-white rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold text-center text-gray-800">Sign Up</h1>
-        <form onSubmit={handleSubmit} className="mt-6">
-          <div className="mb-4">
-            <label className="block text-gray-700">Name</label>
-            <input
-              type="text"
-              name="name"
-              className={`w-full p-2 border rounded ${errors.name ? 'border-red-500' : 'border-gray-300'}`}
-              value={formData.name}
-              onChange={handleChange}
-            />
-            {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+    <div className='min-h-screen mt-20'>
+      <div className='flex p-3 max-w-3xl mx-auto flex-col md:flex-row md:items-center gap-5'>
+        {/* left */}
+        <div className='flex-1'>
+          <Link to='/' className='font-bold dark:text-white text-4xl'>
+            <span className='px-2 py-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-lg text-white'>
+              Citizen's Charter
+            </span>
+            Passport
+          </Link>
+          <p className='text-sm mt-5'>
+            A citizen's charter is a document that outlines an organization's
+            aims, values, and standards of service. It also includes information
+            about how the organization will provide services to the public and
+            what the public can expect from the organization
+          </p>
+        </div>
+        {/* right */}
+
+        <div className='flex-1'>
+          <form className='flex flex-col gap-4' onSubmit={handleSubmit}>
+            <div>
+              <Label value='Your username' />
+              <TextInput
+                type='text'
+                placeholder='Username'
+                id='username'
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <Label value='Your email' />
+              <TextInput
+                type='email'
+                placeholder='name@company.com'
+                id='email'
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <Label value='Your password' />
+              <TextInput
+                type='password'
+                placeholder='Password'
+                id='password'
+                onChange={handleChange}
+              />
+            </div>
+            <Button
+              gradientDuoTone='purpleToPink' className='w-full bg-purple-500 text-white'
+              type='submit'
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Spinner size='sm' />
+                  <span className='pl-3'>Loading...</span>
+                </>
+              ) : (
+                'Sign Up'
+              )}
+            </Button>
+            <OAuth />
+          </form>
+          <div className='flex gap-2 text-sm mt-5'>
+            <span>Have an account?</span>
+            <Link to='/sign-in' className='text-blue-500'>
+              Sign In
+            </Link>
           </div>
-          <div className="mb-4">
-            <label className="block text-gray-700">Email</label>
-            <input
-              type="email"
-              name="email"
-              className={`w-full p-2 border rounded ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
-              value={formData.email}
-              onChange={handleChange}
-            />
-            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700">Password</label>
-            <input
-              type="password"
-              name="password"
-              className={`w-full p-2 border rounded ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
-              value={formData.password}
-              onChange={handleChange}
-            />
-            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
-          </div>
-          <div className="mb-4">
-            <label className="block text-gray-700">Confirm Password</label>
-            <input
-              type="password"
-              name="confirmPassword"
-              className={`w-full p-2 border rounded ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'}`}
-              value={formData.confirmPassword}
-              onChange={handleChange}
-            />
-            {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>}
-          </div>
-          <button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Signing up...' : 'Sign Up'}
-          </button>
-        </form>
-        <p className="mt-4 text-center text-gray-600">
-          Already have an account?{' '}
-          <Link to="/sign-in" className="text-blue-600 hover:text-blue-800">Sign in</Link>
-        </p>
+          {errorMessage && (
+            <Alert className='mt-5' color='failure'>
+              {errorMessage}
+            </Alert>
+          )}
+        </div>
       </div>
     </div>
   );
-};
-
-export default SignUp;
+}

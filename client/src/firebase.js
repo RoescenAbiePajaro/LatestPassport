@@ -7,7 +7,7 @@ import { initializeApp } from "firebase/app";
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: import.meta.env.FIREBASE_API_KEY,
+  apiKey: "AIzaSyDGIMh0vaeQYfL_YxsBYverv2DGhDRNaXw",
   authDomain: "interactiveboardforpassport.firebaseapp.com",
   projectId: "interactiveboardforpassport",
   storageBucket: "interactiveboardforpassport.firebasestorage.app",
