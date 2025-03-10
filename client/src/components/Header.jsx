@@ -1,14 +1,11 @@
-'use client';
-
-import { MegaMenu, Navbar, TextInput, Button, Avatar, Dropdown } from 'flowbite-react';
-import { HiArrowRight, HiChevronDown } from 'react-icons/hi';
+import { useEffect, useState } from 'react';
+import { Avatar, Button, Dropdown, Navbar, TextInput } from 'flowbite-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AiOutlineSearch } from 'react-icons/ai';
 import { FaMoon, FaSun } from 'react-icons/fa';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleTheme } from '../redux/theme/themeSlice';
 import { signoutSuccess } from '../redux/user/userSlice';
-import { useEffect, useState } from 'react';
 
 export default function Header() {
   const location = useLocation();
@@ -29,7 +26,10 @@ export default function Header() {
   const handleSignout = async () => {
     try {
       const res = await fetch('/api/user/signout', { method: 'POST' });
-      if (res.ok) {
+      const data = await res.json();
+      if (!res.ok) {
+        console.log(data.message);
+      } else {
         dispatch(signoutSuccess());
       }
     } catch (error) {
@@ -45,87 +45,82 @@ export default function Header() {
   };
 
   return (
-    <MegaMenu>
-      <Link
-              to='/'
-              className='self-center whitespace-nowrap text-lg sm:text-xl font-semibold dark:text-white'
-            >
-              <span className='px-2 py-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-lg text-white'>
-                Citizen's Charter
-              </span>
-              Passport
-            </Link>
-      <Navbar.Toggle />
-      <Navbar.Collapse>
-        <Navbar.Link href="/">Home</Navbar.Link>
-        <Navbar.Link href="/about">About</Navbar.Link>
-        <Navbar.Link href="/projects">Projects</Navbar.Link>
-        <MegaMenu.DropdownToggle>
-          More
-          <HiChevronDown className="ml-2" />
-        </MegaMenu.DropdownToggle>
-      </Navbar.Collapse>
-      
-      <form onSubmit={handleSubmit} className="relative hidden md:flex w-full max-w-xs">
+    <Navbar className="border-b-2 flex justify-between items-center px-4 py-2">
+      {/* Logo */}
+      <Link to="/" className="text-sm sm:text-xl font-semibold dark:text-white">
+        <span className="px-2 py-1 rounded-lg dark:text-white">
+        Citizen's Charter 
+        </span>
+        for Passport
+      </Link>
+
+      {/* Navigation Links (Always Visible) */}
+      <div className="hidden md:flex gap-6">
+        <Link to="/" className={`text-sm font-medium ${location.pathname === '/' ? 'text-blue-500' : 'text-gray-700 dark:text-gray-300'}`}>
+          Home
+        </Link>
+        <Link to="/projects" className={`text-sm font-medium ${location.pathname === '/about' ? 'text-blue-500' : 'text-gray-700 dark:text-gray-300'}`}>
+          Passport
+        </Link>
+        <Link to="/" className={`text-sm font-medium ${location.pathname === '/' ? 'text-blue-500' : 'text-gray-700 dark:text-gray-300'}`}>
+          FAQs
+        </Link>
+
+        <Link to="/" className={`text-sm font-medium ${location.pathname === '/' ? 'text-blue-500' : 'text-gray-700 dark:text-gray-300'}`}>
+          Contact Us
+        </Link>
+      </div>
+
+      {/* Search Form */}
+      <form onSubmit={handleSubmit} className="hidden lg:flex">
         <TextInput
           type="text"
           placeholder="Search..."
+          rightIcon={AiOutlineSearch}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full rounded-lg pr-10"
         />
-        <button type="submit" className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-          <AiOutlineSearch size={20} />
-        </button>
       </form>
-      
-      <div className="flex items-center gap-4">
-        <Button color="gray" pill onClick={() => dispatch(toggleTheme())}>
-          {theme === 'light' ? <FaSun size={18} /> : <FaMoon size={18} />}
+
+      {/* Right Side (Theme Toggle, User Menu) */}
+      <div className="flex items-center gap-2">
+        {/* Theme Toggle */}
+        <Button
+          className="w-10 h-10"
+          color="gray"
+          pill
+          onClick={() => dispatch(toggleTheme())}
+        >
+          {theme === 'light' ? <FaSun /> : <FaMoon />}
         </Button>
 
+        {/* User Profile / Sign-in */}
         {currentUser ? (
-          <Dropdown arrowIcon={false} inline label={<Avatar alt='user' img={currentUser.profilePicture} rounded />}> 
+          <Dropdown arrowIcon={false} inline label={<Avatar alt="user" img={currentUser.profilePicture} rounded />}>
             <Dropdown.Header>
-              <span className='block text-sm'>@{currentUser.username}</span>
-              <span className='block text-sm font-medium truncate'>{currentUser.email}</span>
+              <span className="block text-sm">@{currentUser.username}</span>
+              <span className="block text-sm font-medium truncate">{currentUser.email}</span>
             </Dropdown.Header>
-            <Link to='/dashboard?tab=profile'><Dropdown.Item>Profile</Dropdown.Item></Link>
+            <Link to="/dashboard?tab=profile">
+              <Dropdown.Item>Profile</Dropdown.Item>
+            </Link>
             <Dropdown.Divider />
             <Dropdown.Item onClick={handleSignout}>Sign out</Dropdown.Item>
           </Dropdown>
         ) : (
-          <></>
+          <Link to="/sign-in" >
+           <Button 
+  as={Link} 
+  to="/sign-in" 
+  className={`text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-500  `}
+>
+  Sign In
+</Button>
+
+
+          </Link>
         )}
       </div>
-
-      <MegaMenu.Dropdown>
-        <div className="mt-6 border-y border-gray-200 bg-white shadow-sm dark:border-gray-600 dark:bg-gray-800">
-          <div className="mx-auto grid max-w-screen-xl px-4 py-5 text-sm text-gray-500 dark:text-gray-400 md:grid-cols-3 md:px-6">
-            <ul className="mb-4 hidden space-y-4 md:mb-0 md:block" aria-labelledby="mega-menu-full-image-button">
-              <li><a href="#" className="hover:text-primary-600 dark:hover:text-primary-500">Online Stores</a></li>
-              <li><a href="#" className="hover:text-primary-600 dark:hover:text-primary-500">Segmentation</a></li>
-              <li><a href="#" className="hover:text-primary-600 dark:hover:text-primary-500">Marketing CRM</a></li>
-            </ul>
-            <ul className="mb-4 space-y-4 md:mb-0">
-              <li><a href="#" className="hover:text-primary-600 dark:hover:text-primary-500">Our Blog</a></li>
-              <li><a href="#" className="hover:text-primary-600 dark:hover:text-primary-500">Terms & Conditions</a></li>
-              <li><a href="#" className="hover:text-primary-600 dark:hover:text-primary-500">License</a></li>
-            </ul>
-            <a href="#" className="rounded-lg bg-gray-500 p-8 text-left">
-              <p className="mb-5 max-w-xl font-extrabold leading-tight tracking-tight text-white">
-                Preview the new Citizen's Charter Passport dashboard navigation.
-              </p>
-              <Link to='/sign-in'>
-                <button type="button" className="inline-flex items-center rounded-lg border border-white px-2.5 py-1.5 text-center text-xs font-medium text-white hover:bg-white hover:text-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-700">
-                  Get started
-                  <HiArrowRight className="ml-2" />
-                </button>
-              </Link>
-            </a>
-          </div>
-        </div>
-      </MegaMenu.Dropdown>
-    </MegaMenu>
+    </Navbar>
   );
 }
