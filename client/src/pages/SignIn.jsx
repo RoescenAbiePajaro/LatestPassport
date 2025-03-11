@@ -49,13 +49,15 @@ export default function SignIn() {
         <div className='flex-1'>
           <Link to='/' className='font-bold dark:text-white text-4xl'>
             <span className='px-2 py-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-lg text-white'>
-              Sahand's
+              Citizen's Charter
             </span>
-            Blog
+           Passport
           </Link>
           <p className='text-sm mt-5'>
-            This is a demo project. You can sign in with your email and password
-            or with Google.
+            A citizen's charter is a document that outlines an organization's
+            aims, values, and standards of service. It also includes information
+            about how the organization will provide services to the public and
+            what the public can expect from the organization
           </p>
         </div>
         {/* right */}
@@ -80,20 +82,17 @@ export default function SignIn() {
                 onChange={handleChange}
               />
             </div>
-            <Button
-              gradientDuoTone='purpleToPink'
-              type='submit'
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <Spinner size='sm' />
-                  <span className='pl-3'>Loading...</span>
-                </>
-              ) : (
-                'Sign In'
-              )}
-            </Button>
+            <Button gradientDuoTone='purpleToPink' className='w-full bg-purple-500 text-white' type="submit" disabled={loading}>
+            {loading ? (
+              <>
+                <Spinner size="sm" />
+                <span className="pl-3">Loading...</span>
+              </>
+            ) : (
+              'Sign In'
+            )}
+          </Button>
+
             <OAuth />
           </form>
           <div className='flex gap-2 text-sm mt-5'>

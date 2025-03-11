@@ -47,12 +47,15 @@ export default function Header() {
   return (
     <Navbar className="border-b-2 flex justify-between items-center px-4 py-2">
       {/* Logo */}
-      <Link to="/" className="text-sm sm:text-xl font-semibold dark:text-white">
-        <span className="px-2 py-1 rounded-lg dark:text-white">
-        Citizen's Charter 
-        </span>
-        for Passport
-      </Link>
+            <Link
+              to='/'
+              className='self-center whitespace-nowrap text-lg sm:text-xl font-semibold dark:text-white'
+            >
+              <span className='px-2 py-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-lg text-white'>
+                Citizen's Charter
+              </span>
+              Passport
+            </Link>
 
       {/* Navigation Links (Always Visible) */}
       <div className="hidden md:flex gap-6">
@@ -72,17 +75,20 @@ export default function Header() {
       </div>
 
       {/* Search Form */}
-      <form onSubmit={handleSubmit} className="hidden lg:flex">
-        <TextInput
+        <form onSubmit={handleSubmit} className="hidden lg:flex">
+          <div className="relative">
+            <TextInput
           type="text"
           placeholder="Search..."
-          rightIcon={AiOutlineSearch}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </form>
+          className="pl-10"
+            />
+            <AiOutlineSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+          </div>
+        </form>
 
-      {/* Right Side (Theme Toggle, User Menu) */}
+        {/* Right Side (Theme Toggle, User Menu) */}
       <div className="flex items-center gap-2">
         {/* Theme Toggle */}
         <Button
@@ -91,7 +97,7 @@ export default function Header() {
           pill
           onClick={() => dispatch(toggleTheme())}
         >
-          {theme === 'light' ? <FaSun /> : <FaMoon />}
+          {theme === 'light' ? <FaMoon /> : <FaSun />}
         </Button>
 
         {/* User Profile / Sign-in */}

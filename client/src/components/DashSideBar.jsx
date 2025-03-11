@@ -77,6 +77,18 @@ export default function DashSidebar() {
               </Sidebar.Item>
             </Link>
           )}
+          {!currentUser.isAdmin && (
+            <Link to='/dashboard?tab=createpost'>
+              <Sidebar.Item
+                active={tab === 'createpost'}
+                icon={HiDocumentText}
+                as='div'
+              >
+                Create Post
+              </Sidebar.Item>
+            </Link>
+          )}
+
           {currentUser.isAdmin && (
             <>
               <Link to='/dashboard?tab=users'>
