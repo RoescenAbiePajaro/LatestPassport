@@ -19,7 +19,7 @@ export default function CreatePost() {
   const [imageUploadError, setImageUploadError] = useState(null);
   const [formData, setFormData] = useState({});
   const [publishError, setPublishError] = useState(null);
-  const quillRef = useRef(null); 
+  // const quillRef = useRef(null); 
 
   const navigate = useNavigate();
 
@@ -143,7 +143,7 @@ export default function CreatePost() {
             className='w-full h-72 object-cover'
           />
         )}
-        <ReactQuill
+        {/* <ReactQuill
           ref={quillRef}
           theme='snow'
           placeholder='Write something...'
@@ -152,7 +152,7 @@ export default function CreatePost() {
           onChange={(value) => {
             setFormData({ ...formData, content: value });
           }}
-        />
+        /> */}
         <Button type='submit' gradientDuoTone='purpleToPink'>
           Publish
         </Button>
