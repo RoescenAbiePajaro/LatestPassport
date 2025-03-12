@@ -14,27 +14,32 @@ export default function Home() {
     };
     fetchPosts();
   }, []);
+
   return (
     <div>
-      <div className='flex flex-col gap-6 p-28 px-3 max-w-6xl mx-auto '>
+      {/* Call to Action Section - Placed First */}
+      <div className='p-3 bg-amber-100 dark:bg-slate-700'>
+        <CallToAction />
+      </div>
+
+      {/* Citizen's Charter Section */}
+      <div className='flex flex-col gap-6 p-28 px-3 max-w-6xl mx-auto'>
         <h1 className='text-3xl font-bold lg:text-6xl'>Citizen's Charter for Passport</h1>
         <p className='text-gray-500 text-xs sm:text-sm'>
           A citizen's charter is a document that outlines an organization's
           aims, values, and standards of service. It also includes information
           about how the organization will provide services to the public and
-          what the public can expect from the organization
+          what the public can expect from the organization.
         </p>
-        <Link
-          to='/search'
-          className='text-xs sm:text-sm text-teal-500 font-bold hover:underline'
-        >
-          View all posts
-        </Link>
+        
       </div>
-      <div className='p-3 bg-amber-100 dark:bg-slate-700'>
-        <CallToAction />
-      </div>
-
+ <Link
+              to={'/search'}
+              className='text-lg text-teal-500 hover:underline text-center'
+            >
+              View all posts
+            </Link>
+      {/* Recent Posts Section */}
       <div className='max-w-6xl mx-auto p-3 flex flex-col gap-8 py-7'>
         {posts && posts.length > 0 && (
           <div className='flex flex-col gap-6'>
@@ -44,12 +49,7 @@ export default function Home() {
                 <PostCard key={post._id} post={post} />
               ))}
             </div>
-            <Link
-              to={'/search'}
-              className='text-lg text-teal-500 hover:underline text-center'
-            >
-              View all posts
-            </Link>
+           
           </div>
         )}
       </div>
