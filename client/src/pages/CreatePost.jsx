@@ -1,6 +1,4 @@
 import { Alert, Button, FileInput, Select, TextInput } from 'flowbite-react';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
 import {
   getDownloadURL,
   getStorage,
@@ -12,6 +10,7 @@ import { useState, useRef } from 'react';
 import { CircularProgressbar } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import { useNavigate } from 'react-router-dom';
+import RichTextEditor from '../components/RichTextEditor'; // Import the new component
 
 export default function CreatePost() {
   const [file, setFile] = useState(null);
@@ -19,8 +18,7 @@ export default function CreatePost() {
   const [imageUploadError, setImageUploadError] = useState(null);
   const [formData, setFormData] = useState({});
   const [publishError, setPublishError] = useState(null);
-  // const quillRef = useRef(null); 
-
+  
   const navigate = useNavigate();
 
   const handleUpdloadImage = async () => {
@@ -59,6 +57,11 @@ export default function CreatePost() {
       console.log(error);
     }
   };
+
+  const handleContentChange = (content) => {
+    setFormData({ ...formData, content: content });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -83,6 +86,7 @@ export default function CreatePost() {
       setPublishError('Something went wrong');
     }
   };
+  
   return (
     <div className='p-3 max-w-3xl mx-auto min-h-screen'>
       <h1 className='text-center text-3xl my-7 font-semibold'>Create a post</h1>
@@ -143,16 +147,15 @@ export default function CreatePost() {
             className='w-full h-72 object-cover'
           />
         )}
-        {/* <ReactQuill
-          ref={quillRef}
-          theme='snow'
-          placeholder='Write something...'
-          className='h-72 mb-12'
-          required
-          onChange={(value) => {
-            setFormData({ ...formData, content: value });
-          }}
-        /> */}
+        
+        {/* Add the Rich Text Editor here */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Post Content
+          </label>
+          <RichTextEditor onChange={handleContentChange} />
+        </div>
+        
         <Button type='submit' gradientDuoTone='purpleToPink'>
           Publish
         </Button>
