@@ -2,23 +2,35 @@ import Post from '../models/post.model.js';
 import { errorHandler } from '../utils/error.js';
 
 export const create = async (req, res, next) => {
-  if (!req.user.isAdmin) {
-    return next(errorHandler(403, 'You are not allowed to create a post'));
-  }
-  if (!req.body.title || !req.body.content) {
-    return next(errorHandler(400, 'Please provide all required fields'));
-  }
-  const slug = req.body.title
-    .split(' ')
-    .join('-')
-    .toLowerCase()
-    .replace(/[^a-zA-Z0-9-]/g, '');
-  const newPost = new Post({
-    ...req.body,
-    slug,
-    userId: req.user.id,
-  });
   try {
+    // Ensure user is authenticated
+    if (!req.user) {
+      return next(errorHandler(401, 'Unauthorized: Please log in'));
+    }
+
+    // Validate required fields
+    const { title, content, image, category } = req.body;
+    if (!title || !content) {
+      return next(errorHandler(400, 'Title and content are required'));
+    }
+
+    // Generate a slug for the post
+    const slug = title
+      .toLowerCase()
+      .split(' ')
+      .join('-')
+      .replace(/[^a-z0-9-]/g, '');
+
+    // Create new post
+    const newPost = new Post({
+      title,
+      content,
+      image,
+      category: category || 'uncategorized',
+      slug,
+      userId: req.user.id,
+    });
+
     const savedPost = await newPost.save();
     res.status(201).json(savedPost);
   } catch (error) {

@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.6.0",
+    "@supabase/supabase-js": "^2.49.1",
     "firebase": "^11.4.0",
     "flowbite-react": "^0.10.2",
     "latestpassport": "file:..",
@@ -22,7 +23,8 @@
     "react-quill": "^2.0.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.3.0",
-    "redux-persist": "^6.0.0"
+    "redux-persist": "^6.0.0",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
