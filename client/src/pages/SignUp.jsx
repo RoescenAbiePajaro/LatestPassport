@@ -43,24 +43,24 @@ export default function SignUp() {
         {/* left */}
         <div className='flex-1'>
           <Link to='/' className='font-bold dark:text-white text-4xl'>
-            <span className='px-2 py-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-lg text-white'>
+            <span className='px-2 py-1 bg-gradient-to-r rounded-lg dark:text-white'>
               Citizen's Charter
             </span>
             Passport
           </Link>
-          <p className='text-sm mt-5'>
+          {/* <p className='text-sm mt-5'>
             A citizen's charter is a document that outlines an organization's
             aims, values, and standards of service. It also includes information
             about how the organization will provide services to the public and
             what the public can expect from the organization
-          </p>
+          </p> */}
         </div>
         {/* right */}
 
         <div className='flex-1'>
           <form className='flex flex-col gap-4' onSubmit={handleSubmit}>
             <div>
-              <Label value='Your username' />
+              <Label value='Admin username' />
               <TextInput
                 type='text'
                 placeholder='Username'
@@ -69,7 +69,7 @@ export default function SignUp() {
               />
             </div>
             <div>
-              <Label value='Your email' />
+              <Label value='Admin email' />
               <TextInput
                 type='email'
                 placeholder='name@company.com'
@@ -78,7 +78,7 @@ export default function SignUp() {
               />
             </div>
             <div>
-              <Label value='Your password' />
+              <Label value='Admin password' />
               <TextInput
                 type='password'
                 placeholder='Password'
@@ -87,7 +87,7 @@ export default function SignUp() {
               />
             </div>
             <Button
-              gradientDuoTone='purpleToPink' className='w-full bg-purple-500 text-white'
+              gradientDuoTone='purpleToPink' className='w-full bg-blue-500 text-white'
               type='submit'
               disabled={loading}
             >
@@ -102,12 +102,16 @@ export default function SignUp() {
             </Button>
             <OAuth />
           </form>
-          <div className='flex gap-2 text-sm mt-5'>
-            <span>Have an account?</span>
-            <Link to='/sign-in' className='text-blue-500'>
-              Sign In
-            </Link>
-          </div>
+
+          <div className='flex justify-center gap-2 text-sm mt-5 text-center'>
+  <span>Have an account?</span>
+  <Link to='/sign-in' className='text-blue-500'>
+    Sign In
+  </Link>
+</div>
+
+
+
           {errorMessage && (
             <Alert className='mt-5' color='failure'>
               {errorMessage}
