@@ -49,7 +49,7 @@ export default function FooterCom() {
               <Footer.Icon href='#' icon={BsFacebook} />
               <Footer.Icon href='#' icon={BsInstagram} />
               <Footer.Icon href='#' icon={BsTwitter} />
-              <Footer.Icon href='https://github.com/sahandghavidel' icon={BsGithub} />
+              <Footer.Icon href='' icon={BsGithub} />
               <Footer.Icon href='#' icon={BsLinkedin} />
             </div>
           </div>
@@ -64,7 +64,7 @@ export default function FooterCom() {
             year={new Date().getFullYear()}
           />
           <p className='text-sm text-gray-400'>
-            All rights reserved. Philippines Government.
+            Allrightsreserved.PhilippinesGovernment.
           </p>
         </div>
       </div>

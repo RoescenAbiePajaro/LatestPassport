@@ -175,6 +175,31 @@ export default function PassportDropdown() {
                         Renewal Passport
                       </div>
                     </Link>
+
+                    <Link to="/minor/renewal">
+                      <div
+                        className={`px-4 py-2 ${
+                          theme === "dark"
+                            ? "hover:bg-gray-700"
+                            : "hover:bg-gray-100"
+                        }`}
+                      >
+                        Renewal Non-ePassport
+                      </div>
+                    </Link>
+
+                    <Link to="/minor/renewal">
+                      <div
+                        className={`px-4 py-2 ${
+                          theme === "dark"
+                            ? "hover:bg-gray-700"
+                            : "hover:bg-gray-100"
+                        }`}
+                      >
+                        Lost Passport & Travel
+                      </div>
+                    </Link>
+
                   </div>
                 )}
               </div>
@@ -219,6 +244,7 @@ export default function PassportDropdown() {
             Courtesy Lane Eligibility
           </Dropdown.Item>
         </Link>
+
       </Dropdown>
     </div>
   );

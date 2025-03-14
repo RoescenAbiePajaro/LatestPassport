@@ -56,7 +56,7 @@ export default function Header() {
         </Link>
 
         {/* Mobile Menu Button */}
-        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-2xl">
+        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="md:hidden text-m">
           {isSidebarOpen ? <AiOutlineClose /> : <AiOutlineMenu />}
         </button>
 
@@ -102,13 +102,13 @@ export default function Header() {
       {/* Mobile Sidebar */}
       <div className={`fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-900 shadow-lg transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:hidden z-50`}>
         <div className="flex flex-col p-4 space-y-4">
-          <Link to="/" className={`block px-4 py-2 text-sm font-medium ${location.pathname === '/' ? 'text-blue-500' : 'text-gray-700 dark:text-gray-300'}`}>Home</Link>
+          <Link to="/" className={`block px-4 py-2 text-m  ${location.pathname === '/' ? 'text-blue-500' : 'text-gray-700 dark:text-gray-300'}`}>Home</Link>
           <PassportDropdown />
-          <Link to="/faqs" className={`block px-4 py-2 text-sm font-medium ${location.pathname === '/faqs' ? 'text-blue-500' : 'text-gray-700 dark:text-gray-300'}`}>FAQs</Link>
-          <Link to="/contact" className={`block px-4 py-2 text-sm font-medium ${location.pathname === '/contact' ? 'text-blue-500' : 'text-gray-700 dark:text-gray-300'}`}>Contact Us</Link>
+          <Link to="/faqs" className={`block px-4 py-2 text-m ${location.pathname === '/faqs' ? 'text-blue-500' : 'text-gray-700 dark:text-gray-300'}`}>FAQs</Link>
+          <Link to="/contact" className={`block px-4 py-2 text-m ${location.pathname === '/contact' ? 'text-blue-500' : 'text-gray-700 dark:text-gray-300'}`}>Contact Us</Link>
 
           {/* Theme Toggle & User Menu in Sidebar */}
-          <div className="mt-4 space-y-4">
+          <div className="mt-4 space-y-3">
             <Button className="w-full text-left" color="gray" pill onClick={() => dispatch(toggleTheme())}>
               {theme === 'light' ? <FaMoon className="mr-2" /> : <FaSun className="mr-2" />}
               {theme === 'light' ? "Dark Mode" : "Light Mode"}

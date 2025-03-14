@@ -16,7 +16,6 @@ export default function Search() {
   const [showMore, setShowMore] = useState(false);
 
   const location = useLocation();
-
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -104,8 +103,8 @@ export default function Search() {
     <div className='flex flex-col md:flex-row'>
       <div className='p-7 border-b md:border-r md:min-h-screen border-gray-500'>
         <form className='flex flex-col gap-8' onSubmit={handleSubmit}>
-          <div className='flex   items-center gap-2'>
-            <label className='whitespace-nowrap font-semibold'>
+          <div className='flex items-center gap-2'>
+            <label className='whitespace-nowrap font-semibold w-24'>
               Search Term:
             </label>
             <TextInput
@@ -114,21 +113,23 @@ export default function Search() {
               type='text'
               value={sidebarData.searchTerm}
               onChange={handleChange}
+              className='flex-1'
             />
           </div>
           <div className='flex items-center gap-2'>
-            <label className='font-semibold'>Sort:</label>
-            <Select onChange={handleChange} value={sidebarData.sort} id='sort'>
+            <label className='font-semibold w-24'>Sort:</label>
+            <Select onChange={handleChange} value={sidebarData.sort} id='sort' className='flex-1'>
               <option value='desc'>Latest</option>
               <option value='asc'>Oldest</option>
             </Select>
           </div>
           <div className='flex items-center gap-2'>
-            <label className='font-semibold'>Category:</label>
+            <label className='font-semibold w-24'>Category:</label>
             <Select
               onChange={handleChange}
               value={sidebarData.category}
               id='category'
+              className='flex-1'
             >
               <option value='uncategorized'>Uncategorized</option>
               <option value='reactjs'>React.js</option>
