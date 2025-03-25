@@ -44,9 +44,9 @@ export default function SignUp() {
         <div className='flex-1'>
           <Link to='/' className='font-bold dark:text-white text-4xl'>
             <span className='px-2 py-1 bg-gradient-to-r rounded-lg dark:text-white'>
-              Citizen's Charter
+            InformYou
             </span>
-            Passport
+            
           </Link>
           {/* <p className='text-sm mt-5'>
             A citizen's charter is a document that outlines an organization's

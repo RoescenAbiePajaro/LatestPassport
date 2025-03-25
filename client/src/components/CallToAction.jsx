@@ -6,7 +6,7 @@ export default function CallToAction() {
     <div className='flex flex-col sm:flex-row p-3 border border-blue-500 justify-center items-center rounded-tl-3xl rounded-br-3xl text-center'>
         <div className="flex-1 left flex flex-col">
             <h1 className='text-lg sm:text-2xl font-bold'>
-                Citizen's Charter for Passport
+                InformYou
             </h1>
 
             <p className='text-gray-500 my-2 relative'>
@@ -24,9 +24,21 @@ export default function CallToAction() {
               View all posts
             </Link>
         </div>
-        <div className="p-7 flex-1">
-        <img src="src/Passport.png" alt="Passport" />
-        </div>
+        <div className="py-5 flex-2 px-4">
+  {/* Light mode image */}
+  <img 
+    src="src/1.png" 
+    alt="Passport" 
+    className="dark:hidden"  // hidden in dark mode
+  />
+  
+  {/* Dark mode image */}
+  <img 
+    src="src/2.png" 
+    alt="Passport" 
+    className="hidden dark:block"  // shown only in dark mode
+  />
+</div>
     </div>
   )
 }
