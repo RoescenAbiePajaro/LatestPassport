@@ -45,16 +45,25 @@ export default function SignIn() {
   return (
     <div className='min-h-screen mt-20'>
       <div className='flex p-3 max-w-3xl mx-auto flex-col md:flex-row md:items-center gap-5'>
-        {/* left */}
-        <div className='flex-1'>
-          <Link to='/' className='font-bold dark:text-white text-4xl'>
-            <span className='px-2 py-1 bg-gradient-to-r rounded-lg dark:text-white'>
-              Citizen's Charter
-            </span>
-           Passport
-          </Link>
-        </div>
-        {/* right */}
+      
+
+<div className='flex-1 flex items-center gap-2'>
+  <Link to='/' className='font-bold dark:text-white text-4xl flex items-center'>
+    {/* Light mode logo */}
+    <img
+      src="src/1.png" 
+      alt="InformYou Logo"
+      className="dark:hidden"
+    />
+    {/* Dark mode logo */}
+    <img
+      src="src/2.png" 
+      alt="InformYou Logo"
+      className="hidden dark:block"
+    />
+  </Link>
+</div>
+
 
         <div className='flex-1'>
           <form className='flex flex-col gap-4' onSubmit={handleSubmit}>
