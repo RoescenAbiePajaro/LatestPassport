@@ -107,7 +107,7 @@ export default function CreatePost() {
         {formData.image && <img src={formData.image} alt='upload' className='w-full h-72 object-cover' />}
 
         <RichTextEditor onChange={(content) => setFormData({ ...formData, content })} />
-        <Button gradientDuoTone='purpleToPink' className='w-full bg-purple-500 text-white' type='submit'>
+        <Button gradientDuoTone='purpleToPink' className='w-full bg-blue-500 text-white' type='submit'>
           Publish
         </Button>
         {publishError && <Alert color='failure'>{publishError}</Alert>}
