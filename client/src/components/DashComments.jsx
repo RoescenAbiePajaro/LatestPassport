@@ -1,8 +1,8 @@
-import { Modal, Table, Button } from 'flowbite-react';
+import { Modal, Button } from 'flowbite-react';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { HiOutlineExclamationCircle } from 'react-icons/hi';
-import { FaCheck, FaTimes } from 'react-icons/fa';
+import { Icon } from '@iconify/react';
 
 export default function DashComments() {
   const { currentUser } = useSelector((state) => state.user);
@@ -10,6 +10,7 @@ export default function DashComments() {
   const [showMore, setShowMore] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [commentIdToDelete, setCommentIdToDelete] = useState('');
+
   useEffect(() => {
     const fetchComments = async () => {
       try {
@@ -33,9 +34,7 @@ export default function DashComments() {
   const handleShowMore = async () => {
     const startIndex = comments.length;
     try {
-      const res = await fetch(
-        `/api/comment/getcomments?startIndex=${startIndex}`
-      );
+      const res = await fetch(`/api/comment/getcomments?startIndex=${startIndex}`);
       const data = await res.json();
       if (res.ok) {
         setComments((prev) => [...prev, ...data.comments]);
@@ -51,17 +50,12 @@ export default function DashComments() {
   const handleDeleteComment = async () => {
     setShowModal(false);
     try {
-      const res = await fetch(
-        `/api/comment/deleteComment/${commentIdToDelete}`,
-        {
-          method: 'DELETE',
-        }
-      );
+      const res = await fetch(`/api/comment/deleteComment/${commentIdToDelete}`, {
+        method: 'DELETE',
+      });
       const data = await res.json();
       if (res.ok) {
-        setComments((prev) =>
-          prev.filter((comment) => comment._id !== commentIdToDelete)
-        );
+        setComments((prev) => prev.filter((comment) => comment._id !== commentIdToDelete));
         setShowModal(false);
       } else {
         console.log(data.message);
@@ -72,48 +66,46 @@ export default function DashComments() {
   };
 
   return (
-    <div className='table-auto overflow-x-scroll md:mx-auto p-3 scrollbar scrollbar-track-slate-100 scrollbar-thumb-slate-300 dark:scrollbar-track-slate-700 dark:scrollbar-thumb-slate-500'>
+    <div className='overflow-x-auto p-3 scrollbar scrollbar-track-gray-100 scrollbar-thumb-gray-300 dark:scrollbar-track-gray-700 dark:scrollbar-thumb-gray-500'>
       {currentUser.isAdmin && comments.length > 0 ? (
         <>
-          <Table hoverable className='shadow-md'>
-            <Table.Head>
-              <Table.HeadCell>Date updated</Table.HeadCell>
-              <Table.HeadCell>Comment content</Table.HeadCell>
-              <Table.HeadCell>Number of likes</Table.HeadCell>
-              <Table.HeadCell>PostId</Table.HeadCell>
-              <Table.HeadCell>UserId</Table.HeadCell>
-              <Table.HeadCell>Delete</Table.HeadCell>
-            </Table.Head>
-            {comments.map((comment) => (
-              <Table.Body className='divide-y' key={comment._id}>
-                <Table.Row className='bg-white dark:border-gray-700 dark:bg-gray-800'>
-                  <Table.Cell>
-                    {new Date(comment.updatedAt).toLocaleDateString()}
-                  </Table.Cell>
-                  <Table.Cell>{comment.content}</Table.Cell>
-                  <Table.Cell>{comment.numberOfLikes}</Table.Cell>
-                  <Table.Cell>{comment.postId}</Table.Cell>
-                  <Table.Cell>{comment.userId}</Table.Cell>
-                  <Table.Cell>
+          <table className='shadow-md w-full border-collapse border border-gray-300 rounded-lg overflow-hidden'>
+            <thead>
+              <tr className='bg-gray-200'>
+                <th className='border p-2'>Date Updated</th>
+                <th className='border p-2'>Comment</th>
+                <th className='border p-2'>Likes</th>
+                <th className='border p-2'>Post ID</th>
+                <th className='border p-2'>User ID</th>
+                <th className='border p-2'>Delete</th>
+              </tr>
+            </thead>
+            <tbody>
+              {comments.map((comment) => (
+                <tr key={comment._id} className='bg-white border'>
+                  <td className='border p-2'>{new Date(comment.updatedAt).toLocaleDateString()}</td>
+                  <td className='border p-2'>{comment.content}</td>
+                  <td className='border p-2 text-center'>{comment.numberOfLikes}</td>
+                  <td className='border p-2'>{comment.postId}</td>
+                  <td className='border p-2'>{comment.userId}</td>
+                  <td className='border p-2 text-center'>
                     <span
                       onClick={() => {
                         setShowModal(true);
                         setCommentIdToDelete(comment._id);
                       }}
-                      className='font-medium text-red-500 hover:underline cursor-pointer'
+                      className='text-red-500 hover:text-red-700 cursor-pointer'
                     >
-                      Delete
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 1024 1024">
+                      <path fill="currentColor" d="M160 256H96a32 32 0 0 1 0-64h256V95.936a32 32 0 0 1 32-32h256a32 32 0 0 1 32 32V192h256a32 32 0 1 1 0 64h-64v672a32 32 0 0 1-32 32H192a32 32 0 0 1-32-32zm448-64v-64H416v64zM224 896h576V256H224zm192-128a32 32 0 0 1-32-32V416a32 32 0 0 1 64 0v320a32 32 0 0 1-32 32m192 0a32 32 0 0 1-32-32V416a32 32 0 0 1 64 0v320a32 32 0 0 1-32 32"/></svg>
                     </span>
-                  </Table.Cell>
-                </Table.Row>
-              </Table.Body>
-            ))}
-          </Table>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
           {showMore && (
-            <button
-              onClick={handleShowMore}
-              className='w-full text-teal-500 self-center text-sm py-7'
-            >
+            <button onClick={handleShowMore} className='w-full text-teal-500 self-center text-sm py-7'>
               Show more
             </button>
           )}
@@ -121,12 +113,9 @@ export default function DashComments() {
       ) : (
         <p>You have no comments yet!</p>
       )}
-      <Modal
-        show={showModal}
-        onClose={() => setShowModal(false)}
-        popup
-        size='md'
-      >
+
+      {/* Delete Confirmation Modal */}
+      <Modal show={showModal} onClose={() => setShowModal(false)} popup size='md'>
         <Modal.Header />
         <Modal.Body>
           <div className='text-center'>
