@@ -67,37 +67,73 @@ export default function DashPosts() {
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-3'>
             {userPosts.length > 0 ? (
                 userPosts.map((post) => (
-                    <div key={post._id} className='bg-white shadow-md rounded-lg p-4'>
+                    <div key={post._id} className='bg-white dark:bg-gray-800 shadow-md rounded-lg p-4'>
                         <Link to={`/post/${post.slug}`}>
                             <img src={post.image} alt={post.title} className='w-full h-32 object-cover rounded-t-lg' />
                         </Link>
-                        <h3 className='font-medium text-gray-900 mt-2'>{post.title}</h3>
-                        <p className='text-gray-600'>{post.category}</p>
+                        <h3 className='font-medium text-gray-900 dark:text-white mt-2'>{post.title}</h3>
+                        <p className='text-gray-600 dark:text-gray-400'>{post.category}</p>
                         <div className='flex justify-between mt-4'>
-                            <span onClick={() => { setShowModal(true); setPostIdToDelete(post._id); }} className='text-red-500 cursor-pointer'>Delete</span>
-                            <Link className='text-teal-500' to={`/update-post/${post._id}`}>Edit</Link>
+                            <span onClick={() => { setShowModal(true); setPostIdToDelete(post._id); }} 
+                                className='text-red-500 dark:text-red-400 cursor-pointer'>Delete</span>
+                            <Link className='text-teal-500 dark:text-teal-400' to={`/update-post/${post._id}`}>Edit</Link>
                         </div>
                     </div>
                 ))
             ) : (
-                <p>You have no posts yet!</p>
+                <p className='dark:text-white'>You have no posts yet!</p>
             )}
             {showMore && (
-                <button onClick={handleShowMore} className='w-full text-teal-500 self-center text-sm py-7'>Show more</button>
+                <button onClick={handleShowMore} 
+                    className='w-full text-teal-500 dark:text-teal-400 self-center text-sm py-7'>
+                    Show more
+                </button>
             )}
-            <Modal show={showModal} onClose={() => setShowModal(false)} popup size='md'>
-                <Modal.Header />
-                <Modal.Body>
-                    <div className='text-center'>
-                        <HiOutlineExclamationCircle className='h-14 w-14 text-gray-400 dark:text-gray-200 mb-4 mx-auto' />
-                        <h3 className='mb-5 text-lg text-gray-500 dark:text-gray-400'>Are you sure you want to delete this post?</h3>
-                        <div className='flex justify-center gap-4'>
-                            <Button color='failure' onClick={handleDeletePost}>Yes, I'm sure</Button>
-                            <Button color='gray' onClick={() => setShowModal(false)}>No, cancel</Button>
+            <Modal 
+                show={showModal} 
+                onClose={() => setShowModal(false)} 
+                popup 
+                size='xs'
+                position="center"
+                dismissible={false}
+                className="dark:bg-gray-800 max-w-[360px] mx-auto"
+            >
+                <div className="relative">
+                    <Modal.Header className="dark:border-gray-600 px-3 pt-3" />
+                    <Modal.Body className="px-4 pb-4">
+                        <div className='text-center'>
+                            <HiOutlineExclamationCircle className='h-14 w-14 text-gray-400 dark:text-gray-200 mb-4 mx-auto' />
+                            <h3 className='mb-5 text-base font-semibold text-gray-600 dark:text-gray-300'>
+                                Are you sure you want to delete this post?
+                            </h3>
+                            <div className='flex justify-center items-center gap-3'>
+                                <Button 
+                                    color='failure' 
+                                    onClick={handleDeletePost}
+                                    size="sm"
+                                    className='bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:text-white dark:hover:bg-red-700 w-24 font-medium'
+                                >
+                                    Delete
+                                </Button>
+                                <Button 
+                                    color='gray' 
+                                    onClick={() => setShowModal(false)}
+                                    size="sm"
+                                    className='dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 w-24 font-medium'
+                                >
+                                    Cancel
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                </Modal.Body>
+                    </Modal.Body>
+                </div>
             </Modal>
+            {showModal && (
+                <div 
+                    className="fixed inset-0 bg-black bg-opacity-50 z-40"
+                    onClick={(e) => e.stopPropagation()}
+                />
+            )}
         </div>
     );
 }
