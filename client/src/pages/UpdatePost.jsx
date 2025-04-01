@@ -1,19 +1,18 @@
 import { Alert, Button, FileInput, Select, TextInput } from 'flowbite-react';
-import { getDownloadURL, getStorage, ref, uploadBytesResumable } from 'firebase/storage';
-import { app } from '../firebase';
 import { useEffect, useState } from 'react';
-import { CircularProgressbar } from 'react-circular-progressbar';
-import 'react-circular-progressbar/dist/styles.css';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import RichTextEditor from '../components/RichTextEditor';
+import supabase, { CDNURL } from '../supabase';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function UpdatePost() {
   const [file, setFile] = useState(null);
-  const [imageUploadProgress, setImageUploadProgress] = useState(null);
   const [imageUploadError, setImageUploadError] = useState(null);
-  const [formData, setFormData] = useState({ title: '', category: 'uncategorized', content: '' });
+  const [formData, setFormData] = useState({ title: '', category: '', content: '', image: '' });
   const [publishError, setPublishError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const { postId } = useParams();
   const navigate = useNavigate();
   const { currentUser } = useSelector((state) => state.user);
@@ -43,28 +42,29 @@ export default function UpdatePost() {
       setImageUploadError('Please select an image');
       return;
     }
+
+    setUploading(true);
     setImageUploadError(null);
-    const storage = getStorage(app);
-    const fileName = new Date().getTime() + '-' + file.name;
-    const storageRef = ref(storage, fileName);
-    const uploadTask = uploadBytesResumable(storageRef, file);
-    uploadTask.on(
-      'state_changed',
-      (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        setImageUploadProgress(progress.toFixed(0));
-      },
-      (error) => {
-        setImageUploadError('Image upload failed');
-        setImageUploadProgress(null);
-      },
-      () => {
-        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-          setImageUploadProgress(null);
-          setFormData({ ...formData, image: downloadURL });
-        });
+
+    try {
+      const fileName = `${uuidv4()}-${file.name}`;
+
+      const { data, error } = await supabase.storage
+        .from('passportinteractiveboard')
+        .upload(fileName, file);
+
+      if (error) {
+        throw new Error(error.message);
       }
-    );
+
+      const imageUrl = `${CDNURL}${fileName}`;
+      setFormData((prev) => ({ ...prev, image: imageUrl }));
+    } catch (error) {
+      console.error('Upload failed:', error);
+      setImageUploadError('Image upload failed');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -94,64 +94,45 @@ export default function UpdatePost() {
 
   return (
     <div className='p-3 max-w-3xl mx-auto min-h-screen'>
-      <h1 className='text-center text-3xl my-7 font-semibold text-black dark:text-white'>Update post</h1>
+      <h1 className='text-center text-3xl my-7 font-semibold'>Update post</h1>
       <form className='flex flex-col gap-4' onSubmit={handleSubmit}>
-        <div className='flex flex-col gap-4 sm:flex-row justify-between'>
-          <TextInput
-            type='text'
-            placeholder='Title'
-            required
-            id='title'
-            className='flex-1'
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            value={formData.title}
-          />
-          <Select
-            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-            value={formData.category}
-          >
-            <option value='uncategorized'>Select a category</option>
-            <option value='javascript'>JavaScript</option>
-            <option value='reactjs'>React.js</option>
-            <option value='nextjs'>Next.js</option>
-          </Select>
-        </div>
-        <div className='flex gap-4 items-center justify-between border-4 border-teal-500 border-dotted p-3'>
-          <FileInput
-            type='file'
-            accept='image/*'
-            onChange={(e) => setFile(e.target.files[0])}
-          />
-          <Button
-            type='button'
-            gradientDuoTone='purpleToBlue'
-            size='sm'
-            outline
-            onClick={handleUploadImage}
-            disabled={imageUploadProgress}
-          >
-            {imageUploadProgress ? (
-              <div className='w-16 h-16'>
-                <CircularProgressbar value={imageUploadProgress} text={`${imageUploadProgress || 0}%`} />
-              </div>
-            ) : (
-              'Upload Image'
-            )}
-          </Button>
-        </div>
+        <TextInput
+          type='text'
+          placeholder='Title'
+          required
+          value={formData.title}
+          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+        />
+
+        <Select onChange={(e) => setFormData({ ...formData, category: e.target.value })} value={formData.category}>
+          <option value=''>Select a category</option>
+          <option value='/appointment'>Appointment</option>
+          <option value='/passport'>Passport</option>
+          <option value='/renewal'>Renewal</option>
+          <option value='/tracking'>Tracking</option>
+          <option value='/visa'>Visa</option>
+        </Select>
+
+        <FileInput type='file' accept='image/*' onChange={(e) => setFile(e.target.files[0])} />
+        <Button
+          gradientDuoTone='purpleToPink'
+          className='w-full bg-blue-500 text-white'
+          type='button'
+          onClick={handleUploadImage}
+          disabled={uploading}
+        >
+          {uploading ? 'Uploading...' : 'Upload Image'}
+        </Button>
+
         {imageUploadError && <Alert color='failure'>{imageUploadError}</Alert>}
         {formData.image && <img src={formData.image} alt='upload' className='w-full h-72 object-cover' />}
-        <textarea
-          placeholder='Write something...'
-          className='h-72 mb-12 border border-gray-300 p-2'
-          required
-          value={formData.content}
-          onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-        />
-        <Button type='submit' gradientDuoTone='purpleToPink'>
+
+        <RichTextEditor onChange={(content) => setFormData({ ...formData, content })} value={formData.content} />
+        
+        <Button gradientDuoTone='purpleToPink' className='w-full bg-blue-500 text-white' type='submit'>
           Update post
         </Button>
-        {publishError && <Alert className='mt-5' color='failure'>{publishError}</Alert>}
+        {publishError && <Alert color='failure'>{publishError}</Alert>}
       </form>
     </div>
   );

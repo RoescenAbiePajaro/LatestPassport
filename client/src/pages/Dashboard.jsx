@@ -21,14 +21,14 @@ export default function Dashboard() {
   }, [location.search]);
 
   return (
-    <div className='min-h-screen flex flex-col md:flex-row'>
+    <div className='min-h-screen flex flex-col md:flex-row bg-white dark:bg-gray-900'>
       {/* Sidebar */}
       <div className='md:w-56'>
         <DashSidebar />
       </div>
 
       {/* Main Content */}
-      <div className='flex-1 p-4'>
+      <div className='flex-1 p-4 bg-white dark:bg-gray-900'>
         {tab === 'profile' && <DashProfile />}
         {tab === 'posts' && <DashPosts />}
         {tab === 'users' && <DashUsers />}
