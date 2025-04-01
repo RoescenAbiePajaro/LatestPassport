@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
 body {
   height: 100vh;
 }
@@ -38,5 +37,20 @@ body {
 }
 
 .dark .post-content a {
-  color: red;
+  color: rgb(59, 130, 246);
+}
+
+/* Dark mode styles */
+.dark {
+  color-scheme: dark;
+}
+
+.dark body {
+  background-color: rgb(17, 24, 39);
+  color: rgb(243, 244, 246);
+}
+
+/* Transition styles */
+* {
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
 }
