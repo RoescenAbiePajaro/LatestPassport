@@ -7,16 +7,22 @@ import DashUsers from '../components/DashUsers';
 import DashComments from '../components/DashComments';
 import DashboardComp from '../components/DashboardComp';
 import CreatePost from './CreatePost';
+import UpdatePost from './UpdatePost';
 
 export default function Dashboard() {
   const location = useLocation();
   const [tab, setTab] = useState('');
+  const [postId, setPostId] = useState('');
 
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
     const tabFromUrl = urlParams.get('tab');
+    const postIdFromUrl = urlParams.get('postId');
     if (tabFromUrl) {
       setTab(tabFromUrl);
+    }
+    if (postIdFromUrl) {
+      setPostId(postIdFromUrl);
     }
   }, [location.search]);
 
@@ -35,6 +41,7 @@ export default function Dashboard() {
         {tab === 'comments' && <DashComments />}
         {tab === 'dash' && <DashboardComp />}
         {tab === 'createpost' && <CreatePost />}
+        {tab === 'updatepost' && <UpdatePost postId={postId} />}
       </div>
     </div>
   );

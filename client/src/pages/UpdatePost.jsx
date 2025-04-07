@@ -1,19 +1,18 @@
 import { Alert, Button, FileInput, Select, TextInput } from 'flowbite-react';
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import RichTextEditor from '../components/RichTextEditor';
 import supabase, { CDNURL } from '../supabase';
 import { v4 as uuidv4 } from 'uuid';
 
-export default function UpdatePost() {
+export default function UpdatePost({ postId }) {
   const [file, setFile] = useState(null);
   const [imageUploadError, setImageUploadError] = useState(null);
   const [formData, setFormData] = useState({ title: '', category: '', content: '', image: '' });
   const [publishError, setPublishError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const { postId } = useParams();
   const navigate = useNavigate();
   const { currentUser } = useSelector((state) => state.user);
 
@@ -82,7 +81,8 @@ export default function UpdatePost() {
         setPublishError(data.message);
         return;
       }
-      navigate(`/post/${data.slug}`);
+      // Navigate back to the posts tab in the dashboard instead of to the post page
+      navigate('/dashboard?tab=posts');
     } catch (error) {
       setPublishError('Something went wrong');
     }
@@ -93,7 +93,7 @@ export default function UpdatePost() {
   }
 
   return (
-    <div className='p-3 max-w-3xl mx-auto min-h-screen'>
+    <div className='max-w-3xl mx-auto'>
       <h1 className='text-center text-3xl my-7 font-semibold'>Update post</h1>
       <form className='flex flex-col gap-4' onSubmit={handleSubmit}>
         <TextInput

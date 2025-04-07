@@ -76,7 +76,7 @@ export default function DashPosts() {
                         <div className='flex justify-between mt-4'>
                             <span onClick={() => { setShowModal(true); setPostIdToDelete(post._id); }} 
                                 className='text-red-500 dark:text-red-400 cursor-pointer'>Delete</span>
-                            <Link className='text-teal-500 dark:text-teal-400' to={`/update-post/${post._id}`}>Edit</Link>
+                            <Link className='text-teal-500 dark:text-teal-400' to={`/dashboard?tab=updatepost&postId=${post._id}`}>Edit</Link>
                         </div>
                     </div>
                 ))
