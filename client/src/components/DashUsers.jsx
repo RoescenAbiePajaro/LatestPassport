@@ -3,8 +3,6 @@ import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { HiOutlineExclamationCircle } from 'react-icons/hi';
 import { FaCheck, FaTimes } from 'react-icons/fa';
-import { Icon } from '@iconify/react';
-
 
 export default function DashUsers() {
   const { currentUser } = useSelector((state) => state.user);
@@ -78,10 +76,10 @@ export default function DashUsers() {
   });
 
   return (
-    <div className='w-full max-w-full overflow-x-auto p-3'>
+    <div className='w-full max-w-full p-4'>
       {currentUser.isAdmin && users.length > 0 ? (
         <>
-          <div className='flex flex-col sm:flex-row gap-4 mb-4'>
+          <div className='flex flex-col sm:flex-row gap-4 mb-6'>
             <div className='flex-1'>
               <TextInput
                 type="text"
@@ -103,48 +101,62 @@ export default function DashUsers() {
               </Select>
             </div>
           </div>
-          <div className='min-w-full inline-block align-middle'>
-            <table className='shadow-md w-full border-separate border-spacing-0 border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden'>
+          
+          <div className='overflow-x-auto rounded-lg shadow-md'>
+            <table className='w-full bg-white dark:bg-gray-800 border-collapse'>
               <thead>
-                <tr className='bg-gray-100 dark:bg-gray-700'>
-                  <th className='border p-2 text-sm sm:text-base dark:border-gray-600 dark:text-gray-200 text-gray-700'>Date Created</th>
-                  <th className='border p-2 text-sm sm:text-base dark:border-gray-600 dark:text-gray-200 text-gray-700'>User Image</th>
-                  <th className='border p-2 text-sm sm:text-base dark:border-gray-600 dark:text-gray-200 text-gray-700'>Username</th>
-                  <th className='border p-2 text-sm sm:text-base dark:border-gray-600 dark:text-gray-200 text-gray-700'>Email</th>
-                  <th className='border p-2 text-sm sm:text-base dark:border-gray-600 dark:text-gray-200 text-gray-700'>Super Admin</th>
-                  <th className='border p-2 text-sm sm:text-base dark:border-gray-600 dark:text-gray-200 text-gray-700'>Delete</th>
+                <tr className='bg-gray-50 dark:bg-gray-700 text-left'>
+                  <th className='px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider'>Date Created</th>
+                  <th className='px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider'>User</th>
+                  <th className='px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider'>Email</th>
+                  <th className='px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider text-center'>Role</th>
+                  <th className='px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider text-center'>Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
                 {filteredUsers.map((user) => (
-                  <tr key={user._id} className='bg-white dark:bg-gray-800 border dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'>
-                    <td className='border p-2 text-sm sm:text-base dark:border-gray-600 dark:text-gray-200 text-gray-700'>{new Date(user.createdAt).toLocaleDateString()}</td>
-                    <td className='border p-2 dark:border-gray-600'>
-                      <img
-                        src={user.profilePicture}
-                        alt={user.username}
-                        className='w-8 h-8 sm:w-10 sm:h-10 object-cover bg-gray-200 dark:bg-gray-600 rounded-full'
-                      />
+                  <tr key={user._id} className='hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'>
+                    <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300'>
+                      {new Date(user.createdAt).toLocaleDateString()}
                     </td>
-                    <td className='border p-2 text-sm sm:text-base dark:border-gray-600 dark:text-gray-200 text-gray-700'>{user.username}</td>
-                    <td className='border p-2 text-sm sm:text-base dark:border-gray-600 dark:text-gray-200 text-gray-700'>{user.email}</td>
-                    <td className='border p-2 text-center dark:border-gray-600'>
+                    <td className='px-6 py-4 whitespace-nowrap'>
+                      <div className='flex items-center'>
+                        <div className='flex-shrink-0 h-10 w-10'>
+                          <img
+                            className='h-10 w-10 rounded-full object-cover ring-2 ring-gray-200 dark:ring-gray-600'
+                            src={user.profilePicture}
+                            alt={user.username}
+                          />
+                        </div>
+                        <div className='ml-4'>
+                          <div className='text-sm font-medium text-gray-900 dark:text-gray-100'>{user.username}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300'>
+                      {user.email}
+                    </td>
+                    <td className='px-6 py-4 whitespace-nowrap text-center'>
                       {user.isAdmin ? (
-                        <FaCheck className='text-green-500 text-sm sm:text-base' />
+                        <span className='px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100'>
+                          Super Admin
+                        </span>
                       ) : (
-                        <FaTimes className='text-red-500 text-sm sm:text-base' />
+                        <span className='px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100'>
+                          Admin
+                        </span>
                       )}
                     </td>
-                    <td className='border p-2 text-center dark:border-gray-600'>
+                    <td className='px-6 py-4 whitespace-nowrap text-center text-sm'>
                       <button
                         onClick={() => {
                           setShowModal(true);
                           setUserIdToDelete(user._id);
                         }}
-                        className='text-red-500 hover:text-red-600 dark:hover:text-red-400 transition-colors p-1'
+                        className='text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20'
                         aria-label="Delete user"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 1024 1024">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 1024 1024">
                           <path fill="currentColor" d="M160 256H96a32 32 0 0 1 0-64h256V95.936a32 32 0 0 1 32-32h256a32 32 0 0 1 32 32V192h256a32 32 0 1 1 0 64h-64v672a32 32 0 0 1-32 32H192a32 32 0 0 1-32-32zm448-64v-64H416v64zM224 896h576V256H224zm192-128a32 32 0 0 1-32-32V416a32 32 0 0 1 64 0v320a32 32 0 0 1-32 32m192 0a32 32 0 0 1-32-32V416a32 32 0 0 1 64 0v320a32 32 0 0 1-32 32"/>
                         </svg>
                       </button>
@@ -154,17 +166,20 @@ export default function DashUsers() {
               </tbody>
             </table>
           </div>
+          
           {showMore && (
             <button
               onClick={handleShowMore}
-              className='w-full text-teal-500 dark:text-teal-400 self-center text-sm py-7 hover:underline'
+              className='mt-6 w-full flex items-center justify-center py-3 px-4 text-sm font-medium text-teal-600 dark:text-teal-400 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors'
             >
-              Show more
+              Show more users
             </button>
           )}
         </>
       ) : (
-        <p className='dark:text-gray-200 text-center py-4'>You have no users yet!</p>
+        <div className='flex items-center justify-center h-40 bg-white dark:bg-gray-800 rounded-lg shadow-md'>
+          <p className='text-gray-500 dark:text-gray-400'>You have no users yet!</p>
+        </div>
       )}
 
       <Modal 
@@ -174,22 +189,22 @@ export default function DashUsers() {
         size='xs'
         position="center"
         dismissible={false}
-        className="dark:bg-gray-800 max-w-[360px] mx-auto"
+        className="dark:bg-gray-800 max-w-sm mx-auto"
       >
         <div className="relative">
-          <Modal.Header className="dark:border-gray-600 px-3 pt-3" />
-          <Modal.Body className="px-4 pb-4">
+          <Modal.Header className="dark:border-gray-600 px-4 pt-4" />
+          <Modal.Body className="px-4 pb-6">
             <div className='text-center'>
-              <HiOutlineExclamationCircle className='h-14 w-14 text-gray-400 dark:text-gray-200 mb-4 mx-auto' />
-              <h3 className='mb-5 text-base font-semibold text-gray-600 dark:text-gray-300'>
+              <HiOutlineExclamationCircle className='h-16 w-16 text-red-400 dark:text-red-300 mb-5 mx-auto' />
+              <h3 className='mb-6 text-lg font-medium text-gray-700 dark:text-gray-200'>
                 Are you sure you want to delete this user?
               </h3>
-              <div className='flex justify-center items-center gap-3'>
+              <div className='flex justify-center items-center gap-4'>
                 <Button 
                   color='failure' 
                   onClick={handleDeleteUser}
                   size="sm"
-                  className='bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:text-white dark:hover:bg-red-700 w-24 font-medium'
+                  className='bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:text-white dark:hover:bg-red-700 w-28 font-medium'
                 >
                   Delete
                 </Button>
@@ -197,7 +212,7 @@ export default function DashUsers() {
                   color='gray' 
                   onClick={() => setShowModal(false)}
                   size="sm"
-                  className='dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 w-24 font-medium'
+                  className='bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 w-28 font-medium'
                 >
                   Cancel
                 </Button>

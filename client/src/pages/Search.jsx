@@ -10,7 +10,6 @@ export default function Search() {
     category: 'uncategorized',
   });
 
-  console.log(sidebarData);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showMore, setShowMore] = useState(false);
@@ -26,9 +25,9 @@ export default function Search() {
     if (searchTermFromUrl || sortFromUrl || categoryFromUrl) {
       setSidebarData({
         ...sidebarData,
-        searchTerm: searchTermFromUrl,
-        sort: sortFromUrl,
-        category: categoryFromUrl,
+        searchTerm: searchTermFromUrl || '',
+        sort: sortFromUrl || 'desc',
+        category: categoryFromUrl || 'uncategorized',
       });
     }
 
@@ -70,9 +69,9 @@ export default function Search() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const urlParams = new URLSearchParams(location.search);
-    urlParams.set('searchTerm', sidebarData.searchTerm);
-    urlParams.set('sort', sidebarData.sort);
+    const urlParams = new URLSearchParams();
+    urlParams.set('searchTerm', sidebarData.searchTerm.trim());
+    urlParams.set('sort', sidebarData.sort === 'asc' ? 'asc' : 'desc');
     urlParams.set('category', sidebarData.category);
     const searchQuery = urlParams.toString();
     navigate(`/search?${searchQuery}`);
@@ -99,10 +98,19 @@ export default function Search() {
     }
   };
 
+  useEffect(() => {
+    const urlParams = new URLSearchParams();
+    urlParams.set('searchTerm', sidebarData.searchTerm);
+    urlParams.set('sort', sidebarData.sort);
+    urlParams.set('category', sidebarData.category);
+    const searchQuery = urlParams.toString();
+    navigate(`/search?${searchQuery}`, { replace: true });
+  }, [sidebarData, navigate]);
+
   return (
     <div className='flex flex-col md:flex-row'>
       <div className='p-7 border-b md:border-r md:min-h-screen border-gray-500'>
-        <form className='flex flex-col gap-8' onSubmit={handleSubmit}>
+        <form className='flex flex-col gap-8'>
           <div className='flex items-center gap-2'>
             <label className='whitespace-nowrap font-semibold w-24'>
               Search Term:
@@ -132,14 +140,13 @@ export default function Search() {
               className='flex-1'
             >
               <option value='uncategorized'>Uncategorized</option>
-              <option value='reactjs'>React.js</option>
-              <option value='nextjs'>Next.js</option>
-              <option value='javascript'>JavaScript</option>
+              <option value='appointment'>Appointment</option>
+              <option value='passport'>Passport</option>
+              <option value='renewal'>Renewal</option>
+              <option value='tracking'>Tracking</option>
+              <option value='visa'>Visa</option>
             </Select>
           </div>
-          <Button type='submit' outline gradientDuoTone='purpleToPink'>
-            Apply Filters
-          </Button>
         </form>
       </div>
       <div className='w-full'>

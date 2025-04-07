@@ -8,7 +8,7 @@ import RichTextEditor from '../components/RichTextEditor';
 export default function CreatePost() {
   const [file, setFile] = useState(null);
   const [imageUploadError, setImageUploadError] = useState(null);
-  const [formData, setFormData] = useState({ title: '', content: '', category: '', image: '' });
+  const [formData, setFormData] = useState({ title: '', content: '', category: 'uncategorized', image: '' });
   const [publishError, setPublishError] = useState(null);
   const [uploading, setUploading] = useState(false);
 
@@ -83,13 +83,17 @@ export default function CreatePost() {
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
         />
 
-        <Select onChange={(e) => setFormData({ ...formData, category: e.target.value })}>
-          <option value=''>Select a category</option>
-          <option value='/appointment'>Appointment</option>
-          <option value='/passport'>Passport</option>
-          <option value='/renewal'>Renewal</option>
-          <option value='/tracking'>Tracking</option>
-          <option value='/visa'>Visa</option>
+        <Select 
+          id="category"
+          value={formData.category}
+          onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+        >
+          <option value='uncategorized'>Select a category</option>
+          <option value='appointment'>Appointment</option>
+          <option value='passport'>Passport</option>
+          <option value='renewal'>Renewal</option>
+          <option value='tracking'>Tracking</option>
+          <option value='visa'>Visa</option>
         </Select>
 
         <FileInput type='file' accept='image/*' onChange={(e) => setFile(e.target.files[0])} />
