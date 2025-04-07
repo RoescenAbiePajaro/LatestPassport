@@ -20,6 +20,7 @@ export default function DashboardComp() {
   const [lastMonthUsers, setLastMonthUsers] = useState(0);
   const [lastMonthPosts, setLastMonthPosts] = useState(0);
   const [lastMonthComments, setLastMonthComments] = useState(0);
+  const [loading, setLoading] = useState(true);
   const { currentUser } = useSelector((state) => state.user);
 
   useEffect(() => {
@@ -66,9 +67,8 @@ export default function DashboardComp() {
     };
 
     if (currentUser.isAdmin) {
-      fetchUsers();
-      fetchPosts();
-      fetchComments();
+      Promise.all([fetchUsers(), fetchPosts(), fetchComments()])
+        .finally(() => setLoading(false));
     }
   }, [currentUser]);
 
@@ -90,6 +90,29 @@ export default function DashboardComp() {
       <p className="text-3xl font-bold dark:text-white mt-1">{value}</p>
     </div>
   );
+
+  // Placeholder content for empty tables
+  const renderEmptyState = (type) => (
+    <div className="flex flex-col items-center justify-center p-8 text-gray-500 dark:text-gray-400">
+      {type === 'users' ? (
+        <HiUsers className="w-12 h-12 mb-3 text-gray-400" />
+      ) : (
+        <HiDocumentText className="w-12 h-12 mb-3 text-gray-400" />
+      )}
+      <p className="text-lg font-medium">No {type} found</p>
+      <p className="text-sm">New {type} will appear here when added</p>
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -130,28 +153,36 @@ export default function DashboardComp() {
             </Button>
           </div>
           <div className="overflow-x-auto">
-            <Table hoverable>
-              <Table.Head>
-                <Table.HeadCell className="dark:text-gray-200">User</Table.HeadCell>
-                <Table.HeadCell className="dark:text-gray-200">Username</Table.HeadCell>
-              </Table.Head>
-              <Table.Body className="divide-y">
-                {users.map((user) => (
-                  <Table.Row key={user._id} className="bg-white dark:bg-gray-800 dark:border-gray-700">
-                    <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
-                      <div className="flex items-center">
-                        <img
-                          src={user.profilePicture}
-                          alt={user.username}
-                          className="w-10 h-10 rounded-full object-cover mr-3 border-2 border-gray-200 dark:border-gray-700"
-                        />
-                      </div>
-                    </Table.Cell>
-                    <Table.Cell className="dark:text-gray-200 font-medium">{user.username}</Table.Cell>
-                  </Table.Row>
-                ))}
-              </Table.Body>
-            </Table>
+            {users && users.length > 0 ? (
+              <Table hoverable>
+                <Table.Head>
+                  <Table.HeadCell className="dark:text-gray-200">User</Table.HeadCell>
+                  <Table.HeadCell className="dark:text-gray-200">Username</Table.HeadCell>
+                </Table.Head>
+                <Table.Body className="divide-y">
+                  {users.map((user) => (
+                    <Table.Row key={user._id} className="bg-white dark:bg-gray-800 dark:border-gray-700">
+                      <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
+                        <div className="flex items-center">
+                          <img
+                            src={user.profilePicture || '/default-profile.png'}
+                            alt={user.username}
+                            className="w-10 h-10 rounded-full object-cover mr-3 border-2 border-gray-200 dark:border-gray-700"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = '/default-profile.png';
+                            }}
+                          />
+                        </div>
+                      </Table.Cell>
+                      <Table.Cell className="dark:text-gray-200 font-medium">{user.username}</Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table>
+            ) : (
+              renderEmptyState('users')
+            )}
           </div>
         </div>
 
@@ -170,34 +201,42 @@ export default function DashboardComp() {
             </Button>
           </div>
           <div className="overflow-x-auto">
-            <Table hoverable>
-              <Table.Head>
-                <Table.HeadCell className="dark:text-gray-200">Post</Table.HeadCell>
-                <Table.HeadCell className="dark:text-gray-200">Title</Table.HeadCell>
-                <Table.HeadCell className="dark:text-gray-200">Category</Table.HeadCell>
-              </Table.Head>
-              <Table.Body className="divide-y">
-                {posts.map((post) => (
-                  <Table.Row key={post._id} className="bg-white dark:bg-gray-800 dark:border-gray-700">
-                    <Table.Cell>
-                      <img
-                        src={post.image}
-                        alt={post.title}
-                        className="w-16 h-12 rounded-lg object-cover border border-gray-200 dark:border-gray-700"
-                      />
-                    </Table.Cell>
-                    <Table.Cell className="dark:text-gray-200 font-medium line-clamp-1">
-                      {post.title}
-                    </Table.Cell>
-                    <Table.Cell>
-                      <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300">
-                        {post.category}
-                      </span>
-                    </Table.Cell>
-                  </Table.Row>
-                ))}
-              </Table.Body>
-            </Table>
+            {posts && posts.length > 0 ? (
+              <Table hoverable>
+                <Table.Head>
+                  <Table.HeadCell className="dark:text-gray-200">Post</Table.HeadCell>
+                  <Table.HeadCell className="dark:text-gray-200">Title</Table.HeadCell>
+                  <Table.HeadCell className="dark:text-gray-200">Category</Table.HeadCell>
+                </Table.Head>
+                <Table.Body className="divide-y">
+                  {posts.map((post) => (
+                    <Table.Row key={post._id} className="bg-white dark:bg-gray-800 dark:border-gray-700">
+                      <Table.Cell>
+                        <img
+                          src={post.image || '/default-post.png'}
+                          alt={post.title}
+                          className="w-16 h-12 rounded-lg object-cover border border-gray-200 dark:border-gray-700"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/default-post.png';
+                          }}
+                        />
+                      </Table.Cell>
+                      <Table.Cell className="dark:text-gray-200 font-medium line-clamp-1">
+                        {post.title}
+                      </Table.Cell>
+                      <Table.Cell>
+                        <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-300">
+                          {post.category || 'Uncategorized'}
+                        </span>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table>
+            ) : (
+              renderEmptyState('posts')
+            )}
           </div>
         </div>
       </div>
