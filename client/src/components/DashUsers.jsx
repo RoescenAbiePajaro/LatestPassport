@@ -96,8 +96,8 @@ export default function DashUsers() {
                 className='w-full'
               >
                 <option value="all">All Users</option>
-                <option value="admin">Super Admin</option>
-                <option value="user">Admins</option>
+                <option value="admin">Admin</option>
+                <option value="user">Staff</option>
               </Select>
             </div>
           </div>
