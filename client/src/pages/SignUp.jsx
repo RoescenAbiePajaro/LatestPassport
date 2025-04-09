@@ -97,7 +97,7 @@ export default function SignUp() {
 
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <Label htmlFor="username" value="Admin username" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block" />
+              <Label htmlFor="username" value="Username" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block" />
               <TextInput
                 id="username"
                 type="text"
@@ -111,7 +111,7 @@ export default function SignUp() {
             </div>
 
             <div>
-              <Label htmlFor="email" value="Admin email" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block" />
+              <Label htmlFor="email" value="Email" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block" />
               <TextInput
                 id="email"
                 type="email"
@@ -125,7 +125,7 @@ export default function SignUp() {
             </div>
 
             <div>
-              <Label htmlFor="password" value="Admin password" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block" />
+              <Label htmlFor="password" value="Password" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block" />
               <TextInput
                 id="password"
                 type="password"

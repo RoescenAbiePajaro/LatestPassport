@@ -390,12 +390,12 @@ export default function DashProfile() {
           >
             Delete Account
           </button>
-          <button
+          {/* <button
             onClick={handleSignout}
             className="py-2.5 px-4 text-sm font-medium bg-white dark:bg-transparent text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex-1"
           >
             Sign Out
-          </button>
+          </button> */}
         </div>
       </div>
 

@@ -117,7 +117,7 @@ export default function SignIn() {
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Admin Email
+                  Email
               </label>
               <input
                 type="email"
@@ -137,7 +137,7 @@ export default function SignIn() {
             
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Admin Password
+                Password
               </label>
               <input
                 type="password"

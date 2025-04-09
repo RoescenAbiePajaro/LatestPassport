@@ -66,7 +66,7 @@ export default function DashSidebar() {
               Profile
             </Sidebar.Item>
           </Link>
-          {currentUser.isAdmin && (
+          
             <Link to='/dashboard?tab=posts'>
               <Sidebar.Item
                 active={tab === 'posts'}
@@ -76,7 +76,7 @@ export default function DashSidebar() {
                 Posts
               </Sidebar.Item>
             </Link>
-          )}
+
           {!currentUser.isAdmin && (
             <Link to='/dashboard?tab=createpost'>
               <Sidebar.Item
@@ -87,7 +87,7 @@ export default function DashSidebar() {
                 Create Post
               </Sidebar.Item>
             </Link>
-          )}
+          )} 
 
           {currentUser.isAdmin && (
             <>
@@ -103,8 +103,9 @@ export default function DashSidebar() {
               
             </>
           )}
+
           {/* Sign out button */}
-        <div className="px-3 py-4 border-t border-gray-100">
+        {/* <div className="px-3 py-4 border-t border-gray-100">
           <button
             onClick={handleSignout}
             className="flex items-center w-full p-3 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all group"
@@ -112,7 +113,7 @@ export default function DashSidebar() {
             <HiArrowSmRight className="w-5 h-5 text-gray-500 group-hover:text-red-600" />
             <span className="ml-3 font-medium">Sign Out</span>
           </button>
-        </div>
+        </div> */}
         </Sidebar.ItemGroup>
       </Sidebar.Items>
     </Sidebar>
