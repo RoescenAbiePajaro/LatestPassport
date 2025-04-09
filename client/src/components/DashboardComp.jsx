@@ -1,16 +1,22 @@
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { Button, Table } from 'flowbite-react';
 import { 
-  HiUsers, 
-  HiTrendingUp, 
-  HiDocumentText, 
-  HiAnnotation,
-  HiOutlineEye,
-  HiChartPie
-} from 'react-icons/hi';
-import { ChevronUp, ChevronDown, Activity, Users, FileText, TrendingUp, BarChart2, Eye } from 'lucide-react';
+  ChevronUp, 
+  ChevronDown, 
+  Activity, 
+  Users, 
+  FileText, 
+  TrendingUp, 
+  BarChart2, 
+  Eye,
+  CalendarDays,
+  Clock,
+  MoreHorizontal,
+  ArrowUpRight,
+  Search,
+  Filter
+} from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
 
 export default function DashboardComp() {
@@ -24,7 +30,7 @@ export default function DashboardComp() {
   const [lastMonthPosts, setLastMonthPosts] = useState(0);
   const [lastMonthComments, setLastMonthComments] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [activeTimeframe, setActiveTimeframe] = useState('today');
+  const [activeTimeframe, setActiveTimeframe] = useState('week');
   const [topPerformers, setTopPerformers] = useState([]);
   const { currentUser } = useSelector((state) => state.user);
 
@@ -49,7 +55,7 @@ export default function DashboardComp() {
         const res = await fetch('/api/user/getusers');
         const data = await res.json();
         if (res.ok) {
-          setUsers(data.users);
+          setUsers(data.users.slice(0, 5)); // Get just the most recent 5 users
           setTotalUsers(data.totalUsers);
           setLastMonthUsers(data.lastMonthUsers);
         }
@@ -63,7 +69,7 @@ export default function DashboardComp() {
         const res = await fetch('/api/post/getposts');
         const data = await res.json();
         if (res.ok) {
-          setPosts(data.posts);
+          setPosts(data.posts.slice(0, 5)); // Get just the most recent 5 posts
           setTotalPosts(data.totalPosts);
           setLastMonthPosts(data.lastMonthPosts);
           
@@ -150,44 +156,54 @@ export default function DashboardComp() {
     }
   }, [currentUser]);
 
-  // Calculate top performers based on posts
   const calculateTopPerformers = () => {
-    if (users.length > 0 && posts.length > 0) {
-      // Create a map to count posts per user
-      const userPostCounts = posts.reduce((acc, post) => {
-        if (post.userId) {
-          acc[post.userId] = (acc[post.userId] || 0) + 1;
-        }
-        return acc;
-      }, {});
-      
-      // Convert to array and sort by post count
-      const userPostArray = users
-        .map(user => ({
+    if (!users || !posts || users.length === 0 || posts.length === 0) return;
+  
+    // Create a map to count number of posts per userId
+    const userPostCounts = posts.reduce((acc, post) => {
+      acc[post.userId] = (acc[post.userId] || 0) + 1;
+      return acc;
+    }, {});
+  
+    // Map user data to a format suitable for top performers
+    const topPerformers = users
+      .map((user) => {
+        const postCount = userPostCounts[user._id] || 0;
+        return {
           id: user._id,
           name: user.username,
           avatar: user.profilePicture || '/api/placeholder/40/40',
-          value: (userPostCounts[user._id] || 0).toString(),
-          trend: userPostCounts[user._id] > 0 ? 'up' : 'down' // Trend based on post count
-        }))
-        .sort((a, b) => parseInt(b.value) - parseInt(a.value))
-        .slice(0, 4); // Get top 4
-      
-      setTopPerformers(userPostArray);
-    }
+          value: postCount.toString(),
+          trend: postCount > 0 ? 'up' : 'down'
+        };
+      })
+      .sort((a, b) => parseInt(b.value) - parseInt(a.value))
+      .slice(0, 4); // Limit to top 4
+  
+    setTopPerformers(topPerformers);
   };
 
-  // Modern statistics card component
-  const StatsCard = ({ title, value, icon: Icon, color, gradient, growth }) => (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md transition-all duration-300 hover:shadow-lg hover:translate-y-px overflow-hidden">
-      <div className={`h-1 ${gradient}`}></div>
+  // Format date to readable format
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    }).format(date);
+  };
+
+  // Modern statistics card component with subtle gradient border
+  const StatsCard = ({ title, value, icon: Icon, color, growth }) => (
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700 relative group">
+      <div className={`absolute inset-x-0 top-0 h-1 ${color} opacity-80 group-hover:opacity-100 transition-opacity`}></div>
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <div className={`p-3 rounded-lg ${color} bg-opacity-10`}>
+          <div className={`p-3 rounded-xl ${color} bg-opacity-10`}>
             <Icon className={`${color.replace('bg-', 'text-')} w-5 h-5`} />
           </div>
           <span className="flex items-center text-sm font-medium text-green-500">
-            <TrendingUp className="mr-1 w-4 h-4" />
+            <ArrowUpRight className="mr-1 w-4 h-4" />
             {growth}
             <span className="ml-1 text-gray-500 dark:text-gray-400">last month</span>
           </span>
@@ -201,16 +217,19 @@ export default function DashboardComp() {
   );
 
   // Chart card component with improved styling
-  const ChartCard = ({ title, subtitle, children }) => (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg">
+  const ChartCard = ({ title, subtitle, headerIcon, children }) => (
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700">
       <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-700">
         <div>
           <h2 className="text-lg font-semibold dark:text-white flex items-center">
-            <BarChart2 className="mr-2 text-indigo-500 w-5 h-5" />
+            {headerIcon && <span className="mr-2 text-indigo-500">{headerIcon}</span>}
             {title}
           </h2>
           {subtitle && <p className="text-gray-500 text-xs mt-1">{subtitle}</p>}
         </div>
+        <button className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+          <MoreHorizontal className="w-4 h-4" />
+        </button>
       </div>
       <div className="p-5">
         {children}
@@ -218,30 +237,19 @@ export default function DashboardComp() {
     </div>
   );
 
-  // Placeholder content for empty tables
-  const renderEmptyState = (type) => (
-    <div className="flex flex-col items-center justify-center p-8 text-gray-500 dark:text-gray-400">
-      {type === 'users' ? (
-        <Users className="w-12 h-12 mb-3 text-gray-400" />
-      ) : (
-        <FileText className="w-12 h-12 mb-3 text-gray-400" />
-      )}
-      <p className="text-lg font-medium">No {type} found</p>
-      <p className="text-sm">New {type} will appear here when added</p>
-    </div>
-  );
-
-  // Loading state
+  // Loading state with subtle animation
   if (loading) {
     return (
       <div className="p-6 max-w-7xl mx-auto">
         <div className="flex items-center justify-center h-64">
-          <div className="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm rounded-md text-indigo-500 bg-indigo-100 dark:bg-indigo-900 dark:bg-opacity-20">
-            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Loading dashboard...
+          <div className="flex flex-col items-center">
+            <div className="relative">
+              <div className="w-12 h-12 rounded-full border-t-4 border-indigo-500 border-r-4 border-indigo-200 border-b-4 border-indigo-200 border-l-4 border-indigo-200 animate-spin"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-4 h-4 bg-indigo-500 rounded-full opacity-70"></div>
+              </div>
+            </div>
+            <p className="mt-4 text-sm font-medium text-gray-700 dark:text-gray-300">Loading dashboard...</p>
           </div>
         </div>
       </div>
@@ -260,19 +268,34 @@ export default function DashboardComp() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto bg-gray-50 dark:bg-gray-900 min-h-screen">
-      {/* Header with search and actions */}
-      <div className="flex items-center justify-between mb-8">
+      {/* Header with welcome and search */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+            Dashboard
+            <span className="bg-indigo-100 text-indigo-800 text-xs py-1 px-2 rounded-md font-medium">Admin</span>
+          </h1>
           <div className="flex items-center text-gray-500 text-sm mt-1">
-            <span>Admin</span>
-            <span className="mx-1.5">•</span>
-            <span>Analytics Overview</span>
+            <Clock className="w-3.5 h-3.5 mr-1" />
+            <span>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
           </div>
         </div>
-        <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl px-4 py-2 flex items-center">
-          <span className="text-sm text-gray-500 mr-2">Last updated:</span>
-          <span className="text-sm font-medium">{new Date().toLocaleDateString()}</span>
+        
+        <div className="flex gap-3">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-4 w-4 text-gray-400" />
+            </div>
+            <input 
+              type="text" 
+              className="pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 dark:bg-gray-800 dark:text-white" 
+              placeholder="Search..." 
+            />
+          </div>
+          <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+            <Filter className="w-4 h-4" />
+            <span>Filters</span>
+          </button>
         </div>
       </div>
       
@@ -283,7 +306,6 @@ export default function DashboardComp() {
           value={totalUsers} 
           icon={Users} 
           color="bg-indigo-500" 
-          gradient="bg-gradient-to-r from-indigo-500 to-purple-500"
           growth={lastMonthUsers} 
         />
         <StatsCard 
@@ -291,7 +313,6 @@ export default function DashboardComp() {
           value={totalPosts} 
           icon={FileText} 
           color="bg-emerald-500" 
-          gradient="bg-gradient-to-r from-emerald-500 to-teal-500"
           growth={lastMonthPosts} 
         />
         <StatsCard 
@@ -299,15 +320,18 @@ export default function DashboardComp() {
           value={totalComments} 
           icon={Activity} 
           color="bg-blue-500" 
-          gradient="bg-gradient-to-r from-blue-500 to-cyan-500"
           growth={lastMonthComments} 
         />
       </div>
 
-      {/* Charts and Tables Section */}
+      {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* User & Post Activity Chart */}
-        <ChartCard title="User & Post Activity" subtitle="Last 7 days">
+        <ChartCard 
+          title="User & Post Activity" 
+          subtitle="Last 7 days" 
+          headerIcon={<BarChart2 className="w-5 h-5" />}
+        >
           <div className="mb-4">
             <div className="flex items-center">
               <h3 className="text-2xl font-bold dark:text-white">{totalUsers + totalPosts}</h3>
@@ -320,8 +344,8 @@ export default function DashboardComp() {
           </div>
           <div className="h-52">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={activityData} barSize={24} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <XAxis dataKey="name" axisLine={false} tickLine={false} />
+              <BarChart data={activityData} barSize={20} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9CA3AF' }} />
                 <YAxis hide={true} />
                 <Tooltip 
                   cursor={{fill: 'rgba(243, 244, 246, 0.2)'}} 
@@ -332,8 +356,8 @@ export default function DashboardComp() {
                     padding: '10px'
                   }}
                 />
-                <Bar dataKey="users" name="Users" fill="#6366F1" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="posts" name="Posts" fill="#10B981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="users" name="Users" fill="#A5B4FC" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="posts" name="Posts" fill="#34D399" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -343,8 +367,8 @@ export default function DashboardComp() {
                 key={period}
                 className={`${
                   activeTimeframe === period 
-                    ? 'bg-indigo-500 text-white' 
-                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                    ? 'bg-indigo-500 text-white ring-2 ring-indigo-200' 
+                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 } px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200`}
                 onClick={() => setActiveTimeframe(period)}
               >
@@ -354,8 +378,11 @@ export default function DashboardComp() {
           </div>
         </ChartCard>
 
-        {/* Content Distribution - Now using a more modern Pie Chart */}
-        <ChartCard title="Content Categories">
+        {/* Content Distribution - Modern Pie Chart */}
+        <ChartCard 
+          title="Content Categories" 
+          headerIcon={<PieChart className="w-5 h-5" />}
+        >
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -365,11 +392,13 @@ export default function DashboardComp() {
                   cy="50%"
                   labelLine={false}
                   outerRadius={80}
+                  innerRadius={50} // Add inner radius for donut chart effect
                   fill="#8884d8"
                   dataKey="value"
+                  paddingAngle={3} // Add padding for separation between segments
                 >
                   {contentDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                    <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                   ))}
                 </Pie>
                 <Tooltip 
@@ -397,20 +426,23 @@ export default function DashboardComp() {
           </div>
         </ChartCard>
 
-        {/* Top Performers - showing users with most posts */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg">
+        {/* Top Performers - Modern User Cards */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-700">
             <h2 className="text-lg font-semibold dark:text-white flex items-center">
               <Users className="mr-2 text-emerald-500 w-5 h-5" />
               Top Content Creators
             </h2>
+            <button className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+              <MoreHorizontal className="w-4 h-4" />
+            </button>
           </div>
-          <div className="p-5 space-y-4">
+          <div className="p-5 space-y-3">
             {topPerformers.length > 0 ? (
               topPerformers.map((user) => (
-                <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/30 rounded-xl">
+                <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/30 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
                   <div className="flex items-center">
-                    <div className="w-10 h-10 bg-gray-200 rounded-full overflow-hidden flex-shrink-0 border-2 border-white">
+                    <div className="w-10 h-10 bg-gray-200 rounded-full overflow-hidden flex-shrink-0 border-2 border-white dark:border-gray-700">
                       <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                     </div>
                     <div className="ml-3">
@@ -424,7 +456,9 @@ export default function DashboardComp() {
                     ) : (
                       <ChevronDown className="text-red-500 h-4 w-4" />
                     )}
-                    <span className={`ml-1 text-sm font-medium ${user.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>{user.value}</span>
+                    <span className={`ml-1 text-sm font-medium ${user.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
+                      {user.value} posts
+                    </span>
                   </div>
                 </div>
               ))
@@ -438,135 +472,111 @@ export default function DashboardComp() {
         </div>
       </div>
       
-      {/* Tables Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Users */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden lg:col-span-2">
+      {/* Tables Section - Recent Users & Posts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Recent Users Table */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-700">
             <h2 className="text-lg font-semibold dark:text-white flex items-center">
-              <Users className="mr-2 text-indigo-500 w-5 h-5" />
+              <Users className="mr-2 text-blue-500 w-5 h-5" />
               Recent Users
             </h2>
-            <Button color="indigo" size="sm" className="rounded-lg">
-              <Link to="/dashboard?tab=users" className="flex items-center">
+            <Link to="/dashboard?tab=users" className="flex items-center">
                 <span>View All</span>
                 <Eye className="ml-2 w-4 h-4" />
-              </Link>
-            </Button>
+            </Link>
           </div>
           <div className="overflow-x-auto">
-            {users && users.length > 0 ? (
-              <Table hoverable className="rounded-lg overflow-hidden">
-                <Table.Head className="bg-gray-50 dark:bg-gray-700/50">
-                  <Table.HeadCell className="dark:text-gray-200 py-4">User</Table.HeadCell>
-                  <Table.HeadCell className="dark:text-gray-200 py-4">Username</Table.HeadCell>
-                  <Table.HeadCell className="dark:text-gray-200 py-4">Status</Table.HeadCell>
-                </Table.Head>
-                <Table.Body className="divide-y divide-gray-100 dark:divide-gray-700">
-                  {users.slice(0, 5).map((user) => (
-                    <Table.Row key={user._id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                      <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
-                        <div className="flex items-center">
-                          <img
-                            src={user.profilePicture || '/api/placeholder/40/40'}
-                            alt={user.username}
-                            className="w-10 h-10 rounded-full object-cover mr-3 border-2 border-gray-200 dark:border-gray-700"
-                            onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.src = '/api/placeholder/40/40';
-                            }}
-                          />
-                          <div>
-                            <div className="font-medium">{user.username}</div>
-                            <div className="text-sm text-gray-500">{user.email || 'No email'}</div>
-                          </div>
+            <table className="w-full text-sm text-left">
+              <thead className="text-xs uppercase bg-gray-50 dark:bg-gray-700/30">
+                <tr>
+                  <th className="px-5 py-3">User</th>
+                  <th className="px-5 py-3">Email</th>
+                  <th className="px-5 py-3">Joined</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                {users.length > 0 ? users.map((user) => (
+                  <tr key={user._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
+                    <td className="px-5 py-4">
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
+                          <img src={user.profilePicture || '/api/placeholder/40/40'} alt={user.username} className="w-full h-full object-cover" />
                         </div>
-                      </Table.Cell>
-                      <Table.Cell className="dark:text-gray-200 font-medium">@{user.username}</Table.Cell>
-                      <Table.Cell>
-                        <div className="flex gap-1">
-                          <span className={`${user.isAdmin ? 'bg-purple-100 text-purple-600 dark:bg-purple-900 dark:bg-opacity-30 dark:text-purple-300' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900 dark:bg-opacity-30 dark:text-emerald-300'} px-2.5 py-1 rounded-lg text-xs font-medium`}>
-                            {user.isAdmin ? 'Admin' : 'User'}
-                          </span>
-                        </div>
-                      </Table.Cell>
-                    </Table.Row>
-                  ))}
-                </Table.Body>
-              </Table>
-            ) : (
-              renderEmptyState('users')
-            )}
+                        <span className="font-medium ml-3 dark:text-white">{user.username}</span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4 text-gray-500 dark:text-gray-300">{user.email}</td>
+                    <td className="px-5 py-4 text-gray-500 dark:text-gray-300">
+                      <div className="flex items-center">
+                        <CalendarDays className="w-4 h-4 mr-1 text-gray-400" />
+                        {formatDate(user.createdAt)}
+                      </div>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan="3" className="px-5 py-8 text-center text-gray-500">
+                      No users found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
-      </div>
-      
-      {/* Recent Posts */}
-      <div className="mt-6 bg-white dark:bg-gray-800 rounded-2xl shadow-md overflow-hidden">
-        <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-700">
-          <h2 className="text-lg font-semibold dark:text-white flex items-center">
-            <FileText className="mr-2 text-emerald-500 w-5 h-5" />
-            Recent Posts
-          </h2>
-          <Button color="success" size="sm" className="rounded-lg">
+
+        {/* Recent Posts Table */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-700">
+            <h2 className="text-lg font-semibold dark:text-white flex items-center">
+              <FileText className="mr-2 text-emerald-500 w-5 h-5" />
+              Recent Posts
+            </h2>
             <Link to="/dashboard?tab=posts" className="flex items-center">
               <span>View All</span>
               <Eye className="ml-2 w-4 h-4" />
             </Link>
-          </Button>
-        </div>
-        <div className="overflow-x-auto">
-          {posts && posts.length > 0 ? (
-            <Table hoverable className="rounded-lg overflow-hidden">
-              <Table.Head className="bg-gray-50 dark:bg-gray-700/50">
-                <Table.HeadCell className="dark:text-gray-200 py-4">Image</Table.HeadCell>
-                <Table.HeadCell className="dark:text-gray-200 py-4">Title</Table.HeadCell>
-                <Table.HeadCell className="dark:text-gray-200 py-4">Category</Table.HeadCell>
-                <Table.HeadCell className="dark:text-gray-200 py-4">Date</Table.HeadCell>
-                <Table.HeadCell className="dark:text-gray-200 py-4">Actions</Table.HeadCell>
-              </Table.Head>
-              <Table.Body className="divide-y divide-gray-100 dark:divide-gray-700">
-                {posts.slice(0, 5).map((post) => (
-                  <Table.Row key={post._id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                    <Table.Cell>
-                      <img
-                        src={post.image || '/api/placeholder/60/40'}
-                        alt={post.title}
-                        className="w-16 h-12 rounded-xl object-cover border border-gray-200 dark:border-gray-700"
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = '/api/placeholder/60/40';
-                        }}
-                      />
-                    </Table.Cell>
-                    <Table.Cell className="dark:text-gray-200 font-medium line-clamp-1">
-                      {post.title}
-                    </Table.Cell>
-                    <Table.Cell>
-                      <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-1 rounded-lg dark:bg-blue-900 dark:bg-opacity-30 dark:text-blue-300">
-                        {post.category || 'Uncategorized'}
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="text-xs uppercase bg-gray-50 dark:bg-gray-700/30">
+                <tr>
+                  <th className="px-5 py-3">Title</th>
+                  <th className="px-5 py-3">Category</th>
+                  <th className="px-5 py-3">Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                {posts.length > 0 ? posts.map((post) => (
+                  <tr key={post._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
+                    <td className="px-5 py-4">
+                      <span className="font-medium dark:text-white line-clamp-1">
+                        {post.title}
                       </span>
-                    </Table.Cell>
-                    <Table.Cell className="dark:text-gray-200">
-                      {new Date(post.createdAt).toLocaleDateString()}
-                    </Table.Cell>
-                    <Table.Cell className="dark:text-gray-200">
-                      <div className="flex space-x-2">
-                        <button className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 font-medium text-sm">
-                          Edit
-                        </button>
-                        <button className="text-red-600 hover:text-red-800 dark:text-red-400 font-medium text-sm">
-                          Delete
-                        </button>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className="px-2.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs font-medium capitalize">
+                        {post.category || 'uncategorized'}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-gray-500 dark:text-gray-300">
+                      <div className="flex items-center">
+                        <CalendarDays className="w-4 h-4 mr-1 text-gray-400" />
+                        {formatDate(post.createdAt)}
                       </div>
-                    </Table.Cell>
-                  </Table.Row>
-                ))}
-              </Table.Body>
-            </Table>
-          ) : (
-            renderEmptyState('posts')
-          )}
+                    </td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan="3" className="px-5 py-8 text-center text-gray-500">
+                      No posts found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
