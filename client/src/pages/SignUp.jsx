@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Alert, Button, Label, Spinner, TextInput } from 'flowbite-react';
+import { Eye, EyeOff } from 'lucide-react';
 import OAuth from '../components/OAuth';
 
 export default function SignUp() {
@@ -8,6 +9,7 @@ export default function SignUp() {
   const [validationErrors, setValidationErrors] = useState({});
   const [errorMessage, setErrorMessage] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const validateForm = () => {
@@ -28,6 +30,10 @@ export default function SignUp() {
     if (validationErrors[e.target.id]) {
       setValidationErrors({ ...validationErrors, [e.target.id]: '' });
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   const handleSubmit = async (e) => {
@@ -126,23 +132,35 @@ export default function SignUp() {
 
             <div>
               <Label htmlFor="password" value="Password" className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block" />
-              <TextInput
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                onChange={handleChange}
-                className={`mt-1 w-full ${validationErrors.password ? 'border-red-500 focus:ring-red-500' : ''}`}
-              />
+              <div className="relative">
+                <TextInput
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  onChange={handleChange}
+                  className={`mt-1 w-full ${validationErrors.password ? 'border-red-500 focus:ring-red-500' : ''}`}
+                />
+                <button
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
               {validationErrors.password && (
                 <p className="mt-1 text-sm text-red-600 dark:text-red-400">{validationErrors.password}</p>
               )}
             </div>
 
-            <Button
+            <button
               type="submit"
-              gradientDuoTone="purpleToBlue"
-              className="w-full text-white font-medium rounded-lg transition duration-300 shadow-md hover:shadow-lg"
               disabled={loading}
+              className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-lg transition duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
             >
               {loading ? (
                 <div className="flex items-center justify-center">
@@ -152,7 +170,7 @@ export default function SignUp() {
               ) : (
                 'Sign Up'
               )}
-            </Button>
+            </button>
 
             <div className="relative flex items-center justify-center">
               <div className="absolute inset-0 flex items-center">
