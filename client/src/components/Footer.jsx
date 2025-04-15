@@ -26,7 +26,8 @@ export default function FooterComponent() {
             </Link>
             
             <p className="text-gray-300 text-sm leading-relaxed">
-              Government of Philippines Official Portal. Connecting citizens with government services efficiently and transparently.
+              CivicView - Your Digital Gateway to Government Services.
+              Real-time information access and efficient guidelines.
             </p>
             
             <div className="pt-2">
@@ -41,7 +42,7 @@ export default function FooterComponent() {
                   <svg className="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                   </svg>
-                  <span className="text-gray-300">info@government.com</span>
+                  <span className="text-gray-300">civicview@gmail.com</span>
                 </div>
               </div>
             </div>
@@ -53,9 +54,8 @@ export default function FooterComponent() {
               About
             </h3>
             <ul className="space-y-4">
-              <li><Link to="/about" className="text-gray-300 hover:text-teal-400 transition duration-300">About Us</Link></li>
-              <li><Link to="/contact" className="text-gray-300 hover:text-teal-400 transition duration-300">Contact</Link></li>
-              <li><Link to="/careers" className="text-gray-300 hover:text-teal-400 transition duration-300">Careers</Link></li>
+              <li><Link to="/about" className="text-gray-300 hover:text-teal-400 transition duration-300">About CivicView</Link></li>
+              <li><Link to="/contact" className="text-gray-300 hover:text-teal-400 transition duration-300">Contact Us</Link></li>
               <li><Link to="/news" className="text-gray-300 hover:text-teal-400 transition duration-300">News & Updates</Link></li>
             </ul>
           </div>
@@ -93,25 +93,7 @@ export default function FooterComponent() {
               </button>
             </form>
             
-            <div className="mt-6">
-              <div className="flex space-x-4">
-                <a href="#" className="text-gray-400 hover:text-teal-400 transition duration-300">
-                  <FaFacebook size={22} />
-                </a>
-                <a href="#" className="text-gray-400 hover:text-teal-400 transition duration-300">
-                  <FaInstagram size={22} />
-                </a>
-                <a href="#" className="text-gray-400 hover:text-teal-400 transition duration-300">
-                  <FaXTwitter size={22} />
-                </a>
-                <a href="#" className="text-gray-400 hover:text-teal-400 transition duration-300">
-                  <FaGithub size={22} />
-                </a>
-                <a href="#" className="text-gray-400 hover:text-teal-400 transition duration-300">
-                  <FaLinkedin size={22} />
-                </a>
-              </div>
-            </div>
+            
           </div>
         </div>
       </div>
@@ -122,9 +104,6 @@ export default function FooterComponent() {
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="text-gray-400 text-sm">
               © {new Date().getFullYear()} <span className="font-medium text-gray-300">CivicView</span>. All rights reserved.
-            </div>
-            <div className="text-gray-400 text-sm">
-              <span>Republic of the Philippines Government</span>
             </div>
           </div>
         </div>
