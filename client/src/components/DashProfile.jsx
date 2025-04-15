@@ -340,7 +340,7 @@ export default function DashProfile() {
                 className={`w-full py-2 px-4 rounded-lg text-white font-medium shadow transition-all ${
                   loading || imageFileUploading
                     ? 'bg-indigo-400 cursor-not-allowed'
-                    : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg'
+                    : 'bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 hover:shadow-lg'
                 }`}
               >
                 {loading ? 'Updating...' : 'Update Profile'}

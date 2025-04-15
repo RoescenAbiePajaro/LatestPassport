@@ -74,10 +74,10 @@ export default function Home() {
         <div className="flex flex-col gap-12">
           <div className="text-center space-y-4">
             <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
-              Passport Guidelines
+              CivicView Guidelines
             </h2>
             <p className="max-w-2xl mx-auto text-lg text-gray-600 dark:text-gray-300">
-              Essential information to help with your passport application process
+              Essential information to help with your application process
             </p>
           </div>
 
@@ -142,7 +142,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-              No passport guidelines available at the moment.
+              No CivicView guidelines available at the moment.
             </div>
           )}
         </div>

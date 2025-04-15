@@ -19,10 +19,10 @@ export default function FooterComponent() {
             <Link to="/" className="inline-block">
               <div className="flex items-center">
                 <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-500">
-                  Citizen's Charter
+                  CivicView
                 </span>
               </div>
-              <span className="text-xl font-semibold text-white">Passport</span>
+             
             </Link>
             
             <p className="text-gray-300 text-sm leading-relaxed">
@@ -121,7 +121,7 @@ export default function FooterComponent() {
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="text-gray-400 text-sm">
-              © {new Date().getFullYear()} <span className="font-medium text-gray-300">Citizen's Charter for Passport</span>. All rights reserved.
+              © {new Date().getFullYear()} <span className="font-medium text-gray-300">CivicView</span>. All rights reserved.
             </div>
             <div className="text-gray-400 text-sm">
               <span>Republic of the Philippines Government</span>
