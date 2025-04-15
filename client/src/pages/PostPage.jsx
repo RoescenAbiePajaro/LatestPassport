@@ -159,7 +159,7 @@ export default function PostPage() {
       <div className="bg-slate-100 dark:bg-slate-900 py-16">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-10 font-serif">
-            More Passport Guidelines
+            More CivicView Guidelines
           </h2>
           
           {recentPosts?.length > 0 ? (

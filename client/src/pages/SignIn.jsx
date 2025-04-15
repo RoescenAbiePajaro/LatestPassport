@@ -31,7 +31,7 @@ export default function SignIn() {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value.trim() });
-    // Clear validation error when user starts typing
+
     if (validationErrors[e.target.id]) {
       setValidationErrors({ ...validationErrors, [e.target.id]: '' });
     }
@@ -76,7 +76,7 @@ export default function SignIn() {
               {/* Light version of logo for dark background */}
               <img
                 src="src/2.png"
-                alt="InformYou Logo"
+                alt="CivicView Logo"
                 className="h-12"
               />
             </Link>

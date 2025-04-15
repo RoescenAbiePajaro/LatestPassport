@@ -106,17 +106,17 @@ export default function CreatePost() {
 
   return (
     <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-      <h1 className="text-4xl font-bold text-center mb-10 text-gray-800">Create a Post</h1>
+      <h1 className="text-4xl font-bold text-center mb-10 text-gray-900 dark:text-white">Create a Post</h1>
       
       {publishError && (
-        <div className="mb-6 p-4 border-l-4 border-red-500 bg-red-50 text-red-700 rounded">
+        <div className="mb-6 p-4 border-l-4 border-red-500 bg-red-50 text-red-700 rounded dark:bg-red-900 dark:border-red-400 dark:text-red-300">
           <p className="font-medium">{publishError}</p>
         </div>
       )}
       
       <form className="space-y-8" onSubmit={handleSubmit}>
         <div>
-          <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
             Title
           </label>
           <input
@@ -126,19 +126,19 @@ export default function CreatePost() {
             required
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300"
           />
         </div>
 
         <div>
-          <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
             Category
           </label>
           <select
             id="category"
             value={formData.category}
             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300"
           >
             {categories.map((category) => (
               <option key={category.value} value={category.value}>
@@ -150,7 +150,7 @@ export default function CreatePost() {
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
               Cover Image
             </label>
             <div className="flex items-center space-x-4">
@@ -211,7 +211,7 @@ export default function CreatePost() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
             Content
           </label>
           <div className="border border-gray-300 rounded-lg overflow-hidden">
@@ -226,7 +226,7 @@ export default function CreatePost() {
             className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white ${
               isSubmitting 
                 ? 'bg-blue-400 cursor-not-allowed' 
-                : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
+                : 'bg-gradient-to-r from-teal-400 to-blue-500 hover:from-teal-500 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
             }`}
           >
             {isSubmitting ? 'Publishing...' : 'Publish Post'}

@@ -70,7 +70,7 @@ export default function SignUp() {
 
           <div className="relative z-10">
             <Link to="/" className="inline-block mb-8">
-              <img src="src/2.png" alt="InformYou Logo" className="h-12" />
+              <img src="src/2.png" alt="CivicView Logo" className="h-12" />
             </Link>
 
             <h2 className="text-3xl font-bold text-white mb-3">Create Account</h2>

@@ -6,11 +6,11 @@ export default function CallToAction() {
     <div className='flex flex-col sm:flex-row p-3 border border-blue-500 justify-center items-center rounded-tl-3xl rounded-br-3xl text-center'>
         <div className="flex-1 left flex flex-col">
             <h1 className='text-lg sm:text-2xl font-bold'>
-                InformYou
+                CivicView
             </h1>
 
             <p className='text-gray-500 my-2 relative'>
-                A citizen's charter is a document that outlines an 
+                A CivicView is a document that outlines an 
                 organization's aims, values, and standards of service. 
                 It also includes information about how the organization 
                 will provide services to the public and what the public can expect from the organization.
