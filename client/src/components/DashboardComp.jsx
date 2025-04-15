@@ -302,7 +302,7 @@ export default function DashboardComp() {
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <StatsCard 
-          title="Total Users" 
+          title="Total Staffs" 
           value={totalUsers} 
           icon={Users} 
           color="bg-indigo-500" 
