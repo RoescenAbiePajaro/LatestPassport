@@ -1,73 +1,134 @@
-import { Footer } from 'flowbite-react';
 import { Link } from 'react-router-dom';
-import { BsFacebook, BsInstagram, BsTwitter, BsGithub, BsLinkedin } from 'react-icons/bs';
+import { 
+  FaFacebook, 
+  FaInstagram, 
+  FaXTwitter, 
+  FaGithub, 
+  FaLinkedin 
+} from 'react-icons/fa6';
 
-export default function FooterCom() {
+export default function FooterComponent() {
   return (
-    <Footer container className='bg-gray-800 text-white border-t-4 border-teal-500'>
-      <div className='w-full max-w-7xl mx-auto px-6 py-8'>
-        <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8'>
-          {/* Government Info */}
-          <div className='space-y-4'>
-            <Link
-              to='/'
-              className='text-xl font-semibold text-teal-500'
-            >
-              <span className='bg-gradient-to-r py-1 rounded-lg'>Citizen's Charter</span> Passport
+    <footer className="bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100">
+      {/* Main Footer Content */}
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+          
+          {/* Logo & Info Section */}
+          <div className="space-y-6">
+            <Link to="/" className="inline-block">
+              <div className="flex items-center">
+                <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-blue-500">
+                  Citizen's Charter
+                </span>
+              </div>
+              <span className="text-xl font-semibold text-white">Passport</span>
             </Link>
-            <p className='text-sm'>
-              Government of Philippines Official Portal. Connecting citizens with government services.
+            
+            <p className="text-gray-300 text-sm leading-relaxed">
+              Government of Philippines Official Portal. Connecting citizens with government services efficiently and transparently.
             </p>
-            <p className='text-sm'>
-              <strong>Contact Us:</strong> +1-800-123-4567 | info@government.com
-            </p>
+            
+            <div className="pt-2">
+              <div className="flex flex-col space-y-2">
+                <div className="flex items-center space-x-3">
+                  <svg className="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                  </svg>
+                  <span className="text-gray-300">+1-800-123-4567</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <svg className="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                  </svg>
+                  <span className="text-gray-300">info@government.com</span>
+                </div>
+              </div>
+            </div>
           </div>
-
-          {/* About */}
-          <div>
-            <Footer.Title title='About' />
-            <Footer.LinkGroup col>
-              <Footer.Link href='/about'>About Us</Footer.Link>
-              <Footer.Link href='/contact'>Contact</Footer.Link>
-              <Footer.Link href='/careers'>Careers</Footer.Link>
-            </Footer.LinkGroup>
+          
+          {/* About Section */}
+          <div className="mt-8 md:mt-0">
+            <h3 className="text-lg font-semibold mb-6 text-white relative pb-2 after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-1 after:w-12 after:bg-gradient-to-r after:from-teal-400 after:to-blue-500">
+              About
+            </h3>
+            <ul className="space-y-4">
+              <li><Link to="/about" className="text-gray-300 hover:text-teal-400 transition duration-300">About Us</Link></li>
+              <li><Link to="/contact" className="text-gray-300 hover:text-teal-400 transition duration-300">Contact</Link></li>
+              <li><Link to="/careers" className="text-gray-300 hover:text-teal-400 transition duration-300">Careers</Link></li>
+              <li><Link to="/news" className="text-gray-300 hover:text-teal-400 transition duration-300">News & Updates</Link></li>
+            </ul>
           </div>
-
-          {/* Legal */}
-          <div>
-            <Footer.Title title='Legal' />
-            <Footer.LinkGroup col>
-              <Footer.Link href='/privacy-policy'>Privacy Policy</Footer.Link>
-              <Footer.Link href='/terms-conditions'>Terms & Conditions</Footer.Link>
-            </Footer.LinkGroup>
+          
+          {/* Legal Section */}
+          <div className="mt-8 md:mt-0">
+            <h3 className="text-lg font-semibold mb-6 text-white relative pb-2 after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-1 after:w-12 after:bg-gradient-to-r after:from-teal-400 after:to-blue-500">
+              Legal
+            </h3>
+            <ul className="space-y-4">
+              <li><Link to="/privacy-policy" className="text-gray-300 hover:text-teal-400 transition duration-300">Privacy Policy</Link></li>
+              <li><Link to="/terms-conditions" className="text-gray-300 hover:text-teal-400 transition duration-300">Terms & Conditions</Link></li>
+              <li><Link to="/data-protection" className="text-gray-300 hover:text-teal-400 transition duration-300">Data Protection</Link></li>
+              <li><Link to="/accessibility" className="text-gray-300 hover:text-teal-400 transition duration-300">Accessibility</Link></li>
+            </ul>
           </div>
-
-          {/* Social Media */}
-          <div>
-            <Footer.Title title='Follow Us' />
-            <div className="flex gap-4 justify-center sm:justify-start">
-              <Footer.Icon href='#' icon={BsFacebook} />
-              <Footer.Icon href='#' icon={BsInstagram} />
-              <Footer.Icon href='#' icon={BsTwitter} />
-              <Footer.Icon href='' icon={BsGithub} />
-              <Footer.Icon href='#' icon={BsLinkedin} />
+          
+          {/* Newsletter Section */}
+          <div className="mt-8 md:mt-0">
+            <h3 className="text-lg font-semibold mb-6 text-white relative pb-2 after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-1 after:w-12 after:bg-gradient-to-r after:from-teal-400 after:to-blue-500">
+              Stay Connected
+            </h3>
+            <p className="text-gray-300 mb-4 text-sm">Subscribe to our newsletter for updates</p>
+            <form className="flex flex-col space-y-4">
+              <input 
+                type="email" 
+                placeholder="Your email address" 
+                className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 text-gray-300 text-sm"
+              />
+              <button 
+                type="submit" 
+                className="bg-gradient-to-r from-teal-500 to-blue-500 text-white rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90 transition duration-300"
+              >
+                Subscribe
+              </button>
+            </form>
+            
+            <div className="mt-6">
+              <div className="flex space-x-4">
+                <a href="#" className="text-gray-400 hover:text-teal-400 transition duration-300">
+                  <FaFacebook size={22} />
+                </a>
+                <a href="#" className="text-gray-400 hover:text-teal-400 transition duration-300">
+                  <FaInstagram size={22} />
+                </a>
+                <a href="#" className="text-gray-400 hover:text-teal-400 transition duration-300">
+                  <FaXTwitter size={22} />
+                </a>
+                <a href="#" className="text-gray-400 hover:text-teal-400 transition duration-300">
+                  <FaGithub size={22} />
+                </a>
+                <a href="#" className="text-gray-400 hover:text-teal-400 transition duration-300">
+                  <FaLinkedin size={22} />
+                </a>
+              </div>
             </div>
           </div>
         </div>
-
-        <Footer.Divider />
-
-        <div className='w-full flex flex-col sm:flex-row justify-between items-center mt-6'>
-          <Footer.Copyright
-            href='#'
-            by="Citizen'sCharterforPassport"
-            year={new Date().getFullYear()}
-          />
-          <p className='text-sm text-gray-400'>
-            Allrightsreserved.PhilippinesGovernment.
-          </p>
+      </div>
+      
+      {/* Bottom Bar */}
+      <div className="border-t border-gray-700 bg-gray-900">
+        <div className="max-w-7xl mx-auto px-6 py-6">
+          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+            <div className="text-gray-400 text-sm">
+              © {new Date().getFullYear()} <span className="font-medium text-gray-300">Citizen's Charter for Passport</span>. All rights reserved.
+            </div>
+            <div className="text-gray-400 text-sm">
+              <span>Republic of the Philippines Government</span>
+            </div>
+          </div>
         </div>
       </div>
-    </Footer>
+    </footer>
   );
 }
