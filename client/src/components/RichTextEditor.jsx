@@ -26,6 +26,17 @@ export default function RichTextEditor({ onChange, initialContent = '' }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.addEventListener('input', handleContentChange);
+    }
+    return () => {
+      if (editorRef.current) {
+        editorRef.current.removeEventListener('input', handleContentChange);
+      }
+    };
+  }, []);
+
   const handleContentChange = () => {
     if (!editorRef.current) return;
     const newContent = editorRef.current.innerHTML;
@@ -144,8 +155,13 @@ export default function RichTextEditor({ onChange, initialContent = '' }) {
         ref={editorRef}
         contentEditable
         className="p-4 min-h-56 focus:outline-none text-gray-800 dark:text-gray-200 transition-all duration-200 ease-in-out"
-        onInput={handleContentChange}
-        dangerouslySetInnerHTML={{ __html: content }}
+        onInput={(e) => {
+          const newContent = e.currentTarget.innerHTML;
+          setContent(newContent);
+          if (onChange) {
+            onChange(newContent);
+          }
+        }}
         spellCheck="true"
       />
       
