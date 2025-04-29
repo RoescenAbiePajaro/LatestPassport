@@ -1,7 +1,7 @@
 import { Modal, Button, TextInput, Select } from 'flowbite-react';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { HiOutlineExclamationCircle } from 'react-icons/hi';
+import { HiOutlineExclamationCircle, HiOutlineUserGroup } from 'react-icons/hi';
 import { FaCheck, FaTimes } from 'react-icons/fa';
 
 export default function DashUsers() {
@@ -77,6 +77,13 @@ export default function DashUsers() {
 
   return (
     <div className='w-full max-w-full p-4'>
+      <div className="flex justify-between items-center mb-6 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6">
+        <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-3">
+          <HiOutlineUserGroup className="w-8 h-8 text-teal-400 dark:text-teal-500"/>
+            User Management
+        </h2>
+                         
+      </div>
       {currentUser.isAdmin && users.length > 0 ? (
         <>
           <div className='flex flex-col sm:flex-row gap-4 mb-6'>

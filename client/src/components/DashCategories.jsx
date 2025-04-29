@@ -36,9 +36,12 @@ export default function CategoryManager() {
         const data = await res.json();
         if (res.ok) {
           setCategories(data);
+        } else {
+          throw new Error(data.message || 'Failed to fetch categories');
         }
       } catch (err) {
         console.error('Failed to fetch categories:', err);
+        setError(err.message);
       }
     };
     fetchCategories();
@@ -77,22 +80,16 @@ export default function CategoryManager() {
       const data = await res.json();
   
       if (!res.ok) {
-        setError(data.message || 'Something went wrong');
-        setLoading(false);
-        return;
+        throw new Error(data.message || 'Something went wrong');
       }
   
-      setLoading(false);
       setSuccessMessage(editingId ? 'Category updated successfully!' : 'Category created successfully!');
       setFormData({ name: '', description: '' });
       setEditingId(null);
       setShowCreateForm(false);
-
-      setTimeout(() => {
-        setSuccessMessage('');
-      }, 3000);
     } catch (err) {
-      setError('Network error. Please try again.');
+      setError(err.message || 'Network error. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
@@ -124,18 +121,16 @@ export default function CategoryManager() {
         },
       });
   
-      if (res.ok) {
-        setSuccessMessage('Category deleted successfully!');
-        setShowModal(false);
-        setCategoryToDelete(null);
-        setTimeout(() => setSuccessMessage(''), 3000);
-      } else {
-        const data = await res.json();
-        setError(data.message || 'Failed to delete category');
-        setShowModal(false);
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to delete category');
       }
+      
+      setSuccessMessage('Category deleted successfully!');
+      setShowModal(false);
+      setCategoryToDelete(null);
     } catch (err) {
-      setError('Network error. Please try again.');
+      setError(err.message || 'Network error. Please try again.');
       setShowModal(false);
     }
   };
@@ -187,7 +182,7 @@ export default function CategoryManager() {
         </motion.div>
       )}
 
-      {/* Create/Edit Form (Collapsible) */}
+      {/* Create/Edit Form */}
       {showCreateForm && (
         <motion.div 
           initial={{ opacity: 0, height: 0 }}

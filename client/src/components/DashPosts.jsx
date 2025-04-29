@@ -3,6 +3,15 @@ import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { HiOutlineExclamationCircle, HiOutlinePencil, HiOutlineTrash, HiOutlinePhotograph, HiOutlineTag } from 'react-icons/hi';
 import { motion } from 'framer-motion';
+import {
+    HiUser,
+    HiArrowSmRight,
+    HiDocumentText,
+    HiOutlineUserGroup,
+    HiAnnotation,
+    HiChartPie,
+    HiTag,
+  } from 'react-icons/hi';
 
 export default function DashPosts() {
     const { currentUser } = useSelector((state) => state.user);
@@ -68,7 +77,15 @@ export default function DashPosts() {
     };
 
     return (
+        
         <div className="container mx-auto px-4 py-6">
+            <div className="flex justify-between items-center mb-6 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6">
+                    <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-3">
+                      <HiDocumentText className="w-8 h-8 text-teal-400 dark:text-teal-500"/>
+                      Post Management
+                    </h2>
+                   
+            </div>
             {isLoading ? (
                 <div className="flex justify-center items-center min-h-[300px]">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500"></div>

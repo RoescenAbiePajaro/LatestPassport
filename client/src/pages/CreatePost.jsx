@@ -40,11 +40,11 @@ export default function CreatePost() {
             setFormData(prev => ({ ...prev, category: data[0]._id }));
           }
         } else {
-          throw new Error('Failed to fetch categories');
+          throw new Error(data.message || 'Failed to fetch categories');
         }
       } catch (err) {
         console.error('Error fetching categories:', err);
-        setCategoryError('Failed to load categories. Please try again later.');
+        setCategoryError(err.message || 'Failed to load categories. Please try again later.');
       } finally {
         setIsLoadingCategories(false);
       }
@@ -55,28 +55,42 @@ export default function CreatePost() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate required fields
     if (!formData.title || !formData.content) {
       setPublishError('Title and content are required');
       return;
     }
+    
+    if (!formData.category) {
+      setPublishError('Please select a category');
+      return;
+    }
 
     setIsSubmitting(true);
+    setPublishError(null);
+
     try {
+      const token = localStorage.getItem('token');
       const res = await fetch('/api/post/create', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(formData),
       });
 
       const data = await res.json();
+      
       if (!res.ok) {
-        setPublishError(data.message);
-        return;
+        throw new Error(data.message || 'Failed to create post');
       }
+      
       navigate(`/post/${data.slug}`);
     } catch (error) {
-      setPublishError('Something went wrong');
+      console.error('Error creating post:', error);
+      setPublishError(error.message || 'Something went wrong');
     } finally {
       setIsSubmitting(false);
     }
@@ -105,10 +119,10 @@ export default function CreatePost() {
 
       // Construct public URL
       const imageUrl = `${CDNURL}${fileName}`;
-      setFormData((prev) => ({ ...prev, image: imageUrl }));
+      setFormData(prev => ({ ...prev, image: imageUrl }));
     } catch (error) {
       console.error('Upload failed:', error);
-      setImageUploadError('Image upload failed');
+      setImageUploadError(error.message || 'Image upload failed');
     } finally {
       setUploading(false);
     }
@@ -141,7 +155,7 @@ export default function CreatePost() {
       <form className="space-y-8" onSubmit={handleSubmit}>
         <div>
           <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
-            Title
+            Title <span className="text-red-500">*</span>
           </label>
           <input
             id="title"
@@ -154,10 +168,10 @@ export default function CreatePost() {
           />
         </div>
 
-        {/* Dynamic Category Selection fetched from API */}
+        {/* Category Selection */}
         <div>
           <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
-            Category
+            Category <span className="text-red-500">*</span>
           </label>
           
           {categoryError && (
@@ -172,6 +186,7 @@ export default function CreatePost() {
             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300"
             disabled={isLoadingCategories}
+            required
           >
             {isLoadingCategories ? (
               <option value="">Loading categories...</option>
@@ -268,10 +283,13 @@ export default function CreatePost() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
-            Content
+            Content <span className="text-red-500">*</span>
           </label>
           <div className="border border-gray-300 rounded-lg overflow-hidden dark:border-gray-700">
-            <RichTextEditor onChange={(content) => setFormData({ ...formData, content })} />
+            <RichTextEditor 
+              value={formData.content}
+              onChange={(content) => setFormData({ ...formData, content })}
+            />
           </div>
         </div>
 
