@@ -11,22 +11,11 @@ import {
 
 const router = express.Router();
 
-// Create a new category
 router.post('/', verifyToken, createCategory);
-
-// Get all categories or filter by user
 router.get('/', getCategories);
-
-// Get a single category by ID
 router.get('/:categoryId', getCategoryById);
-
-// Update a category
 router.put('/:categoryId', verifyToken, updateCategory);
-
-// Delete a category
-router.delete('/:categoryId/:userId', verifyToken, deleteCategory);
-
-// Update post counts for categories
+router.delete('/:categoryId', verifyToken, deleteCategory);
 router.post('/update-post-counts', verifyToken, updatePostCounts);
 
 export default router;

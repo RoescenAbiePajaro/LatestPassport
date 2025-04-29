@@ -6,12 +6,10 @@ import DashPosts from '../components/DashPosts';
 import DashUsers from '../components/DashUsers';
 import DashComments from '../components/DashComments';
 import DashboardComp from '../components/DashboardComp';
-import DashCategories from '../components/DashCategories';
-import CreateCategory from './CreateCategory';
+import DashCategories from '../components/DashCategories'; // Updated import
 import UpdateCategory from './UpdateCategory';
 import CreatePost from './CreatePost';
 import UpdatePost from './UpdatePost';
-
 
 export default function Dashboard() {
   const location = useLocation();
@@ -50,9 +48,8 @@ export default function Dashboard() {
         {tab === 'users' && <DashUsers />}
         {tab === 'comments' && <DashComments />}
         {tab === 'dash' && <DashboardComp />}
-        {tab === 'categories' && <DashCategories />}
+        {tab === 'categories' && <DashCategories />} 
         {tab === 'createpost' && <CreatePost />}
-        {tab === 'createcategory' && <CreateCategory />}
         {tab === 'updatepost' && <UpdatePost postId={postId} />}
         {tab === 'updatecategory' && <UpdateCategory categoryId={categoryId} />}
       </div>
