@@ -11,7 +11,7 @@ import {
     HiAnnotation,
     HiChartPie,
     HiTag,
-  } from 'react-icons/hi';
+} from 'react-icons/hi';
 
 export default function DashPosts() {
     const { currentUser } = useSelector((state) => state.user);
@@ -20,6 +20,27 @@ export default function DashPosts() {
     const [showModal, setShowModal] = useState(false);
     const [postIdToDelete, setPostIdToDelete] = useState('');
     const [isLoading, setIsLoading] = useState(true);
+    const [categories, setCategories] = useState({});
+
+    // Fetch categories to map IDs to names
+    const fetchCategories = async () => {
+        try {
+            const res = await fetch('/api/category');
+            const data = await res.json();
+            if (res.ok) {
+                // Create a mapping of category IDs to names
+                const categoryMap = {};
+                data.forEach(category => {
+                    categoryMap[category._id] = category.name;
+                });
+                setCategories(categoryMap);
+            } else {
+                console.error('Failed to fetch categories:', data.message);
+            }
+        } catch (error) {
+            console.error('Error fetching categories:', error.message);
+        }
+    };
 
     const fetchPosts = async () => {
         setIsLoading(true);
@@ -40,6 +61,7 @@ export default function DashPosts() {
     };
 
     useEffect(() => {
+        fetchCategories();
         fetchPosts();
     }, [currentUser._id]);
 
@@ -76,15 +98,18 @@ export default function DashPosts() {
         }
     };
 
+    // Function to get category name from its ID
+    const getCategoryName = (categoryId) => {
+        return categories[categoryId] || 'Uncategorized';
+    };
+
     return (
-        
         <div className="container mx-auto px-4 py-6">
             <div className="flex justify-between items-center mb-6 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6">
-                    <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-3">
-                      <HiDocumentText className="w-8 h-8 text-teal-400 dark:text-teal-500"/>
-                      Post Management
-                    </h2>
-                   
+                <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-3">
+                    <HiDocumentText className="w-8 h-8 text-teal-400 dark:text-teal-500"/>
+                    Post Management
+                </h2>
             </div>
             {isLoading ? (
                 <div className="flex justify-center items-center min-h-[300px]">
@@ -118,7 +143,8 @@ export default function DashPosts() {
                                             <div className="flex items-center space-x-2 mb-3">
                                                 <span className="bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200 text-xs font-medium px-2.5 py-0.5 rounded-full flex items-center">
                                                     <HiOutlineTag className="w-3 h-3 mr-1" />
-                                                    {post.category}
+                                                    {/* Display category name instead of ID */}
+                                                    {getCategoryName(post.category)}
                                                 </span>
                                             </div>
                                             

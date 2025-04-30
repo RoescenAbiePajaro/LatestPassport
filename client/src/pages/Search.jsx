@@ -6,16 +6,48 @@ export default function Search() {
   const [searchParams, setSearchParams] = useState({
     searchTerm: '',
     sort: 'desc',
-    category: 'uncategorized',
+    category: '',
   });
 
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showMore, setShowMore] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
 
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Fetch categories when component mounts
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch('/api/category');
+        const data = await res.json();
+        if (res.ok) {
+          // Format categories for dropdown
+          const formattedCategories = data.map(cat => ({
+            value: cat._id, // Use category ID instead of name
+            label: cat.name
+          }));
+          setCategories([
+            { value: '', label: 'All Categories' }, // Empty value for all categories
+            ...formattedCategories
+          ]);
+        } else {
+          throw new Error(data.message || 'Failed to fetch categories');
+        }
+      } catch (err) {
+        console.error('Failed to fetch categories:', err);
+        // Fallback if API fails
+        setCategories([
+          { value: '', label: 'All Categories' },
+          { value: 'uncategorized', label: 'Uncategorized' }
+        ]);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
@@ -23,14 +55,12 @@ export default function Search() {
     const sortFromUrl = urlParams.get('sort');
     const categoryFromUrl = urlParams.get('category');
     
-    if (searchTermFromUrl || sortFromUrl || categoryFromUrl) {
-      setSearchParams({
-        ...searchParams,
-        searchTerm: searchTermFromUrl || '',
-        sort: sortFromUrl || 'desc',
-        category: categoryFromUrl || 'uncategorized',
-      });
-    }
+    setSearchParams({
+      ...searchParams,
+      searchTerm: searchTermFromUrl || '',
+      sort: sortFromUrl || 'desc',
+      category: categoryFromUrl || '',
+    });
 
     const fetchPosts = async () => {
       setLoading(true);
@@ -90,15 +120,6 @@ export default function Search() {
     navigate(`/search?${urlParams.toString()}`, { replace: true });
   }, [searchParams, navigate]);
 
-  const categories = [
-    { value: 'uncategorized', label: 'Uncategorized' },
-    { value: 'appointment', label: 'Appointment' },
-    { value: 'passport', label: 'Passport' },
-    { value: 'renewal', label: 'Renewal' },
-    { value: 'tracking', label: 'Tracking' },
-    { value: 'visa', label: 'Visa' }
-  ];
-
   const toggleFilters = () => {
     setIsFilterOpen(!isFilterOpen);
   };
@@ -150,7 +171,7 @@ export default function Search() {
                 <input
                   type="radio"
                   name="sort"
-                  id="sort"
+                  id="sort-desc"
                   value="desc"
                   checked={searchParams.sort === 'desc'}
                   onChange={handleChange}
@@ -201,7 +222,7 @@ export default function Search() {
           <h2 className="text-xl font-semibold text-gray-800 flex items-center dark:text-gray-200">
             Search Results
             {!loading && posts.length > 0 && (
-              <span className="ml-2 text-sm bg-gray-100 text-gray-600 py-1 px-2 rounded-full">
+              <span className="ml-2 text-sm bg-gray-100 text-gray-600 py-1 px-2 rounded-full dark:bg-gray-700 dark:text-gray-300">
                 {posts.length} posts
               </span>
             )}
@@ -217,10 +238,10 @@ export default function Search() {
             <svg className="w-16 h-16 text-gray-400 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p className="text-gray-500 text-lg">No posts found matching your search criteria.</p>
+            <p className="text-gray-500 text-lg dark:text-gray-400">No posts found matching your search criteria.</p>
             <button 
               onClick={() => setSearchParams({searchTerm: '', sort: 'desc', category: 'uncategorized'})}
-              className="mt-4 text-teal-600 hover:text-teal-800 font-medium"
+              className="mt-4 text-teal-600 hover:text-teal-800 font-medium dark:text-teal-500 dark:hover:text-teal-400"
             >
               Clear filters
             </button>
@@ -234,7 +255,7 @@ export default function Search() {
             </div>
             
             {showMore && (
-              <div className="flex justify-center p-6 border-t border-gray-200">
+              <div className="flex justify-center p-6 border-t border-gray-200 dark:border-gray-700">
                 <button
                   onClick={handleShowMore}
                   className="py-2 px-4 bg-teal-500 hover:bg-teal-600 text-white font-medium rounded-lg transition duration-200 flex items-center"
