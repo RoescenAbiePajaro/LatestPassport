@@ -17,7 +17,7 @@ export default function CallToAction() {
 
   if (isLoading) {
     return (
-      <div className='flex flex-col sm:flex-row p-3 border border-blue-500 justify-center items-center rounded-tl-3xl rounded-br-3xl text-center min-h-[200px]'>
+      <div className='flex flex-col sm:flex-row p-3 border border-blue-500 justify-center items-center rounded-tl-3xl rounded-br-3xl text-center min-h-[200px] bg-gradient-to-br from-blue-600 to-purple-600'>
         <div className="flex items-center justify-center w-full">
           <LoadingSpinner size="lg" color="primary" />
         </div>
@@ -26,13 +26,13 @@ export default function CallToAction() {
   }
 
   return (
-    <div className='flex flex-col sm:flex-row p-3 border border-blue-500 justify-center items-center rounded-tl-3xl rounded-br-3xl text-center'>
+    <div className='flex flex-col sm:flex-row p-3 border border-blue-500 justify-center items-center rounded-tl-3xl rounded-br-3xl text-center bg-gradient-to-br from-blue-600 to-purple-600'>
         <div className="flex-1 left flex flex-col">
-            <h1 className='text-lg sm:text-2xl font-bold'>
+            <h1 className='text-lg sm:text-2xl font-bold text-white'>
                 CivicView
             </h1>
 
-            <p className='text-gray-500 my-2 relative'>
+            <p className='text-gray-200 my-2 relative'>
                 A CivicView is a document that outlines an 
                 organization's aims, values, and standards of service. 
                 It also includes information about how the organization 
@@ -42,7 +42,7 @@ export default function CallToAction() {
             {/* Replacing the Button with Link */}
             <Link
               to={'/search'} // URL for your route
-              className='text-lg text-teal-500 hover:underline text-center'
+              className='text-lg text-white hover:text-gray-200 text-center hover:underline'
             >
               View all posts
             </Link>
