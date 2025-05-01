@@ -27,15 +27,15 @@ export default function CallToAction() {
         <div className="py-5 flex-2 px-4">
   {/* Light mode image */}
   <img 
-    src="src/1.png" 
-    alt="Passport" 
+    src="src/3.png" 
+    alt="civic"
     className="dark:hidden"  // hidden in dark mode
   />
   
   {/* Dark mode image */}
   <img 
-    src="src/2.png" 
-    alt="Passport" 
+    src="src/3.png" 
+    alt="civic" 
     className="hidden dark:block"  // shown only in dark mode
   />
 </div>

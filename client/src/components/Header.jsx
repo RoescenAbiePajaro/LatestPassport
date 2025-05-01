@@ -91,7 +91,7 @@ export default function Header() {
           </button>
           <Link to="/" className="flex items-center">
             <img 
-              src={`src/${theme === 'light' ? '1' : '2'}.png`} 
+              src={`src/${theme === 'light' ? '3' : '3'}.png`} 
               alt="Logo" 
               className="h-8 sm:h-10 transform hover:scale-105 transition-transform duration-300" 
             />
@@ -251,7 +251,7 @@ export default function Header() {
               <div className="flex flex-col p-5 h-full">
                 <div className="flex justify-between items-center mb-8">
                   <Link to="/" onClick={() => setIsSidebarOpen(false)}>
-                    <img src={`src/${theme === 'light' ? '1' : '2'}.png`} alt="Logo" className="h-8" />
+                    <img src={`src/${theme === 'light' ? '3' : '3'}.png`} alt="Logo" className="h-8" />
                   </Link>
                   <button 
                     onClick={() => setIsSidebarOpen(false)} 

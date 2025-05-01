@@ -75,7 +75,7 @@ export default function SignIn() {
             <Link to="/" className="inline-block mb-8">
               {/* Light version of logo for dark background */}
               <img
-                src="src/2.png"
+                src="src/3.png"
                 alt="CivicView Logo"
                 className="h-12"
               />
