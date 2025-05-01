@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Info, ArrowRight } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { Link } from 'react-router-dom';
+import PostCard from '../components/PostCard';
 
 const CallToAction = () => (
   <div className="flex flex-col lg:flex-row items-center justify-between gap-8 p-8 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 shadow-lg">
@@ -11,15 +12,18 @@ const CallToAction = () => (
         <Info size={16} className="mr-1" /> Important
       </span>
       <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white">
-        CivicView <span className="text-blue-600 dark:text-blue-400">Portal</span> 
+        CivicView <span className="bg-gradient-to-r from-teal-400 to-blue-500 dark:from-teal-500 dark:to-blue-600 text-transparent bg-clip-text">Portal</span>
       </h1>
       <p className="text-lg text-gray-600 dark:text-gray-300 max-w-xl">
         Streamline your application process with our intuitive platform designed for civic engagement and community development.
       </p>
       <div className="flex flex-wrap gap-4 pt-2">
-        <button className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium transition-all shadow-md hover:shadow-xl flex items-center gap-2">
+        <Link 
+          to="/search" 
+          className="bg-gradient-to-r from-teal-400 to-blue-500 dark:from-teal-500 dark:to-blue-600 text-white font-medium px-5 py-2 rounded-lg transition-all duration-300 hover:from-teal-500 hover:to-blue-600 hover:shadow-lg"
+        >
           See More<ArrowRight size={18} />
-        </button>
+        </Link>
       </div>
     </div>
     <div className="flex-1 flex justify-center items-center">
@@ -38,45 +42,7 @@ const CallToAction = () => (
   </div>
 );
 
-const PostCard = ({ post }) => (
-  <div className="group h-full flex flex-col rounded-2xl overflow-hidden bg-white dark:bg-gray-800 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700">
-    <div className="relative overflow-hidden">
-      {post.image ? (
-        <img 
-          src={post.image} 
-          alt={post.title} 
-          className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-      ) : (
-        <div className="w-full h-48 bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 flex items-center justify-center">
-          <Info size={32} className="text-blue-500 dark:text-blue-400" />
-        </div>
-      )}
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-        <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-blue-500 text-white">
-          {post.category || 'Guideline'}
-        </span>
-      </div>
-    </div>
-    <div className="flex-1 p-6 flex flex-col">
-      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{post.title}</h3>
-      <p className="text-gray-600 dark:text-gray-300 text-sm flex-1 line-clamp-3">
-        {post.excerpt || post.content?.substring(0, 150) + '...'}
-      </p>
-      <div className="mt-4 flex items-center justify-between">
-        <span className="text-xs text-gray-500 dark:text-gray-400">
-          {new Date(post.createdAt).toLocaleDateString()}
-        </span>
-        <Link 
-          to={`/post/${post.slug}`} 
-          className="inline-flex items-center text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
-        >
-          Read more <ArrowRight size={16} className="ml-1" />
-        </Link>
-      </div>
-    </div>
-  </div>
-);
+
 
 export default function Home() {
   const [posts, setPosts] = useState([]);
@@ -176,7 +142,7 @@ export default function Home() {
               <Info size={16} /> Essential Guidelines
             </div>
             <h2 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
-              CivicView <span className="text-blue-600 dark:text-blue-400">Guidelines</span>
+              CivicView <span className="bg-gradient-to-r from-teal-400 to-blue-500 dark:from-teal-500 dark:to-blue-600 text-transparent bg-clip-text">Guidelines</span>
             </h2>
             <p className="max-w-2xl mx-auto text-xl text-gray-600 dark:text-gray-300">
               Everything you need to know to complete your application successfully

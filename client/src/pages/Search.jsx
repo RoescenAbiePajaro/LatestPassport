@@ -256,18 +256,20 @@ export default function Search() {
             </div>
             
             {showMore && (
-              <div className="flex justify-center p-6 border-t border-gray-200 dark:border-gray-700">
-                <button
-                  onClick={handleShowMore}
-                  className="py-2 px-4 bg-teal-500 hover:bg-teal-600 text-white font-medium rounded-lg transition duration-200 flex items-center"
-                >
-                  Load More
-                  <svg className="ml-2 w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-              </div>
-            )}
+            <div className="flex justify-center mt-8">
+              <button 
+                onClick={handleShowMore}
+                className="px-6 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-full text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center">
+                    <LoadingSpinner size="sm" color="primary" />
+                    <span className="ml-2">Loading...</span>
+                  </div>
+                ) : 'Show more users'}
+              </button>
+            </div>
+          )}
           </>
         )}
       </div>

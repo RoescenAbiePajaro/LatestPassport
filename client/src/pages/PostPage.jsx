@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Button } from 'flowbite-react';
-import CallToAction from '../components/CallToAction';
-import CommentSection from '../components/CommentSection';
 import PostCard from '../components/PostCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -213,13 +211,6 @@ export default function PostPage() {
             </div>
           )}
           
-          <div className="mt-16 text-center">
-            <Link to="/blog">
-              <Button gradientDuoTone="purpleToBlue" size="lg" className="px-8 py-3 font-medium">
-                View All Articles
-              </Button>
-            </Link>
-          </div>
         </div>
       </div>
     </main>
