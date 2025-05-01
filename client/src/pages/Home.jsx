@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import CallToAction from '../components/CallToAction';
 import PostCard from '../components/PostCard';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Home() {
   const [posts, setPosts] = useState([]);
@@ -83,7 +84,7 @@ export default function Home() {
 
           {isLoading ? (
             <div className="flex justify-center items-center py-12">
-              <div className="w-12 h-12 rounded-full border-4 border-gray-300 border-t-transparent animate-spin" />
+              <LoadingSpinner size="lg" color="primary" />
             </div>
           ) : posts.length > 0 ? (
             <div className="relative px-10">
@@ -102,12 +103,19 @@ export default function Home() {
               <div className="overflow-hidden">
                 <motion.div 
                   className="flex gap-6"
-                  initial={{ x: 0 }}
-                  animate={{ x: `-${currentIndex * (100 / posts.length)}%` }}
-                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  initial={false}
+                  animate={{ 
+                    x: `-${currentIndex * (100 / 3)}%` 
+                  }}
+                  transition={{ 
+                    type: "spring", 
+                    stiffness: 300, 
+                    damping: 30,
+                    mass: 1
+                  }}
                 >
                   {posts.map((post) => (
-                    <div key={post._id} className="min-w-[calc(33.333%-16px)] flex-shrink-0">
+                    <div key={post._id} className="w-[calc(33.333%-16px)] flex-shrink-0">
                       <PostCard post={post} />
                     </div>
                   ))}

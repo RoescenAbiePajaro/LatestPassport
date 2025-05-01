@@ -10,12 +10,14 @@ import DashCategories from '../components/DashCategories'; // Updated import
 import UpdateCategory from './UpdateCategory';
 import CreatePost from './CreatePost';
 import UpdatePost from './UpdatePost';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Dashboard() {
   const location = useLocation();
   const [tab, setTab] = useState('');
   const [postId, setPostId] = useState('');
   const [categoryId, setCategoryId] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
@@ -32,7 +34,19 @@ export default function Dashboard() {
     if (categoryIdFromUrl) {
       setCategoryId(categoryIdFromUrl);
     }
+    // Simulate loading completion
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
   }, [location.search]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900">
+        <LoadingSpinner size="lg" color="primary" />
+      </div>
+    );
+  }
 
   return (
     <div className='min-h-screen flex flex-col md:flex-row bg-white dark:bg-gray-900'>

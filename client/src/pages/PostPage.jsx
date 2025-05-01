@@ -4,6 +4,7 @@ import { Button } from 'flowbite-react';
 import CallToAction from '../components/CallToAction';
 import CommentSection from '../components/CommentSection';
 import PostCard from '../components/PostCard';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function PostPage() {
   const { postSlug } = useParams();
@@ -76,8 +77,7 @@ export default function PostPage() {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
         <div className="flex flex-col items-center">
-          <div className="w-12 h-12 rounded-full border-4 border-slate-300 border-t-slate-600 dark:border-slate-700 dark:border-t-slate-300 animate-spin"></div>
-          <p className="mt-4 text-slate-600 dark:text-slate-300 font-medium">Loading article...</p>
+          <LoadingSpinner size="lg" color="primary" />
         </div>
       </div>
     );

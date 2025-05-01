@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import supabase, { CDNURL } from '../supabase';
 import { v4 as uuidv4 } from 'uuid';
 import RichTextEditor from '../components/RichTextEditor';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function CreatePost() {
   const [file, setFile] = useState(null);
@@ -174,7 +175,10 @@ export default function CreatePost() {
             disabled={isLoadingCategories}
           >
             {isLoadingCategories ? (
-              <option value="">Loading categories...</option>
+              <option value="" className="flex items-center">
+                <LoadingSpinner size="sm" color="primary" />
+                <span className="ml-2">Loading categories...</span>
+              </option>
             ) : categories.length === 0 ? (
               <option value="">No categories available</option>
             ) : (
@@ -236,7 +240,12 @@ export default function CreatePost() {
                     : 'bg-blue-600 hover:bg-blue-700 text-white'
                 }`}
               >
-                {uploading ? 'Uploading...' : 'Upload'}
+                {uploading ? (
+                  <div className="flex items-center">
+                    <LoadingSpinner size="sm" color="white" />
+                    <span className="ml-2">Uploading...</span>
+                  </div>
+                ) : 'Upload'}
               </button>
             </div>
             
@@ -285,7 +294,12 @@ export default function CreatePost() {
                 : 'bg-gradient-to-r from-teal-400 to-blue-500 hover:from-teal-500 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
             }`}
           >
-            {isSubmitting ? 'Publishing...' : 'Publish Post'}
+            {isSubmitting ? (
+              <div className="flex items-center">
+                <LoadingSpinner size="sm" color="white" />
+                <span className="ml-2">Updating...</span>
+              </div>
+            ) : 'Update Post'}
           </button>
         </div>
       </form>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import supabase, { CDNURL } from '../supabase';
 import { v4 as uuidv4 } from 'uuid';
 import RichTextEditor from '../components/RichTextEditor';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function CreatePost() {
   const [file, setFile] = useState(null);
@@ -20,8 +21,18 @@ export default function CreatePost() {
   const [categories, setCategories] = useState([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [categoryError, setCategoryError] = useState(null);
+  const [isPageLoading, setIsPageLoading] = useState(true);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Simulate initial page load
+    const timer = setTimeout(() => {
+      setIsPageLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // Fetch categories from API
   useEffect(() => {
@@ -142,6 +153,14 @@ export default function CreatePost() {
     }
   };
 
+  if (isPageLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[500px]">
+        <LoadingSpinner size="lg" color="primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
       <h1 className="text-4xl font-bold text-center mb-10 text-gray-900 dark:text-white">Create a Post</h1>
@@ -189,7 +208,10 @@ export default function CreatePost() {
             required
           >
             {isLoadingCategories ? (
-              <option value="">Loading categories...</option>
+              <option value="" className="flex items-center">
+                <LoadingSpinner size="sm" color="primary" />
+                <span className="ml-2">Loading categories...</span>
+              </option>
             ) : categories.length === 0 ? (
               <option value="">No categories available</option>
             ) : (
@@ -251,7 +273,12 @@ export default function CreatePost() {
                     : 'bg-blue-600 hover:bg-blue-700 text-white'
                 }`}
               >
-                {uploading ? 'Uploading...' : 'Upload'}
+                {uploading ? (
+                  <div className="flex items-center">
+                    <LoadingSpinner size="sm" color="white" />
+                    <span className="ml-2">Uploading...</span>
+                  </div>
+                ) : 'Upload'}
               </button>
             </div>
             
@@ -303,7 +330,14 @@ export default function CreatePost() {
                 : 'bg-gradient-to-r from-teal-400 to-blue-500 hover:from-teal-500 hover:to-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
             }`}
           >
-            {isSubmitting ? 'Publishing...' : 'Publish Post'}
+            {isSubmitting ? (
+              <div className="flex items-center">
+                <LoadingSpinner size="sm" color="white" />
+                <span className="ml-2">Publishing...</span>
+              </div>
+            ) : (
+              'Publish Post'
+            )}
           </button>
         </div>
       </form>

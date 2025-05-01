@@ -1,7 +1,30 @@
 import { Button } from 'flowbite-react';
 import { Link } from 'react-router-dom'; // Make sure to import Link from react-router-dom
+import { useState, useEffect } from 'react';
+import LoadingSpinner from './LoadingSpinner';
 
 export default function CallToAction() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading completion
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className='flex flex-col sm:flex-row p-3 border border-blue-500 justify-center items-center rounded-tl-3xl rounded-br-3xl text-center min-h-[200px]'>
+        <div className="flex items-center justify-center w-full">
+          <LoadingSpinner size="lg" color="primary" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className='flex flex-col sm:flex-row p-3 border border-blue-500 justify-center items-center rounded-tl-3xl rounded-br-3xl text-center'>
         <div className="flex-1 left flex flex-col">

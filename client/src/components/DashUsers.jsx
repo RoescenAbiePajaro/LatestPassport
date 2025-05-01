@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { HiOutlineExclamationCircle, HiOutlineUserGroup } from 'react-icons/hi';
 import { motion } from 'framer-motion';
+import LoadingSpinner from './LoadingSpinner';
 
 export default function DashUsers() {
   const { currentUser } = useSelector((state) => state.user);
@@ -13,9 +14,11 @@ export default function DashUsers() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [userType, setUserType] = useState('all');
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
     const fetchUsers = async () => {
+      setIsLoading(true);
       try {
         const res = await fetch(`/api/user/getusers`);
         const data = await res.json();
@@ -27,6 +30,8 @@ export default function DashUsers() {
         }
       } catch (error) {
         console.log(error.message);
+      } finally {
+        setIsLoading(false);
       }
     };
     if (currentUser.isAdmin) {
@@ -35,6 +40,7 @@ export default function DashUsers() {
   }, [currentUser._id]);
 
   const handleShowMore = async () => {
+    setIsLoading(true);
     const startIndex = users.length;
     try {
       const res = await fetch(`/api/user/getusers?startIndex=${startIndex}`);
@@ -47,10 +53,13 @@ export default function DashUsers() {
       }
     } catch (error) {
       console.log(error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleDeleteUser = async () => {
+    setIsLoading(true);
     try {
       const res = await fetch(`/api/user/delete/${userIdToDelete}`, {
         method: 'DELETE',
@@ -64,10 +73,13 @@ export default function DashUsers() {
       }
     } catch (error) {
       console.log(error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleUpdateRole = async () => {
+    setIsLoading(true);
     try {
       const res = await fetch(`/api/user/updateRole/${selectedUser._id}`, {
         method: 'PUT',
@@ -89,6 +101,8 @@ export default function DashUsers() {
       }
     } catch (error) {
       console.log(error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -110,7 +124,11 @@ export default function DashUsers() {
         </h2>
       </div>
       
-      {currentUser.isAdmin && users.length > 0 ? (
+      {isLoading ? (
+        <div className="flex justify-center items-center min-h-[300px]">
+          <LoadingSpinner size="lg" color="primary" />
+        </div>
+      ) : currentUser.isAdmin && users.length > 0 ? (
         <>
           <div className='flex flex-col sm:flex-row gap-4 mb-6'>
             <div className='flex-1'>
@@ -213,15 +231,20 @@ export default function DashUsers() {
           </div>
           
           {showMore && (
-              <div className="flex justify-center mt-8">
-                <button 
-                  onClick={handleShowMore}
-                  className="px-6 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-full text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+            <div className="flex justify-center mt-8">
+              <button 
+                onClick={handleShowMore}
+                className="px-6 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-full text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
               >
-                  Show more users
-                </button>
-              </div>
-            )}
+                {isLoading ? (
+                  <div className="flex items-center justify-center">
+                    <LoadingSpinner size="sm" color="primary" />
+                    <span className="ml-2">Loading...</span>
+                  </div>
+                ) : 'Show more users'}
+              </button>
+            </div>
+          )}
         </>
       ) : (
         <div className='flex items-center justify-center h-40 bg-white dark:bg-gray-800 rounded-lg shadow-md'>
@@ -272,7 +295,12 @@ export default function DashUsers() {
                     onClick={handleDeleteUser}
                     className="flex-1 px-4 py-2.5 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
                   >
-                    Delete
+                    {isLoading ? (
+                      <div className="flex items-center justify-center">
+                        <LoadingSpinner size="sm" color="white" />
+                        <span className="ml-2">Deleting...</span>
+                      </div>
+                    ) : 'Delete'}
                   </button>
                 </div>
               </div>
@@ -324,7 +352,12 @@ export default function DashUsers() {
                     onClick={handleUpdateRole}
                     className="flex-1 px-4 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
                   >
-                    Confirm
+                    {isLoading ? (
+                      <div className="flex items-center justify-center">
+                        <LoadingSpinner size="sm" color="white" />
+                        <span className="ml-2">Updating...</span>
+                      </div>
+                    ) : 'Confirm'}
                   </button>
                 </div>
               </div>

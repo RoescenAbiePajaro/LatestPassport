@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { HiOutlineExclamationCircle, HiOutlinePencil, HiOutlineTrash, HiOutlinePhotograph, HiOutlineTag } from 'react-icons/hi';
 import { motion } from 'framer-motion';
+import LoadingSpinner from './LoadingSpinner';
 import {
     HiUser,
     HiArrowSmRight,
@@ -113,7 +114,7 @@ export default function DashPosts() {
             </div>
             {isLoading ? (
                 <div className="flex justify-center items-center min-h-[300px]">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500"></div>
+                    <LoadingSpinner size="lg" color="primary" />
                 </div>
             ) : (
                 <>
@@ -182,7 +183,12 @@ export default function DashPosts() {
                                         onClick={handleShowMore}
                                         className="px-6 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-full text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
                                     >
-                                        Show more posts
+                                        {isLoading ? (
+                                            <div className="flex items-center justify-center">
+                                                <LoadingSpinner size="sm" color="primary" />
+                                                <span className="ml-2">Loading...</span>
+                                            </div>
+                                        ) : 'Show more posts'}
                                     </button>
                                 </div>
                             )}
@@ -246,7 +252,12 @@ export default function DashPosts() {
                                         onClick={handleDeletePost}
                                         className="flex-1 px-4 py-2.5 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
                                     >
-                                        Delete
+                                        {isLoading ? (
+                                            <div className="flex items-center justify-center">
+                                                <LoadingSpinner size="sm" color="white" />
+                                                <span className="ml-2">Deleting...</span>
+                                            </div>
+                                        ) : 'Delete'}
                                     </button>
                                 </div>
                             </div>
