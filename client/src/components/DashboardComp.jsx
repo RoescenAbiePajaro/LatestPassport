@@ -19,10 +19,17 @@ import {
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
 
+// Helper function to generate random colors
+const generateRandomColor = () => {
+  const hue = Math.floor(Math.random() * 360);
+  return `hsl(${hue}, 70%, 50%)`;
+};
+
 export default function DashboardComp() {
   // State management
   const [users, setUsers] = useState([]);
   const [posts, setPosts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalPosts, setTotalPosts] = useState(0);
   const [totalComments, setTotalComments] = useState(0);
@@ -34,7 +41,7 @@ export default function DashboardComp() {
   const [topPerformers, setTopPerformers] = useState([]);
   const { currentUser } = useSelector((state) => state.user);
 
-  // Activity data for charts - will be populated from real data
+  // Activity data for charts
   const [activityData, setActivityData] = useState([
     { name: 'Mon', users: 0, posts: 0 },
     { name: 'Tue', users: 0, posts: 0 },
@@ -45,127 +52,125 @@ export default function DashboardComp() {
     { name: 'Sun', users: 0, posts: 0 },
   ]);
 
-  // Content category distribution - will be populated from post categories
+  // Content category distribution
   const [contentDistribution, setContentDistribution] = useState([]);
 
   // Fetch data on component mount
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch('/api/user/getusers');
-        const data = await res.json();
-        if (res.ok) {
-          setUsers(data.users.slice(0, 5)); // Get just the most recent 5 users
-          setTotalUsers(data.totalUsers);
-          setLastMonthUsers(data.lastMonthUsers);
-        }
-      } catch (error) {
-        console.log(error.message);
-      }
-    };
-
-    const fetchPosts = async () => {
-      try {
-        const res = await fetch('/api/post/getposts');
-        const data = await res.json();
-        if (res.ok) {
-          setPosts(data.posts.slice(0, 5)); // Get just the most recent 5 posts
-          setTotalPosts(data.totalPosts);
-          setLastMonthPosts(data.lastMonthPosts);
+        setLoading(true);
+        
+        // Fetch categories first
+        const categoriesRes = await fetch('/api/category');
+        const categoriesData = await categoriesRes.json();
+        
+        if (categoriesRes.ok) {
+          setCategories(categoriesData);
           
-          // Update content distribution based on post categories
-          const categoryCount = {};
-          data.posts.forEach(post => {
-            // Use the actual category from the post, defaulting to 'uncategorized'
-            const category = post.category || 'uncategorized';
-            categoryCount[category] = (categoryCount[category] || 0) + 1;
-          });
+          // Now fetch other data in parallel
+          const [usersRes, postsRes, commentsRes] = await Promise.all([
+            fetch('/api/user/getusers'),
+            fetch('/api/post/getposts'),
+            fetch('/api/comment/getcomments')
+          ]);
           
-          // Get categories from your CreatePost component
-          const categoryColors = {
-            'uncategorized': '#8884d8',
-            'appointment': '#00C49F',
-            'passport': '#0088FE',
-            'renewal': '#FF8042',
-            'tracking': '#6366F1',
-            'visa': '#FF5252'
-          };
+          const usersData = await usersRes.json();
+          const postsData = await postsRes.json();
+          const commentsData = await commentsRes.json();
           
-          // Convert category counts to content distribution
-          const updatedDistribution = Object.keys(categoryCount).map(category => ({
-            name: category.charAt(0).toUpperCase() + category.slice(1), // Capitalize first letter
-            value: categoryCount[category],
-            color: categoryColors[category.toLowerCase()] || '#CCCCCC' // Default color for unknown categories
-          }));
+          if (usersRes.ok) {
+            setUsers(usersData.users.slice(0, 5));
+            setTotalUsers(usersData.totalUsers);
+            setLastMonthUsers(usersData.lastMonthUsers);
+          }
           
-          setContentDistribution(updatedDistribution);
-          
-          // Calculate daily activity for charts
-          const today = new Date();
-          const weekData = Array(7).fill().map((_, i) => {
-            const date = new Date(today);
-            date.setDate(today.getDate() - (6 - i));
-            return date.toISOString().split('T')[0];
-          });
-          
-          // Count posts and users created each day of the week
-          const dailyActivity = weekData.map(date => {
-            const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(date).getDay()];
-            const dayPosts = data.posts.filter(post => 
-              new Date(post.createdAt).toISOString().split('T')[0] === date
-            ).length;
+          if (postsRes.ok) {
+            setPosts(postsData.posts.slice(0, 5));
+            setTotalPosts(postsData.totalPosts);
+            setLastMonthPosts(postsData.lastMonthPosts);
             
-            const dayUsers = data.users ? data.users.filter(user => 
-              new Date(user.createdAt).toISOString().split('T')[0] === date
-            ).length : 0;
-            
-            return {
-              name: dayName,
-              posts: dayPosts,
-              users: dayUsers
-            };
-          });
-          
-          setActivityData(dailyActivity);
-        }
-      } catch (error) {
-        console.log(error.message);
-      }
-    };
+            // Update content distribution based on post categories
+            const categoryCount = {};
+            postsData.posts.forEach(post => {
+              const matchedCategory = categoriesData.find(cat => cat._id === post.category);
+              const categoryName = matchedCategory ? matchedCategory.name : 'uncategorized';
+              const categoryColor = matchedCategory ? matchedCategory.color || generateRandomColor() : '#8884d8';
+              
+              if (!categoryCount[categoryName]) {
+                categoryCount[categoryName] = {
+                  count: 0,
+                  color: categoryColor
+                };
+              }
+              categoryCount[categoryName].count++;
+            });
 
-    const fetchComments = async () => {
-      try {
-        const res = await fetch('/api/comment/getcomments');
-        const data = await res.json();
-        if (res.ok) {
-          setTotalComments(data.totalComments);
-          setLastMonthComments(data.lastMonthComments);
+            // Convert category counts to content distribution
+            const updatedDistribution = Object.keys(categoryCount).map(categoryName => ({
+              name: categoryName,
+              value: categoryCount[categoryName].count,
+              color: categoryCount[categoryName].color
+            }));
+
+            setContentDistribution(updatedDistribution);
+            
+            // Calculate daily activity for charts
+            const today = new Date();
+            const weekData = Array(7).fill().map((_, i) => {
+              const date = new Date(today);
+              date.setDate(today.getDate() - (6 - i));
+              return date.toISOString().split('T')[0];
+            });
+            
+            // Count posts and users created each day of the week
+            const dailyActivity = weekData.map(date => {
+              const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(date).getDay()];
+              const dayPosts = postsData.posts.filter(post => 
+                new Date(post.createdAt).toISOString().split('T')[0] === date
+              ).length;
+              
+              const dayUsers = usersData.users ? usersData.users.filter(user => 
+                new Date(user.createdAt).toISOString().split('T')[0] === date
+              ).length : 0;
+              
+              return {
+                name: dayName,
+                posts: dayPosts,
+                users: dayUsers
+              };
+            });
+            
+            setActivityData(dailyActivity);
+          }
+          
+          if (commentsRes.ok) {
+            setTotalComments(commentsData.totalComments);
+            setLastMonthComments(commentsData.lastMonthComments);
+          }
+          
+          calculateTopPerformers(usersData.users, postsData.posts);
         }
       } catch (error) {
-        console.log(error.message);
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
     if (currentUser.isAdmin) {
-      Promise.all([fetchUsers(), fetchPosts(), fetchComments()])
-        .then(() => {
-          calculateTopPerformers();
-          setLoading(false);
-        })
-        .catch(() => setLoading(false));
+      fetchData();
     }
   }, [currentUser]);
 
-  const calculateTopPerformers = () => {
-    if (!users || !posts || users.length === 0 || posts.length === 0) return;
+  const calculateTopPerformers = (users = [], posts = []) => {
+    if (users.length === 0 || posts.length === 0) return;
   
-    // Create a map to count number of posts per userId
     const userPostCounts = posts.reduce((acc, post) => {
       acc[post.userId] = (acc[post.userId] || 0) + 1;
       return acc;
     }, {});
   
-    // Map user data to a format suitable for top performers
     const topPerformers = users
       .map((user) => {
         const postCount = userPostCounts[user._id] || 0;
@@ -178,12 +183,11 @@ export default function DashboardComp() {
         };
       })
       .sort((a, b) => parseInt(b.value) - parseInt(a.value))
-      .slice(0, 4); // Limit to top 4
+      .slice(0, 4);
   
     setTopPerformers(topPerformers);
   };
 
-  // Format date to readable format
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('en-US', {
@@ -193,7 +197,7 @@ export default function DashboardComp() {
     }).format(date);
   };
 
-  // Modern statistics card component with subtle gradient border
+  // Modern statistics card component
   const StatsCard = ({ title, value, icon: Icon, color, growth }) => (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700 relative group">
       <div className={`absolute inset-x-0 top-0 h-1 ${color} opacity-80 group-hover:opacity-100 transition-opacity`}></div>
@@ -216,7 +220,7 @@ export default function DashboardComp() {
     </div>
   );
 
-  // Chart card component with improved styling
+  // Chart card component
   const ChartCard = ({ title, subtitle, headerIcon, children }) => (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700">
       <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-700">
@@ -237,7 +241,16 @@ export default function DashboardComp() {
     </div>
   );
 
-  // Loading state with subtle animation
+  // Calculate percentages for content distribution
+  const contentDistributionPercentages = contentDistribution.map(item => {
+    const total = contentDistribution.reduce((sum, current) => sum + current.value, 0);
+    const percentage = total > 0 ? Math.round((item.value / total) * 100) : 0;
+    return {
+      ...item,
+      percentage
+    };
+  });
+
   if (loading) {
     return (
       <div className="p-6 max-w-7xl mx-auto">
@@ -255,16 +268,6 @@ export default function DashboardComp() {
       </div>
     );
   }
-
-  // Calculate percentages for content distribution
-  const contentDistributionPercentages = contentDistribution.map(item => {
-    const total = contentDistribution.reduce((sum, current) => sum + current.value, 0);
-    const percentage = total > 0 ? Math.round((item.value / total) * 100) : 0;
-    return {
-      ...item,
-      percentage
-    };
-  });
 
   return (
     <div className="p-6 max-w-7xl mx-auto bg-gray-50 dark:bg-gray-900 min-h-screen">
@@ -392,13 +395,13 @@ export default function DashboardComp() {
                   cy="50%"
                   labelLine={false}
                   outerRadius={80}
-                  innerRadius={50} // Add inner radius for donut chart effect
+                  innerRadius={50}
                   fill="#8884d8"
                   dataKey="value"
-                  paddingAngle={3} // Add padding for separation between segments
+                  paddingAngle={3}
                 >
                   {contentDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                    <Cell key={`cell-${index}`} fill={entry.color || `hsl(${index * 60}, 70%, 50%)`} stroke="none" />
                   ))}
                 </Pie>
                 <Tooltip 
@@ -416,7 +419,7 @@ export default function DashboardComp() {
           <div className="grid grid-cols-3 gap-3 mt-2">
             {contentDistributionPercentages.slice(0, 6).map((item, index) => (
               <div key={index} className="flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color || `hsl(${index * 60}, 70%, 50%)` }}></div>
                 <div>
                   <p className="text-xs font-medium dark:text-white">{item.percentage}%</p>
                   <p className="text-xs text-gray-500 truncate">{item.name}</p>
@@ -548,26 +551,38 @@ export default function DashboardComp() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {posts.length > 0 ? posts.map((post) => (
-                  <tr key={post._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
-                    <td className="px-5 py-4">
-                      <span className="font-medium dark:text-white line-clamp-1">
-                        {post.title}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4">
-                      <span className="px-2.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-xs font-medium capitalize">
-                        {post.category || 'uncategorized'}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 text-gray-500 dark:text-gray-300">
-                      <div className="flex items-center">
-                        <CalendarDays className="w-4 h-4 mr-1 text-gray-400" />
-                        {formatDate(post.createdAt)}
-                      </div>
-                    </td>
-                  </tr>
-                )) : (
+                {posts.length > 0 ? posts.map((post) => {
+                  const matchedCategory = categories.find(cat => cat._id === post.category);
+                  const categoryName = matchedCategory ? matchedCategory.name : 'uncategorized';
+                  const categoryColor = matchedCategory ? matchedCategory.color || generateRandomColor() : generateRandomColor();
+
+                  return (
+                    <tr key={post._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
+                      <td className="px-5 py-4">
+                        <span className="font-medium dark:text-white line-clamp-1">
+                          {post.title}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4">
+                        <span 
+                          className="px-2.5 py-1 rounded-full text-xs font-medium capitalize"
+                          style={{ 
+                            backgroundColor: `${categoryColor}20`,
+                            color: categoryColor
+                          }}
+                        >
+                          {categoryName}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 text-gray-500 dark:text-gray-300">
+                        <div className="flex items-center">
+                          <CalendarDays className="w-4 h-4 mr-1 text-gray-400" />
+                          {formatDate(post.createdAt)}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                }) : (
                   <tr>
                     <td colSpan="3" className="px-5 py-8 text-center text-gray-500">
                       No posts found

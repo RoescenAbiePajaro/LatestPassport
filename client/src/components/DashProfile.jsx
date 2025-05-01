@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { HiOutlineExclamationCircle, HiOutlinePhotograph, HiPencil } from 'react-icons/hi';
-import { getDownloadURL, getStorage, ref, uploadBytesResumable } from 'firebase/storage';
 import { CircularProgressbar } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
+import supabase, { uploadFile, getPublicUrl, CDNURL } from '../supabase';
 
 import {
   updateStart,
@@ -15,7 +15,6 @@ import {
   deleteUserFailure,
   signoutSuccess,
 } from '../redux/user/userSlice';
-import { app } from '../firebase';
 
 export default function DashProfile() {
   const { currentUser, error, loading } = useSelector((state) => state.user);
@@ -50,14 +49,19 @@ export default function DashProfile() {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Validate file size
       if (file.size > 2 * 1024 * 1024) {
         setImageFileUploadError('File size must be less than 2MB');
         return;
       }
-      if (!file.type.startsWith('image/')) {
-        setImageFileUploadError('File must be an image');
+      
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        setImageFileUploadError('Only JPEG, PNG, and WebP images are allowed');
         return;
       }
+      
       setImageFile(file);
       setImageFileUrl(URL.createObjectURL(file));
       setImageFileUploadError(null);
@@ -73,36 +77,47 @@ export default function DashProfile() {
   const uploadImage = async () => {
     setImageFileUploading(true);
     setImageFileUploadError(null);
-    const storage = getStorage(app);
-    const fileName = new Date().getTime() + imageFile.name;
-    const storageRef = ref(storage, fileName);
-    const uploadTask = uploadBytesResumable(storageRef, imageFile);
-    uploadTask.on(
-      'state_changed',
-      (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        setImageFileUploadProgress(progress.toFixed(0));
-      },
-      (error) => {
-        setImageFileUploadError('Could not upload image (File must be less than 2MB)');
-        setImageFileUploadProgress(null);
-        setImageFile(null);
-        setImageFileUrl(null);
-        setImageFileUploading(false);
-      },
-      () => {
-        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-          setImageFileUrl(downloadURL);
-          setFormData({ ...formData, profilePicture: downloadURL });
-          setImageFileUploading(false);
-        });
-      }
-    );
+    
+    try {
+      const fileName = `profile-${currentUser._id}-${new Date().getTime()}`;
+      const filePath = `profile-pictures/${fileName}`;
+      
+      // Simulate progress steps
+      setImageFileUploadProgress(30);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Upload to Supabase
+      const { error: uploadError } = await supabase.storage
+        .from('passportinteractiveboard')
+        .upload(filePath, imageFile);
+      
+      if (uploadError) throw uploadError;
+      
+      setImageFileUploadProgress(70);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Get public URL
+      const publicUrl = `${CDNURL}${filePath}`;
+      
+      setImageFileUrl(publicUrl);
+      setFormData(prev => ({ ...prev, profilePicture: publicUrl }));
+      setImageFileUploadProgress(100);
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setImageFileUploadProgress(null);
+      setImageFileUploading(false);
+    } catch (error) {
+      setImageFileUploadError('Could not upload image');
+      setImageFileUploadProgress(null);
+      setImageFile(null);
+      setImageFileUrl(null);
+      setImageFileUploading(false);
+      console.error('Upload error:', error);
+    }
   };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
-    // Clear validation error when user starts typing
     if (validationErrors[e.target.id]) {
       setValidationErrors({ ...validationErrors, [e.target.id]: null });
     }
@@ -115,17 +130,13 @@ export default function DashProfile() {
     
     if (Object.keys(formData).length === 0) {
       setUpdateUserError('No changes made');
-      setTimeout(() => {
-        setUpdateUserError(null);
-      }, 3000);
+      setTimeout(() => setUpdateUserError(null), 3000);
       return;
     }
 
     if (imageFileUploading) {
       setUpdateUserError('Please wait for image to upload');
-      setTimeout(() => {
-        setUpdateUserError(null);
-      }, 3000);
+      setTimeout(() => setUpdateUserError(null), 3000);
       return;
     }
 
@@ -135,13 +146,22 @@ export default function DashProfile() {
 
     try {
       dispatch(updateStart());
+      
+      // Prepare the update data
+      const updateData = { ...formData };
+      // Don't send empty password
+      if (updateData.password === '') {
+        delete updateData.password;
+      }
+      
       const res = await fetch(`/api/user/update/${currentUser._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(updateData),
       });
+      
       const data = await res.json();
       if (!res.ok) {
         dispatch(updateFailure(data.message));
@@ -149,7 +169,6 @@ export default function DashProfile() {
       } else {
         dispatch(updateSuccess(data));
         setUpdateUserSuccess("Profile updated successfully");
-        // Clear form data after successful update
         setFormData({});
       }
     } catch (error) {
@@ -390,12 +409,12 @@ export default function DashProfile() {
           >
             Delete Account
           </button>
-          {/* <button
+          <button
             onClick={handleSignout}
             className="py-2.5 px-4 text-sm font-medium bg-white dark:bg-transparent text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex-1"
           >
             Sign Out
-          </button> */}
+          </button>
         </div>
       </div>
 
