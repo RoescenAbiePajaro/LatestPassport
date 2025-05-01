@@ -1,0 +1,450 @@
+import { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { 
+  HiOutlineTag, 
+  HiOutlineCheckCircle, 
+  HiOutlineExclamationCircle,
+  HiOutlinePlus,
+  HiOutlinePencil,
+  HiOutlineTrash,
+  HiOutlineChevronLeft,
+  HiOutlineChevronRight
+} from 'react-icons/hi';
+import { motion } from 'framer-motion';
+
+export default function CategoryManager() {
+  const { currentUser } = useSelector((state) => state.user);
+  const [categories, setCategories] = useState([]);
+  const [formData, setFormData] = useState({ name: '', description: '' });
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
+  const [editingId, setEditingId] = useState(null);
+  const [categoryToDelete, setCategoryToDelete] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
+
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch('/api/category');
+        const data = await res.json();
+        if (res.ok) {
+          setCategories(data);
+        } else {
+          throw new Error(data.message || 'Failed to fetch categories');
+        }
+      } catch (err) {
+        console.error('Failed to fetch categories:', err);
+        setError(err.message);
+      }
+    };
+    fetchCategories();
+  }, [successMessage]);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.id]: e.target.value });
+    setError(null);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+  
+    if (!formData.name.trim()) {
+      setError('Category name is required');
+      return;
+    }
+  
+    setLoading(true);
+    setError(null);
+  
+    try {
+      const token = localStorage.getItem('token');
+      const url = editingId ? `/api/category/${editingId}` : '/api/category';
+      const method = editingId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData),
+      });
+  
+      const data = await res.json();
+  
+      if (!res.ok) {
+        throw new Error(data.message || 'Something went wrong');
+      }
+  
+      setSuccessMessage(editingId ? 'Category updated successfully!' : 'Category created successfully!');
+      setFormData({ name: '', description: '' });
+      setEditingId(null);
+      setShowCreateForm(false);
+    } catch (err) {
+      setError(err.message || 'Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = (category) => {
+    setFormData({
+      name: category.name,
+      description: category.description || ''
+    });
+    setEditingId(category._id);
+    setShowCreateForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const openDeleteModal = (categoryId) => {
+    setCategoryToDelete(categoryId);
+    setShowModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!categoryToDelete) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/category/${categoryToDelete}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to delete category');
+      }
+      
+      setSuccessMessage('Category deleted successfully!');
+      setShowModal(false);
+      setCategoryToDelete(null);
+    } catch (err) {
+      setError(err.message || 'Network error. Please try again.');
+      setShowModal(false);
+    }
+  };
+
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = categories.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(categories.length / itemsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
+      {/* Header and Success/Error Messages */}
+      <div className="flex justify-between items-center mb-6 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6">
+        <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-3">
+          <HiOutlineTag className="w-8 h-8 text-teal-400 dark:text-teal-500" />
+          Category Management
+        </h2>
+        <button
+          onClick={() => setShowCreateForm(!showCreateForm)}
+          className="flex items-center gap-2 bg-gradient-to-r from-teal-400 to-blue-500 dark:from-teal-500 dark:to-blue-600 text-white font-medium px-5 py-2 rounded-lg transition-all duration-300 hover:from-teal-500 hover:to-blue-600 hover:shadow-lg"
+        >
+          <HiOutlinePlus className="h-5 w-5" />
+          {showCreateForm ? 'Hide Form' : 'Create Category'}
+        </button>
+      </div>
+
+      {successMessage && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-900 rounded-lg flex items-center gap-3"
+        >
+          <HiOutlineCheckCircle className="h-5 w-5 text-green-500 dark:text-green-400" />
+          <span className="text-green-700 dark:text-green-300">{successMessage}</span>
+        </motion.div>
+      )}
+
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-900 rounded-lg flex items-center gap-3"
+        >
+          <HiOutlineExclamationCircle className="h-5 w-5 text-red-500" />
+          <span className="text-red-700 dark:text-red-300">{error}</span>
+        </motion.div>
+      )}
+
+      {/* Create/Edit Form */}
+      {showCreateForm && (
+        <motion.div 
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.3 }}
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden mb-8"
+        >
+          <div className="p-6 md:p-8">
+            <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-6">
+              {editingId ? 'Edit Category' : 'Create New Category'}
+            </h3>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Category Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-lg border bg-white dark:bg-gray-700 focus:ring-2 focus:ring-teal-500"
+                  placeholder="Enter category name"
+                />
+              </div>
+              <div>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Description
+                </label>
+                <textarea
+                  id="description"
+                  rows="3"
+                  value={formData.description}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-lg border bg-white dark:bg-gray-700 focus:ring-2 focus:ring-teal-500"
+                  placeholder="Enter category description"
+                ></textarea>
+              </div>
+
+              <div className="flex justify-end gap-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCreateForm(false);
+                    setEditingId(null);
+                    setFormData({ name: '', description: '' });
+                  }}
+                  className="flex items-center gap-2 bg-gradient-to-r from-gray-400 to-gray-500 dark:from-gray-500 dark:to-gray-600 text-white font-medium px-5 py-2 rounded-lg transition-all duration-300 hover:from-gray-500 hover:to-gray-600 hover:shadow-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className={`flex items-center gap-2 bg-gradient-to-r from-teal-400 to-blue-500 dark:from-teal-500 dark:to-blue-600 text-white font-medium px-5 py-2 rounded-lg transition-all duration-300 hover:from-teal-500 hover:to-blue-600 hover:shadow-lg ${
+                    loading ? 'opacity-60 cursor-not-allowed' : ''
+                  }`}
+                >
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      {editingId ? 'Updating...' : 'Creating...'}
+                    </>
+                  ) : (
+                    <>
+                      {editingId ? 'Update Category' : 'Create Category'}
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Categories Table */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-700">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Name
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Description
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Posts
+                </th>
+                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              {currentItems.length > 0 ? (
+                currentItems.map((category) => (
+                  <tr key={category._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                      {category.name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                      {category.description || '—'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                      {category.postCount || 0}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex justify-end gap-3">
+                        <button
+                          onClick={() => handleEdit(category)}
+                          className="text-gray-500 hover:text-teal-600 dark:text-gray-400 dark:hover:text-teal-400 flex items-center transition-colors duration-300"
+                          title="Edit"
+                        >
+                          <HiOutlinePencil className="h-4 w-4" />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => openDeleteModal(category._id)}
+                          className="text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center transition-colors duration-300"
+                        >
+                          <HiOutlineTrash className="w-5 h-5 mr-1" />
+                          <span className="text-sm font-medium">Delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="4" className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                    {categories.length === 0 ? 'No categories found. Create your first category!' : 'No results for this page.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="bg-gray-50 dark:bg-gray-700 px-6 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700">
+            <div className="flex-1 flex justify-between sm:hidden">
+              <button
+                onClick={() => paginate(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="flex items-center gap-1 bg-gradient-to-r from-gray-400 to-gray-500 dark:from-gray-500 dark:to-gray-600 text-white font-medium px-4 py-2 rounded-lg text-sm transition-all duration-300 hover:from-gray-500 hover:to-gray-600 hover:shadow-md disabled:opacity-50"
+              >
+                <HiOutlineChevronLeft className="h-4 w-4" />
+                Previous
+              </button>
+              <button
+                onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-1 bg-gradient-to-r from-gray-400 to-gray-500 dark:from-gray-500 dark:to-gray-600 text-white font-medium px-4 py-2 rounded-lg text-sm transition-all duration-300 hover:from-gray-500 hover:to-gray-600 hover:shadow-md disabled:opacity-50"
+              >
+                Next
+                <HiOutlineChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-gray-700 dark:text-gray-300">
+                  Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to{' '}
+                  <span className="font-medium">{Math.min(indexOfLastItem, categories.length)}</span> of{' '}
+                  <span className="font-medium">{categories.length}</span> categories
+                </p>
+              </div>
+              <div>
+                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                  <button
+                    onClick={() => paginate(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="flex items-center gap-1 bg-gradient-to-r from-gray-400 to-gray-500 dark:from-gray-500 dark:to-gray-600 text-white font-medium px-3 py-2 rounded-l-lg text-sm transition-all duration-300 hover:from-gray-500 hover:to-gray-600 hover:shadow-md disabled:opacity-50"
+                  >
+                    <HiOutlineChevronLeft className="h-4 w-4" />
+                    <span>Previous</span>
+                  </button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
+                    <button
+                      key={number}
+                      onClick={() => paginate(number)}
+                      className={`flex items-center justify-center w-10 h-10 text-sm font-medium transition-all duration-300 ${
+                        currentPage === number
+                          ? 'bg-gradient-to-r from-teal-400 to-blue-500 dark:from-teal-500 dark:to-blue-600 text-white shadow-md'
+                          : 'bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-600 dark:to-gray-700 text-gray-700 dark:text-gray-300 hover:from-gray-200 hover:to-gray-300 dark:hover:from-gray-500 dark:hover:to-gray-600 hover:shadow-md'
+                      }`}
+                    >
+                      {number}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className="flex items-center gap-1 bg-gradient-to-r from-gray-400 to-gray-500 dark:from-gray-500 dark:to-gray-600 text-white font-medium px-3 py-2 rounded-r-lg text-sm transition-all duration-300 hover:from-gray-500 hover:to-gray-600 hover:shadow-md disabled:opacity-50"
+                  >
+                    <span>Next</span>
+                    <HiOutlineChevronRight className="h-4 w-4" />
+                  </button>
+                </nav>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      {showModal && (
+        <>
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            onClick={() => setShowModal(false)}
+          />
+          
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-md w-full mx-auto overflow-hidden"
+            >
+              <div className="p-6">
+                <div className="flex justify-center">
+                  <div className="h-20 w-20 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-5">
+                    <HiOutlineExclamationCircle className="h-10 w-10 text-red-600 dark:text-red-500" />
+                  </div>
+                </div>
+                
+                <h3 className="text-center text-lg font-medium text-gray-900 dark:text-white mb-4">
+                  Delete Category
+                </h3>
+                
+                <p className="text-center text-gray-500 dark:text-gray-400 mb-6">
+                  Are you sure you want to delete this category? This action cannot be undone.
+                </p>
+                
+                <div className="flex gap-3 justify-center">
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="flex-1 px-4 py-2.5 bg-gray-200 text-gray-800 font-medium rounded-lg hover:bg-gray-300 transition duration-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
+                  >
+                    Cancel
+                  </button>
+                  
+                  <button
+                    onClick={handleDeleteConfirm}
+                    className="flex-1 px-4 py-2.5 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

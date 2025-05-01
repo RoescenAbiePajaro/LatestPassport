@@ -11,6 +11,7 @@ export default function PostPage() {
   const [error, setError] = useState(false);
   const [post, setPost] = useState(null);
   const [recentPosts, setRecentPosts] = useState(null);
+  const [categoryName, setCategoryName] = useState('');
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -25,6 +26,12 @@ export default function PostPage() {
         }
         if (res.ok) {
           setPost(data.posts[0]);
+          
+          // Fetch category name if category exists
+          if (data.posts[0]?.category) {
+            fetchCategoryName(data.posts[0].category);
+          }
+          
           setLoading(false);
           setError(false);
         }
@@ -35,6 +42,20 @@ export default function PostPage() {
     };
     fetchPost();
   }, [postSlug]);
+
+  // Function to fetch category name
+  const fetchCategoryName = async (categoryId) => {
+    try {
+      const res = await fetch(`/api/category/${categoryId}`);
+      const data = await res.json();
+      
+      if (res.ok && data) {
+        setCategoryName(data.name);
+      }
+    } catch (error) {
+      console.error('Failed to fetch category name:', error);
+    }
+  };
 
   useEffect(() => {
     try {
@@ -92,14 +113,16 @@ export default function PostPage() {
         <div className="absolute inset-0 bg-black bg-opacity-50"></div>
         <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-12">
           <div className="max-w-3xl mx-auto w-full">
-            <Link
-              to={`/search?category=${post?.category}`}
-              className="inline-block mb-4"
-            >
-              <span className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3 py-1.5 rounded-full transition duration-300">
-                {post?.category}
-              </span>
-            </Link>
+            {post?.category && (
+              <Link
+                to={`/search?category=${post.category}`}
+                className="inline-block mb-4"
+              >
+                <span className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3 py-1.5 rounded-full transition duration-300">
+                  {categoryName || 'Loading...'}
+                </span>
+              </Link>
+            )}
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white font-serif tracking-tight mb-4">
               {post?.title}
             </h1>

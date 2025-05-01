@@ -6,6 +6,8 @@ import DashPosts from '../components/DashPosts';
 import DashUsers from '../components/DashUsers';
 import DashComments from '../components/DashComments';
 import DashboardComp from '../components/DashboardComp';
+import DashCategories from '../components/DashCategories'; // Updated import
+import UpdateCategory from './UpdateCategory';
 import CreatePost from './CreatePost';
 import UpdatePost from './UpdatePost';
 
@@ -13,16 +15,22 @@ export default function Dashboard() {
   const location = useLocation();
   const [tab, setTab] = useState('');
   const [postId, setPostId] = useState('');
+  const [categoryId, setCategoryId] = useState('');
 
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
     const tabFromUrl = urlParams.get('tab');
     const postIdFromUrl = urlParams.get('postId');
+    const categoryIdFromUrl = urlParams.get('categoryId');
+    
     if (tabFromUrl) {
       setTab(tabFromUrl);
     }
     if (postIdFromUrl) {
       setPostId(postIdFromUrl);
+    }
+    if (categoryIdFromUrl) {
+      setCategoryId(categoryIdFromUrl);
     }
   }, [location.search]);
 
@@ -40,8 +48,10 @@ export default function Dashboard() {
         {tab === 'users' && <DashUsers />}
         {tab === 'comments' && <DashComments />}
         {tab === 'dash' && <DashboardComp />}
+        {tab === 'categories' && <DashCategories />} 
         {tab === 'createpost' && <CreatePost />}
         {tab === 'updatepost' && <UpdatePost postId={postId} />}
+        {tab === 'updatecategory' && <UpdateCategory categoryId={categoryId} />}
       </div>
     </div>
   );

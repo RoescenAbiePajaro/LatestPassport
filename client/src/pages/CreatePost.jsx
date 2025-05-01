@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import supabase, { CDNURL } from '../supabase';
 import { v4 as uuidv4 } from 'uuid';
@@ -11,39 +11,86 @@ export default function CreatePost() {
   const [formData, setFormData] = useState({ 
     title: '', 
     content: '', 
-    category: 'uncategorized', 
+    category: '', 
     image: '' 
   });
   const [publishError, setPublishError] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [categoryError, setCategoryError] = useState(null);
 
   const navigate = useNavigate();
 
+  // Fetch categories from API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      setIsLoadingCategories(true);
+      setCategoryError(null);
+      
+      try {
+        const res = await fetch('/api/category');
+        const data = await res.json();
+        
+        if (res.ok) {
+          setCategories(data);
+          // Set default category if available
+          if (data.length > 0) {
+            setFormData(prev => ({ ...prev, category: data[0]._id }));
+          }
+        } else {
+          throw new Error(data.message || 'Failed to fetch categories');
+        }
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+        setCategoryError(err.message || 'Failed to load categories. Please try again later.');
+      } finally {
+        setIsLoadingCategories(false);
+      }
+    };
+    
+    fetchCategories();
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate required fields
     if (!formData.title || !formData.content) {
       setPublishError('Title and content are required');
       return;
     }
+    
+    if (!formData.category) {
+      setPublishError('Please select a category');
+      return;
+    }
 
     setIsSubmitting(true);
+    setPublishError(null);
+
     try {
+      const token = localStorage.getItem('token');
       const res = await fetch('/api/post/create', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(formData),
       });
 
       const data = await res.json();
+      
       if (!res.ok) {
-        setPublishError(data.message);
-        return;
+        throw new Error(data.message || 'Failed to create post');
       }
+      
       navigate(`/post/${data.slug}`);
     } catch (error) {
-      setPublishError('Something went wrong');
+      console.error('Error creating post:', error);
+      setPublishError(error.message || 'Something went wrong');
     } finally {
       setIsSubmitting(false);
     }
@@ -72,10 +119,10 @@ export default function CreatePost() {
 
       // Construct public URL
       const imageUrl = `${CDNURL}${fileName}`;
-      setFormData((prev) => ({ ...prev, image: imageUrl }));
+      setFormData(prev => ({ ...prev, image: imageUrl }));
     } catch (error) {
       console.error('Upload failed:', error);
-      setImageUploadError('Image upload failed');
+      setImageUploadError(error.message || 'Image upload failed');
     } finally {
       setUploading(false);
     }
@@ -95,15 +142,6 @@ export default function CreatePost() {
     }
   };
 
-  const categories = [
-    { value: 'uncategorized', label: 'Select a category' },
-    { value: 'appointment', label: 'Appointment' },
-    { value: 'passport', label: 'Passport' },
-    { value: 'renewal', label: 'Renewal' },
-    { value: 'tracking', label: 'Tracking' },
-    { value: 'visa', label: 'Visa' },
-  ];
-
   return (
     <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
       <h1 className="text-4xl font-bold text-center mb-10 text-gray-900 dark:text-white">Create a Post</h1>
@@ -117,7 +155,7 @@ export default function CreatePost() {
       <form className="space-y-8" onSubmit={handleSubmit}>
         <div>
           <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
-            Title
+            Title <span className="text-red-500">*</span>
           </label>
           <input
             id="title"
@@ -130,22 +168,55 @@ export default function CreatePost() {
           />
         </div>
 
+        {/* Category Selection */}
         <div>
           <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
-            Category
+            Category <span className="text-red-500">*</span>
           </label>
+          
+          {categoryError && (
+            <div className="mb-3 p-2 border-l-4 border-red-500 bg-red-50 text-red-700 text-sm rounded dark:bg-red-900 dark:border-red-400 dark:text-red-300">
+              {categoryError}
+            </div>
+          )}
+          
           <select
             id="category"
             value={formData.category}
             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300"
+            disabled={isLoadingCategories}
+            required
           >
-            {categories.map((category) => (
-              <option key={category.value} value={category.value}>
-                {category.label}
-              </option>
-            ))}
+            {isLoadingCategories ? (
+              <option value="">Loading categories...</option>
+            ) : categories.length === 0 ? (
+              <option value="">No categories available</option>
+            ) : (
+              <>
+                <option value="">Select a category</option>
+                {categories.map((category) => (
+                  <option key={category._id} value={category._id}>
+                    {category.name}
+                  </option>
+                ))}
+              </>
+            )}
           </select>
+          
+          <div className="mt-2 flex items-center">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              {isLoadingCategories ? 'Loading categories...' : 
+               categories.length === 0 && !categoryError ? 'No categories available. Please create one first.' : ''}
+            </span>
+            <button
+              type="button"
+              onClick={() => navigate('/category-manager')}
+              className="ml-auto text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+            >
+              Manage Categories
+            </button>
+          </div>
         </div>
 
         <div className="space-y-4">
@@ -154,7 +225,7 @@ export default function CreatePost() {
               Cover Image
             </label>
             <div className="flex items-center space-x-4">
-              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors dark:border-gray-600 dark:hover:bg-gray-800">
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
                   <svg className="w-8 h-8 mb-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
@@ -212,10 +283,13 @@ export default function CreatePost() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
-            Content
+            Content <span className="text-red-500">*</span>
           </label>
-          <div className="border border-gray-300 rounded-lg overflow-hidden">
-            <RichTextEditor onChange={(content) => setFormData({ ...formData, content })} />
+          <div className="border border-gray-300 rounded-lg overflow-hidden dark:border-gray-700">
+            <RichTextEditor 
+              value={formData.content}
+              onChange={(content) => setFormData({ ...formData, content })}
+            />
           </div>
         </div>
 

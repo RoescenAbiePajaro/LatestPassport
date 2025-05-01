@@ -131,3 +131,28 @@ export const getUser = async (req, res, next) => {
     next(error);
   }
 };
+
+export const updateRole = async (req, res, next) => {
+  if (!req.user.isAdmin) {
+    return next(errorHandler(403, 'You are not allowed to update roles'));
+  }
+  try {
+    const user = await User.findById(req.params.userId);
+    if (!user) {
+      return next(errorHandler(404, 'User not found'));
+    }
+
+    const newRole = req.body.isAdmin; 
+    if (typeof newRole !== 'boolean') {
+      return next(errorHandler(400, 'isAdmin must be a boolean value'));
+    }
+
+    user.isAdmin = newRole;
+    await user.save();
+
+    const { password, ...rest } = user._doc;
+    res.status(200).json({ message: 'User role updated successfully', user: rest });
+  } catch (error) {
+    next(error);
+  }
+};
