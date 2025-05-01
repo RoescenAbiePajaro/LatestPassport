@@ -163,7 +163,7 @@ export default function CreatePost() {
 
   return (
     <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-      <h1 className="text-4xl font-bold text-center mb-10 text-gray-900 dark:text-white">Create a Post</h1>
+      <h1 className="text-4xl font-bold text-center mb-10 text-gray-900 dark:text-white">Create Post</h1>
       
       {publishError && (
         <div className="mb-6 p-4 border-l-4 border-red-500 bg-red-50 text-red-700 rounded dark:bg-red-900 dark:border-red-400 dark:text-red-300">

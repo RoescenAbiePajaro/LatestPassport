@@ -413,17 +413,6 @@ export default function DashProfile() {
           </div>
         )}
 
-        {/* Admin Section */}
-        {currentUser.isAdmin && (
-          <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-4">Admin Actions</h3>
-            <Link to="/create-post">
-              <button className="w-full py-2.5 px-4 bg-gradient-to-r from-purple-600 to-pink-500 rounded-lg text-white font-medium shadow hover:from-purple-700 hover:to-pink-600 transition-all">
-                Create New Post
-              </button>
-            </Link>
-          </div>
-        )}
         
         {/* Action Buttons */}
         <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row gap-4 justify-between">
@@ -438,12 +427,7 @@ export default function DashProfile() {
               </div>
             ) : 'Delete Account'}
           </button>
-          <button
-            onClick={handleSignout}
-            className="py-2.5 px-4 text-sm font-medium bg-white dark:bg-transparent text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex-1"
-          >
-            Sign Out
-          </button>
+          
         </div>
       </div>
 
