@@ -18,6 +18,7 @@ import {
   Filter
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
+import LoadingSpinner from './LoadingSpinner';
 
 // Helper function to generate random colors
 const generateRandomColor = () => {
@@ -255,15 +256,7 @@ export default function DashboardComp() {
     return (
       <div className="p-6 max-w-7xl mx-auto">
         <div className="flex items-center justify-center h-64">
-          <div className="flex flex-col items-center">
-            <div className="relative">
-              <div className="w-12 h-12 rounded-full border-t-4 border-indigo-500 border-r-4 border-indigo-200 border-b-4 border-indigo-200 border-l-4 border-indigo-200 animate-spin"></div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-4 h-4 bg-indigo-500 rounded-full opacity-70"></div>
-              </div>
-            </div>
-            <p className="mt-4 text-sm font-medium text-gray-700 dark:text-gray-300">Loading dashboard...</p>
-          </div>
+          <LoadingSpinner size="lg" color="primary" />
         </div>
       </div>
     );
@@ -305,7 +298,7 @@ export default function DashboardComp() {
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <StatsCard 
-          title="Total Staffs" 
+          title="Total Users" 
           value={totalUsers} 
           icon={Users} 
           color="bg-indigo-500" 

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Alert, Button, Label, Spinner, TextInput } from 'flowbite-react';
+import { Alert, Button, Label, TextInput } from 'flowbite-react';
 import { Eye, EyeOff } from 'lucide-react';
 import OAuth from '../components/OAuth';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function SignUp() {
   const [formData, setFormData] = useState({});
@@ -70,7 +71,7 @@ export default function SignUp() {
 
           <div className="relative z-10">
             <Link to="/" className="inline-block mb-8">
-              <img src="src/2.png" alt="CivicView Logo" className="h-12" />
+              <img src="src/3.png" alt="CivicView Logo" className="h-12" />
             </Link>
 
             <h2 className="text-3xl font-bold text-white mb-3">Create Account</h2>
@@ -164,7 +165,7 @@ export default function SignUp() {
             >
               {loading ? (
                 <div className="flex items-center justify-center">
-                  <Spinner size="sm" />
+                  <LoadingSpinner size="sm" color="white" />
                   <span className="pl-3">Signing up...</span>
                 </div>
               ) : (

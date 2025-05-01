@@ -5,6 +5,7 @@ import { HiOutlineExclamationCircle, HiOutlinePhotograph, HiPencil } from 'react
 import { CircularProgressbar } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import supabase, { uploadFile, getPublicUrl, CDNURL } from '../supabase';
+import LoadingSpinner from './LoadingSpinner';
 
 import {
   updateStart,
@@ -28,8 +29,18 @@ export default function DashProfile() {
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({});
   const [validationErrors, setValidationErrors] = useState({});
+  const [isPageLoading, setIsPageLoading] = useState(true);
   const filePickerRef = useRef();
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    // Simulate initial page load
+    const timer = setTimeout(() => {
+      setIsPageLoading(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const validateForm = () => {
     const errors = {};
@@ -211,6 +222,14 @@ export default function DashProfile() {
     }
   };
 
+  if (isPageLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[500px]">
+        <LoadingSpinner size="lg" color="primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-3xl mx-auto p-6 w-full">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 mb-8">
@@ -362,7 +381,12 @@ export default function DashProfile() {
                     : 'bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 hover:shadow-lg'
                 }`}
               >
-                {loading ? 'Updating...' : 'Update Profile'}
+                {loading ? (
+                  <div className="flex items-center justify-center">
+                    <LoadingSpinner size="sm" color="white" />
+                    <span className="ml-2">Updating...</span>
+                  </div>
+                ) : 'Update Profile'}
               </button>
             </form>
           </div>
@@ -407,7 +431,12 @@ export default function DashProfile() {
             onClick={() => setShowModal(true)}
             className="py-2.5 px-4 text-sm font-medium bg-white dark:bg-transparent text-red-600 dark:text-red-500 border border-red-300 dark:border-red-800 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors flex-1"
           >
-            Delete Account
+            {loading ? (
+              <div className="flex items-center justify-center">
+                <LoadingSpinner size="sm" color="white" />
+                <span className="ml-2">Deleting...</span>
+              </div>
+            ) : 'Delete Account'}
           </button>
           <button
             onClick={handleSignout}
@@ -440,7 +469,12 @@ export default function DashProfile() {
                   onClick={handleDeleteUser}
                   className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors"
                 >
-                  Delete
+                  {loading ? (
+                    <div className="flex items-center justify-center">
+                      <LoadingSpinner size="sm" color="white" />
+                      <span className="ml-2">Deleting...</span>
+                    </div>
+                  ) : 'Delete'}
                 </button>
                 <button
                   onClick={() => setShowModal(false)}

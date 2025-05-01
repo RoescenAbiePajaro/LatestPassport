@@ -25,7 +25,7 @@ export default function FooterComponent() {
             </Link>
             
             <p className="text-gray-300 text-sm leading-relaxed">
-              CivicView - Your Digital Gateway to Government Services.
+              CivicView - Your Digital Gateway to Services.
               Real-time information access and efficient guidelines.
             </p>
             

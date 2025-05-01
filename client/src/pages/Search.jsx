@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import PostCard from '../components/PostCard';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Search() {
   const [searchParams, setSearchParams] = useState({
@@ -231,7 +232,7 @@ export default function Search() {
 
         {loading ? (
           <div className="flex items-center justify-center p-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500"></div>
+            <LoadingSpinner size="lg" color="primary" />
           </div>
         ) : posts.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 text-center">

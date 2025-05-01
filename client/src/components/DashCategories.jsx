@@ -12,6 +12,7 @@ import {
   HiOutlineChevronRight
 } from 'react-icons/hi';
 import { motion } from 'framer-motion';
+import LoadingSpinner from './LoadingSpinner';
 
 export default function CategoryManager() {
   const { currentUser } = useSelector((state) => state.user);
@@ -26,6 +27,7 @@ export default function CategoryManager() {
   const [editingId, setEditingId] = useState(null);
   const [categoryToDelete, setCategoryToDelete] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [isPageLoading, setIsPageLoading] = useState(true);
   const navigate = useNavigate();
 
   // Fetch categories
@@ -42,6 +44,8 @@ export default function CategoryManager() {
       } catch (err) {
         console.error('Failed to fetch categories:', err);
         setError(err.message);
+      } finally {
+        setIsPageLoading(false);
       }
     };
     fetchCategories();
@@ -143,6 +147,14 @@ export default function CategoryManager() {
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
+  if (isPageLoading) {
+    return (
+      <div className="min-h-[500px] flex items-center justify-center">
+        <LoadingSpinner size="lg" color="primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       {/* Header and Success/Error Messages */}
@@ -243,17 +255,12 @@ export default function CategoryManager() {
                   }`}
                 >
                   {loading ? (
-                    <>
-                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      {editingId ? 'Updating...' : 'Creating...'}
-                    </>
+                    <div className="flex items-center">
+                      <LoadingSpinner size="sm" color="white" />
+                      <span className="ml-2">{editingId ? 'Updating...' : 'Creating...'}</span>
+                    </div>
                   ) : (
-                    <>
-                      {editingId ? 'Update Category' : 'Create Category'}
-                    </>
+                    editingId ? 'Update Category' : 'Create Category'
                   )}
                 </button>
               </div>
@@ -435,9 +442,19 @@ export default function CategoryManager() {
                   
                   <button
                     onClick={handleDeleteConfirm}
-                    className="flex-1 px-4 py-2.5 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                    disabled={loading}
+                    className={`flex-1 px-4 py-2.5 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 ${
+                      loading ? 'opacity-60 cursor-not-allowed' : ''
+                    }`}
                   >
-                    Delete
+                    {loading ? (
+                      <div className="flex items-center justify-center">
+                        <LoadingSpinner size="sm" color="white" />
+                        <span className="ml-2">Deleting...</span>
+                      </div>
+                    ) : (
+                      'Delete'
+                    )}
                   </button>
                 </div>
               </div>
