@@ -213,6 +213,18 @@ export default function PostPage() {
           
         </div>
       </div>
+
+      {/* Edit Post Button */}
+      {post && (
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <Link 
+            to={`/update-post/${post.slug}`} 
+            className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Edit Post
+          </Link>
+        </div>
+      )}
     </main>
   );
 }

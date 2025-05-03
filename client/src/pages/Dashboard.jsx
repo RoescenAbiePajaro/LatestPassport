@@ -11,6 +11,7 @@ import UpdateCategory from './UpdateCategory';
 import CreatePost from './CreatePost';
 import UpdatePost from './UpdatePost';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { Link } from 'react-router-dom';
 
 export default function Dashboard() {
   const location = useLocation();

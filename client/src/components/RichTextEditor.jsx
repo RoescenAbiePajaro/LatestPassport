@@ -8,9 +8,9 @@ import {
 
 export default function RichTextEditor({ onChange, initialContent = '' }) {
   const editorRef = useRef(null);
-  const [content, setContent] = useState(initialContent);
   const [selectedText, setSelectedText] = useState('');
   
+  // Handle selection changes
   useEffect(() => {
     const handleSelectionChange = () => {
       const selection = window.getSelection();
@@ -26,30 +26,28 @@ export default function RichTextEditor({ onChange, initialContent = '' }) {
     };
   }, []);
 
+  // Set initial content only once
   useEffect(() => {
-    if (editorRef.current) {
-      editorRef.current.addEventListener('input', handleContentChange);
+    if (editorRef.current && initialContent) {
+      // Set content and ensure cursor is at the end
+      editorRef.current.innerHTML = initialContent;
+      const range = document.createRange();
+      const sel = window.getSelection();
+      range.selectNodeContents(editorRef.current);
+      range.collapse(false);
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+      editorRef.current.focus();
     }
-    return () => {
-      if (editorRef.current) {
-        editorRef.current.removeEventListener('input', handleContentChange);
-      }
-    };
-  }, []);
-
-  const handleContentChange = () => {
-    if (!editorRef.current) return;
-    const newContent = editorRef.current.innerHTML;
-    setContent(newContent);
-    if (onChange) {
-      onChange(newContent);
-    }
-  };
+  }, [initialContent]);
 
   const formatText = (command, value = null) => {
     document.execCommand(command, false, value);
     editorRef.current?.focus();
-    handleContentChange();
+    // Trigger onChange after formatting
+    if (editorRef.current) {
+      onChange(editorRef.current.innerHTML);
+    }
   };
   
   const insertLink = () => {
@@ -150,35 +148,43 @@ export default function RichTextEditor({ onChange, initialContent = '' }) {
         </div>
       </div>
       
-      {/* Editable Content Area */}
+      {/* Modified Editable Content Area */}
       <div
         ref={editorRef}
         contentEditable
+        suppressContentEditableWarning
         className="p-4 min-h-56 focus:outline-none text-gray-800 dark:text-gray-200 transition-all duration-200 ease-in-out"
         onInput={(e) => {
-          const newContent = e.currentTarget.innerHTML;
-          setContent(newContent);
-          if (onChange) {
-            onChange(newContent);
+          // Call onChange with the current HTML content
+          if (e.target instanceof HTMLElement) {
+            const content = e.target.innerHTML;
+            // Ensure content is not reversed
+            onChange(content);
+            // Keep cursor at the end
+            const range = document.createRange();
+            const sel = window.getSelection();
+            range.selectNodeContents(e.target);
+            range.collapse(false);
+            sel?.removeAllRanges();
+            sel?.addRange(range);
           }
         }}
         spellCheck="true"
       />
       
-      {/* Word count and character info */}
+      {/* Word count section */}
       <div className="flex justify-end p-2 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700">
-        {content.replace(/<[^>]*>/g, '').trim().split(/\s+/).filter(Boolean).length} words
+        {editorRef.current?.innerText.trim().split(/\s+/).filter(Boolean).length || 0} words
       </div>
     </div>
   );
 }
 
 RichTextEditor.propTypes = {
-  onChange: PropTypes.func,
+  onChange: PropTypes.func.isRequired,
   initialContent: PropTypes.string
 };
 
 RichTextEditor.defaultProps = {
-  onChange: () => {},
   initialContent: ''
 };

@@ -103,10 +103,17 @@ export const deletepost = async (req, res, next) => {
 };
 
 export const updatepost = async (req, res, next) => {
-  if (!req.user.isAdmin || req.user.id !== req.params.userId) {
-    return next(errorHandler(403, 'You are not allowed to update this post'));
-  }
   try {
+    const post = await Post.findById(req.params.postId);
+    if (!post) {
+      return next(errorHandler(404, 'Post not found'));
+    }
+
+    // Allow update if user is admin OR if user is the post owner
+    if (!req.user.isAdmin && req.user.id !== post.userId.toString()) {
+      return next(errorHandler(403, 'You are not allowed to update this post'));
+    }
+
     const updatedPost = await Post.findByIdAndUpdate(
       req.params.postId,
       {

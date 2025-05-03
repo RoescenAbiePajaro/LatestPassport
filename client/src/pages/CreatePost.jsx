@@ -9,11 +9,11 @@ export default function CreatePost() {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [imageUploadError, setImageUploadError] = useState(null);
-  const [formData, setFormData] = useState({ 
-    title: '', 
-    content: '', 
-    category: '', 
-    image: '' 
+  const [formData, setFormData] = useState({
+    title: '',
+    content: '',
+    category: '',
+    image: ''
   });
   const [publishError, setPublishError] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -66,42 +66,43 @@ export default function CreatePost() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validate required fields
-    if (!formData.title || !formData.content) {
-      setPublishError('Title and content are required');
+
+    // Modified validation
+    if (!formData.title?.trim()) {
+      setPublishError('Title is required');
       return;
     }
-    
-    if (!formData.category) {
-      setPublishError('Please select a category');
+
+    // Better content validation
+    const contentWithoutTags = formData.content?.replace(/<[^>]*>/g, '').trim();
+    const hasContent = contentWithoutTags && contentWithoutTags.length > 0;
+
+    if (!hasContent) {
+      setPublishError('Content is required');
       return;
     }
 
     setIsSubmitting(true);
-    setPublishError(null);
-
     try {
-      const token = localStorage.getItem('token');
       const res = await fetch('/api/post/create', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData),
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          ...formData,
+          title: formData.title.trim(),
+          content: formData.content
+        }),
       });
 
       const data = await res.json();
-      
       if (!res.ok) {
-        throw new Error(data.message || 'Failed to create post');
+        setPublishError(data.message);
+        return;
       }
-      
       navigate(`/post/${data.slug}`);
     } catch (error) {
-      console.error('Error creating post:', error);
-      setPublishError(error.message || 'Something went wrong');
+      setPublishError('Something went wrong');
     } finally {
       setIsSubmitting(false);
     }
@@ -182,7 +183,7 @@ export default function CreatePost() {
             placeholder="Enter post title"
             required
             value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300"
           />
         </div>
@@ -314,8 +315,8 @@ export default function CreatePost() {
           </label>
           <div className="border border-gray-300 rounded-lg overflow-hidden dark:border-gray-700">
             <RichTextEditor 
-              value={formData.content}
-              onChange={(content) => setFormData({ ...formData, content })}
+              onChange={newContent => setFormData(prev => ({ ...prev, content: newContent }))}
+              initialContent={formData.content}
             />
           </div>
         </div>
