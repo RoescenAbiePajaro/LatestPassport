@@ -8,6 +8,12 @@ export const create = async (req, res, next) => {
       return next(errorHandler(401, 'Unauthorized: Please log in'));
     }
 
+    // Count exisitng post by this user
+    const countPost = await Post.countDocuments({ userId: req.user.id });
+    if (countPost >= 5) {
+      return next(errorHandler(403, 'You have reached the maximum of 5 posts'));
+    }
+
     // Validate required fields
     const { title, content, image, category } = req.body;
     if (!title || !content) {
