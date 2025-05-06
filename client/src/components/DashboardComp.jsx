@@ -1,268 +1,246 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { 
-  ChevronUp, 
-  ChevronDown, 
-  Activity, 
-  Users, 
-  FileText, 
-  TrendingUp, 
-  BarChart2, 
-  Eye,
-  CalendarDays,
-  Clock,
-  MoreHorizontal,
-  ArrowUpRight,
-  Search,
-  Filter
+  ChevronUp, ChevronDown, Activity, Users, FileText, 
+  TrendingUp, BarChart2, Eye, CalendarDays, Clock,
+  MoreHorizontal, ArrowUpRight, Search, Filter 
 } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
 import LoadingSpinner from './LoadingSpinner';
 
-// Helper function to generate random colors
-const generateRandomColor = () => {
-  const hue = Math.floor(Math.random() * 360);
-  return `hsl(${hue}, 70%, 50%)`;
-};
+// Constants
+const TIME_PERIODS = ['today', 'week', 'month', 'all'];
+const INITIAL_ACTIVITY_DATA = [
+  { name: 'Mon', users: 0, posts: 0 },
+  { name: 'Tue', users: 0, posts: 0 },
+  { name: 'Wed', users: 0, posts: 0 },
+  { name: 'Thu', users: 0, posts: 0 },
+  { name: 'Fri', users: 0, posts: 0 },
+  { name: 'Sat', users: 0, posts: 0 },
+  { name: 'Sun', users: 0, posts: 0 },
+];
+
+// Helper functions
+const generateRandomColor = () => `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%`;
+
+const formatDate = (dateString) => new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric'
+}).format(new Date(dateString));
+
+// Components
+const StatsCard = ({ title, value, icon: Icon, color, growth }) => (
+  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700 h-full">
+    <div className={`absolute inset-x-0 top-0 h-1 ${color} opacity-80 group-hover:opacity-100 transition-opacity`}></div>
+    <div className="p-5 h-full flex flex-col">
+      <div className="flex items-center justify-between mb-3">
+        <div className={`p-2 rounded-lg ${color} bg-opacity-10`}>
+          <Icon className={`${color.replace('bg-', 'text-')} w-5 h-5`} />
+        </div>
+        <span className="flex items-center text-xs font-medium text-green-500">
+          <ArrowUpRight className="mr-1 w-3 h-3" />
+          {growth}
+          <span className="ml-1 text-gray-500 dark:text-gray-400 text-xs">last month</span>
+        </span>
+      </div>
+      <h3 className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wider">
+        {title}
+      </h3>
+      <p className="text-2xl font-bold dark:text-white mt-1">{value}</p>
+    </div>
+  </div>
+);
+
+const ChartCard = ({ title, subtitle, headerIcon, children, className = '', height = 'h-[300px]' }) => (
+  <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700 ${className} flex flex-col`}>
+    <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-700">
+      <div>
+        <h2 className="text-lg font-semibold dark:text-white flex items-center">
+          {headerIcon && <span className="mr-2 text-indigo-500">{headerIcon}</span>}
+          {title}
+        </h2>
+        {subtitle && <p className="text-gray-500 text-xs mt-1">{subtitle}</p>}
+      </div>
+      <button className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+        <MoreHorizontal className="w-4 h-4" />
+      </button>
+    </div>
+    <div className={`p-5 flex-1 ${height}`}>
+      {children}
+    </div>
+  </div>
+);
 
 export default function DashboardComp() {
   // State management
-  const [users, setUsers] = useState([]);
-  const [posts, setPosts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [totalUsers, setTotalUsers] = useState(0);
-  const [totalPosts, setTotalPosts] = useState(0);
-  const [totalCategories, setTotalCategories] = useState(0);
-  const [lastMonthUsers, setLastMonthUsers] = useState(0);
-  const [lastMonthPosts, setLastMonthPosts] = useState(0);
-  const [lastMonthComments, setLastMonthComments] = useState(0);
+  const [data, setData] = useState({
+    users: [],
+    posts: [],
+    categories: [],
+    comments: [],
+    totalUsers: 0,
+    totalPosts: 0,
+    totalCategories: 0,
+    lastMonthUsers: 0,
+    lastMonthPosts: 0,
+    lastMonthComments: 0,
+    activityData: INITIAL_ACTIVITY_DATA,
+    contentDistribution: [],
+    topPerformers: []
+  });
   const [loading, setLoading] = useState(true);
   const [activeTimeframe, setActiveTimeframe] = useState('week');
-  const [topPerformers, setTopPerformers] = useState([]);
   const { currentUser } = useSelector((state) => state.user);
 
-  // Activity data for charts
-  const [activityData, setActivityData] = useState([
-    { name: 'Mon', users: 0, posts: 0 },
-    { name: 'Tue', users: 0, posts: 0 },
-    { name: 'Wed', users: 0, posts: 0 },
-    { name: 'Thu', users: 0, posts: 0 },
-    { name: 'Fri', users: 0, posts: 0 },
-    { name: 'Sat', users: 0, posts: 0 },
-    { name: 'Sun', users: 0, posts: 0 },
-  ]);
+  // Memoized calculations
+  const mostUsedCategory = useMemo(() => {
+    if (data.categories.length === 0) return 'N/A';
+    return data.categories.reduce((prev, current) => 
+      (data.posts.filter(p => p.category === prev._id).length > 
+      data.posts.filter(p => p.category === current._id).length ? prev : current)
+    ).name;
+  }, [data.categories, data.posts]);
 
-  // Content category distribution
-  const [contentDistribution, setContentDistribution] = useState([]);
+  const totalCategorizedPosts = useMemo(() => 
+    data.categories.reduce((sum, cat) => 
+      sum + data.posts.filter(post => post.category === cat._id).length, 0
+    ),
+    [data.categories, data.posts]
+  );
 
-  // Fetch data on component mount
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        
-        // Fetch categories first
-        const categoriesRes = await fetch('/api/category');
-        const categoriesData = await categoriesRes.json();
-        
-        if (categoriesRes.ok) {
-          setCategories(categoriesData);
-          setTotalCategories(categoriesData.length);
-          
-          // Now fetch other data in parallel
-          const [usersRes, postsRes, commentsRes] = await Promise.all([
-            fetch('/api/user/getusers'),
-            fetch('/api/post/getposts'),
-            fetch('/api/comment/getcomments')
-          ]);
-          
-          const usersData = await usersRes.json();
-          const postsData = await postsRes.json();
-          const commentsData = await commentsRes.json();
-          
-          if (usersRes.ok) {
-            setUsers(usersData.users.slice(0, 5));
-            setTotalUsers(usersData.totalUsers);
-            setLastMonthUsers(usersData.lastMonthUsers);
-          }
-          
-          if (postsRes.ok) {
-            setPosts(postsData.posts.slice(0, 5));
-            setTotalPosts(postsData.totalPosts);
-            setLastMonthPosts(postsData.lastMonthPosts);
-            
-            // Update content distribution based on post categories
-            const categoryCount = {};
-            postsData.posts.forEach(post => {
-              const matchedCategory = categoriesData.find(cat => cat._id === post.category);
-              const categoryName = matchedCategory ? matchedCategory.name : 'uncategorized';
-              const categoryColor = matchedCategory ? matchedCategory.color || generateRandomColor() : '#8884d8';
-              
-              if (!categoryCount[categoryName]) {
-                categoryCount[categoryName] = {
-                  count: 0,
-                  color: categoryColor
-                };
-              }
-              categoryCount[categoryName].count++;
-            });
+  const contentDistributionPercentages = useMemo(() => 
+    data.contentDistribution.map(item => {
+      const total = data.contentDistribution.reduce((sum, current) => sum + current.value, 0);
+      const percentage = total > 0 ? Math.round((item.value / total) * 100) : 0;
+      return { ...item, percentage };
+    }),
+    [data.contentDistribution]
+  );
 
-            // Convert category counts to content distribution
-            const updatedDistribution = Object.keys(categoryCount).map(categoryName => ({
-              name: categoryName,
-              value: categoryCount[categoryName].count,
-              color: categoryCount[categoryName].color
-            }));
+  // Data fetching and processing
+  const fetchData = useCallback(async () => {
+    if (!currentUser.isAdmin) return;
 
-            setContentDistribution(updatedDistribution);
-            
-            // Calculate daily activity for charts
-            const today = new Date();
-            const weekData = Array(7).fill().map((_, i) => {
-              const date = new Date(today);
-              date.setDate(today.getDate() - (6 - i));
-              return date.toISOString().split('T')[0];
-            });
-            
-            // Count posts and users created each day of the week
-            const dailyActivity = weekData.map(date => {
-              const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(date).getDay()];
-              const dayPosts = postsData.posts.filter(post => 
-                new Date(post.createdAt).toISOString().split('T')[0] === date
-              ).length;
-              
-              const dayUsers = usersData.users ? usersData.users.filter(user => 
-                new Date(user.createdAt).toISOString().split('T')[0] === date
-              ).length : 0;
-              
-              return {
-                name: dayName,
-                posts: dayPosts,
-                users: dayUsers
-              };
-            });
-            
-            setActivityData(dailyActivity);
-          }
-          
-          calculateTopPerformers(usersData.users, postsData.posts);
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
+    try {
+      setLoading(true);
+      
+      const categoriesRes = await fetch('/api/category');
+      const categoriesData = await categoriesRes.json();
+      
+      if (!categoriesRes.ok) throw new Error('Failed to fetch categories');
+      
+      const [usersRes, postsRes, commentsRes] = await Promise.all([
+        fetch('/api/user/getusers'),
+        fetch('/api/post/getposts'),
+        fetch('/api/comment/getcomments')
+      ]);
+      
+      const [usersData, postsData, commentsData] = await Promise.all([
+        usersRes.json(),
+        postsRes.json(),
+        commentsRes.json()
+      ]);
+      
+      if (!usersRes.ok || !postsRes.ok || !commentsRes.ok) {
+        throw new Error('Failed to fetch data');
       }
-    };
 
-    if (currentUser.isAdmin) {
-      fetchData();
+      // Process content distribution
+      const categoryCount = {};
+      postsData.posts.forEach(post => {
+        const matchedCategory = categoriesData.find(cat => cat._id === post.category);
+        const categoryName = matchedCategory ? matchedCategory.name : 'uncategorized';
+        const categoryColor = matchedCategory ? matchedCategory.color || generateRandomColor() : '#8884d8';
+        
+        if (!categoryCount[categoryName]) {
+          categoryCount[categoryName] = { count: 0, color: categoryColor };
+        }
+        categoryCount[categoryName].count++;
+      });
+
+      // Process activity data
+      const today = new Date();
+      const weekData = Array(7).fill().map((_, i) => {
+        const date = new Date(today);
+        date.setDate(today.getDate() - (6 - i));
+        return date.toISOString().split('T')[0];
+      });
+      
+      const dailyActivity = weekData.map(date => {
+        const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(date).getDay()];
+        const dayPosts = postsData.posts.filter(post => 
+          new Date(post.createdAt).toISOString().split('T')[0] === date
+        ).length;
+        
+        const dayUsers = usersData.users ? usersData.users.filter(user => 
+          new Date(user.createdAt).toISOString().split('T')[0] === date
+        ).length : 0;
+        
+        return { name: dayName, posts: dayPosts, users: dayUsers };
+      });
+
+      // Calculate top performers
+      const topPerformers = calculateTopPerformers(usersData.users, postsData.posts);
+
+      setData({
+        users: usersData.users.slice(0, 5),
+        posts: postsData.posts.slice(0, 5),
+        categories: categoriesData,
+        comments: commentsData,
+        totalUsers: usersData.totalUsers,
+        totalPosts: postsData.totalPosts,
+        totalCategories: categoriesData.length,
+        lastMonthUsers: usersData.lastMonthUsers,
+        lastMonthPosts: postsData.lastMonthPosts,
+        lastMonthComments: commentsData.lastMonthComments || 0,
+        activityData: dailyActivity,
+        contentDistribution: Object.keys(categoryCount).map(categoryName => ({
+          name: categoryName,
+          value: categoryCount[categoryName].count,
+          color: categoryCount[categoryName].color
+        })),
+        topPerformers
+      });
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
     }
-  }, [currentUser]);
+  }, [currentUser.isAdmin]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const calculateTopPerformers = (users = [], posts = []) => {
-    if (users.length === 0 || posts.length === 0) return;
+    if (users.length === 0 || posts.length === 0) return [];
   
     const userPostCounts = posts.reduce((acc, post) => {
       acc[post.userId] = (acc[post.userId] || 0) + 1;
       return acc;
     }, {});
   
-    const topPerformers = users
-      .map((user) => {
-        const postCount = userPostCounts[user._id] || 0;
-        return {
-          id: user._id,
-          name: user.username,
-          avatar: user.profilePicture || '/api/placeholder/40/40',
-          value: postCount.toString(),
-          trend: postCount > 0 ? 'up' : 'down'
-        };
-      })
+    return users
+      .map((user) => ({
+        id: user._id,
+        name: user.username,
+        avatar: user.profilePicture || '/api/placeholder/40/40',
+        value: (userPostCounts[user._id] || 0).toString(),
+        trend: (userPostCounts[user._id] || 0) > 0 ? 'up' : 'down'
+      }))
       .sort((a, b) => parseInt(b.value) - parseInt(a.value))
       .slice(0, 4);
-  
-    setTopPerformers(topPerformers);
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    }).format(date);
-  };
-
-  // Modern statistics card component
-  const StatsCard = ({ title, value, icon: Icon, color, growth }) => (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700 h-full">
-      <div className={`absolute inset-x-0 top-0 h-1 ${color} opacity-80 group-hover:opacity-100 transition-opacity`}></div>
-      <div className="p-5 h-full flex flex-col">
-        <div className="flex items-center justify-between mb-3">
-          <div className={`p-2 rounded-lg ${color} bg-opacity-10`}>
-            <Icon className={`${color.replace('bg-', 'text-')} w-5 h-5`} />
-          </div>
-          <span className="flex items-center text-xs font-medium text-green-500">
-            <ArrowUpRight className="mr-1 w-3 h-3" />
-            {growth}
-            <span className="ml-1 text-gray-500 dark:text-gray-400 text-xs">last month</span>
-          </span>
-        </div>
-        <h3 className="text-gray-500 dark:text-gray-400 text-xs font-medium uppercase tracking-wider">
-          {title}
-        </h3>
-        <p className="text-2xl font-bold dark:text-white mt-1">{value}</p>
-      </div>
-    </div>
-  );
-
-  // Chart card component
-  const ChartCard = ({ title, subtitle, headerIcon, children, className = '', height = 'h-[300px]' }) => (
-    <div className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700 ${className} flex flex-col`}>
-      <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-700">
-        <div>
-          <h2 className="text-lg font-semibold dark:text-white flex items-center">
-            {headerIcon && <span className="mr-2 text-indigo-500">{headerIcon}</span>}
-            {title}
-          </h2>
-          {subtitle && <p className="text-gray-500 text-xs mt-1">{subtitle}</p>}
-        </div>
-        <button className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-          <MoreHorizontal className="w-4 h-4" />
-        </button>
-      </div>
-      <div className={`p-5 flex-1 ${height}`}>
-        {children}
-      </div>
-    </div>
-  );
-
-  // Calculate percentages for content distribution
-  const contentDistributionPercentages = contentDistribution.map(item => {
-    const total = contentDistribution.reduce((sum, current) => sum + current.value, 0);
-    const percentage = total > 0 ? Math.round((item.value / total) * 100) : 0;
-    return {
-      ...item,
-      percentage
-    };
-  });
-
-  // Prepare category usage data
-  const categoryUsageData = categories.map(cat => ({
-    name: cat.name,
-    count: posts.filter(post => post.category === cat._id).length,
-    color: cat.color || generateRandomColor()
-  }));
-
-  const mostUsedCategory = categories.length > 0 ? 
-    categories.reduce((prev, current) => 
-      (posts.filter(p => p.category === prev._id).length > 
-      posts.filter(p => p.category === current._id).length ? prev : current)
-    ).name : 'N/A';
-
-  const totalCategorizedPosts = categories.reduce((sum, cat) => 
-    sum + posts.filter(post => post.category === cat._id).length, 0
+  const categoryUsageData = useMemo(() => 
+    data.categories.map(cat => ({
+      name: cat.name,
+      count: data.posts.filter(post => post.category === cat._id).length,
+      color: cat.color || generateRandomColor()
+    })),
+    [data.categories, data.posts]
   );
 
   if (loading) {
@@ -277,7 +255,7 @@ export default function DashboardComp() {
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto bg-gray-50 dark:bg-gray-900 min-h-screen">
-      {/* Header with welcome and search */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
@@ -312,24 +290,24 @@ export default function DashboardComp() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <StatsCard 
           title="Total Users" 
-          value={totalUsers} 
+          value={data.totalUsers} 
           icon={Users} 
           color="bg-indigo-500" 
-          growth={lastMonthUsers} 
+          growth={data.lastMonthUsers} 
         />
         <StatsCard 
           title="Total Posts" 
-          value={totalPosts} 
+          value={data.totalPosts} 
           icon={FileText} 
           color="bg-emerald-500" 
-          growth={lastMonthPosts} 
+          growth={data.lastMonthPosts} 
         />
         <StatsCard 
           title="Total Categories" 
-          value={totalCategories} 
+          value={data.totalCategories} 
           icon={TrendingUp} 
           color="bg-amber-500" 
-          growth={totalCategories} 
+          growth={data.totalCategories} 
         />
       </div>
 
@@ -341,13 +319,12 @@ export default function DashboardComp() {
           subtitle="Last 7 days" 
           headerIcon={<BarChart2 className="w-5 h-5" />}
           className="lg:col-span-2"
-          height="h-[300px]"
         >
           <div className="mb-3">
             <div className="flex items-center">
-              <h3 className="text-xl font-bold dark:text-white">{totalUsers + totalPosts}</h3>
+              <h3 className="text-xl font-bold dark:text-white">{data.totalUsers + data.totalPosts}</h3>
               <div className="ml-auto flex items-center">
-                <span className="text-green-500 text-xs">+{lastMonthUsers + lastMonthPosts}%</span>
+                <span className="text-green-500 text-xs">+{data.lastMonthUsers + data.lastMonthPosts}%</span>
                 <ChevronUp className="text-green-500 h-3 w-3 ml-1" />
               </div>
             </div>
@@ -355,9 +332,9 @@ export default function DashboardComp() {
           </div>
           <div className="h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={activityData} barSize={20} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <BarChart data={data.activityData} barSize={20} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9CA3AF' }} />
-                <YAxis hide={true} />
+                <YAxis hide />
                 <Tooltip 
                   cursor={{fill: 'rgba(243, 244, 246, 0.2)'}} 
                   contentStyle={{
@@ -373,7 +350,7 @@ export default function DashboardComp() {
             </ResponsiveContainer>
           </div>
           <div className="flex gap-2 mt-3">
-            {['today', 'week', 'month', 'all'].map((period) => (
+            {TIME_PERIODS.map((period) => (
               <button 
                 key={period}
                 className={`${
@@ -389,18 +366,17 @@ export default function DashboardComp() {
           </div>
         </ChartCard>
 
-        {/* Content Distribution - Modern Pie Chart */}
+        {/* Content Distribution */}
         <ChartCard 
           title="Content Categories" 
           headerIcon={<Activity className="w-5 h-5" />}
           className="lg:col-span-1"
-          height="h-[300px]"
         >
           <div className="h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={contentDistribution}
+                  data={data.contentDistribution}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -410,7 +386,7 @@ export default function DashboardComp() {
                   dataKey="value"
                   paddingAngle={3}
                 >
-                  {contentDistribution.map((entry, index) => (
+                  {data.contentDistribution.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color || `hsl(${index * 60}, 70%, 50%)`} stroke="none" />
                   ))}
                 </Pie>
@@ -429,7 +405,7 @@ export default function DashboardComp() {
           <div className="grid grid-cols-2 gap-2 mt-3">
             {contentDistributionPercentages.slice(0, 6).map((item, index) => (
               <div key={index} className="flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color || `hsl(${index * 60}, 70%, 50%)` }}></div>
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color || `hsl(${index * 60}, 70%, 50%)` }} />
                 <div>
                   <p className="text-xs font-medium dark:text-white">{item.percentage}%</p>
                   <p className="text-xs text-gray-500 truncate">{item.name}</p>
@@ -445,7 +421,6 @@ export default function DashboardComp() {
           subtitle="Posts per category" 
           headerIcon={<Activity className="w-5 h-5" />}
           className="lg:col-span-1"
-          height="h-[300px]"
         >
           <div className="h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -495,7 +470,7 @@ export default function DashboardComp() {
           </div>
         </ChartCard>
 
-        {/* Top Performers - Modern User Cards */}
+        {/* Top Performers */}
         <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700">
             <h2 className="text-lg font-semibold dark:text-white flex items-center">
@@ -507,8 +482,8 @@ export default function DashboardComp() {
             </button>
           </div>
           <div className="p-4 space-y-2">
-            {topPerformers.length > 0 ? (
-              topPerformers.map((user) => (
+            {data.topPerformers.length > 0 ? (
+              data.topPerformers.map((user) => (
                 <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
                   <div className="flex items-center">
                     <div className="w-8 h-8 bg-gray-200 rounded-full overflow-hidden flex-shrink-0 border-2 border-white dark:border-gray-700">
@@ -541,7 +516,7 @@ export default function DashboardComp() {
         </div>
       </div>
       
-      {/* Tables Section - Recent Users & Posts */}
+      {/* Tables Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Recent Users Table */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700">
@@ -565,7 +540,7 @@ export default function DashboardComp() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {users.length > 0 ? users.map((user) => (
+                {data.users.length > 0 ? data.users.map((user) => (
                   <tr key={user._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center">
@@ -617,8 +592,8 @@ export default function DashboardComp() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {posts.length > 0 ? posts.map((post) => {
-                  const matchedCategory = categories.find(cat => cat._id === post.category);
+                {data.posts.length > 0 ? data.posts.map((post) => {
+                  const matchedCategory = data.categories.find(cat => cat._id === post.category);
                   const categoryName = matchedCategory ? matchedCategory.name : 'uncategorized';
                   const categoryColor = matchedCategory ? matchedCategory.color || generateRandomColor() : generateRandomColor();
 
