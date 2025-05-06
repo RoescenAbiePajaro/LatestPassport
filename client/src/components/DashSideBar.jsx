@@ -8,17 +8,63 @@ import {
   HiChartPie,
   HiTag,
 } from 'react-icons/hi';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { signoutSuccess } from '../redux/user/userSlice';
-import { useDispatch } from 'react-redux';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+
+const sidebarItems = [
+  {
+    id: 'dash',
+    label: 'Dashboard',
+    icon: HiChartPie,
+    adminOnly: true,
+    path: '/dashboard?tab=dash'
+  },
+  {
+    id: 'profile',
+    label: 'Profile',
+    icon: HiUser,
+    adminOnly: false,
+    path: '/dashboard?tab=profile'
+  },
+  {
+    id: 'posts',
+    label: 'Posts',
+    icon: HiDocumentText,
+    adminOnly: false,
+    path: '/dashboard?tab=posts'
+  },
+  {
+    id: 'createpost',
+    label: 'Create Post',
+    icon: HiDocumentText,
+    adminOnly: false,
+    userOnly: true,
+    path: '/dashboard?tab=createpost'
+  },
+  {
+    id: 'categories',
+    label: 'Categories',
+    icon: HiTag,
+    adminOnly: true,
+    path: '/dashboard?tab=categories'
+  },
+  {
+    id: 'users',
+    label: 'Users',
+    icon: HiOutlineUserGroup,
+    adminOnly: true,
+    path: '/dashboard?tab=users'
+  },
+];
 
 export default function DashSidebar() {
   const location = useLocation();
   const dispatch = useDispatch();
   const { currentUser } = useSelector((state) => state.user);
   const [tab, setTab] = useState('');
+
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
     const tabFromUrl = urlParams.get('tab');
@@ -26,11 +72,10 @@ export default function DashSidebar() {
       setTab(tabFromUrl);
     }
   }, [location.search]);
+
   const handleSignout = async () => {
     try {
-      const res = await fetch('/api/user/signout', {
-        method: 'POST',
-      });
+      const res = await fetch('/api/user/signout', { method: 'POST' });
       const data = await res.json();
       if (!res.ok) {
         console.log(data.message);
@@ -41,90 +86,32 @@ export default function DashSidebar() {
       console.log(error.message);
     }
   };
+
+  const filteredItems = useMemo(() => {
+    return sidebarItems.filter(item => {
+      if (item.adminOnly) return currentUser?.isAdmin;
+      if (item.userOnly) return !currentUser?.isAdmin;
+      return true;
+    });
+  }, [currentUser]);
+
   return (
     <Sidebar className='w-full md:w-56'>
       <Sidebar.Items>
         <Sidebar.ItemGroup className='flex flex-col gap-1'>
-          {currentUser && currentUser.isAdmin && (
-            <Link to='/dashboard?tab=dash'>
+          {filteredItems.map((item) => (
+            <Link to={item.path} key={item.id}>
               <Sidebar.Item
-                active={tab === 'dash' || !tab}
-                icon={HiChartPie}
+                active={tab === item.id || (item.id === 'dash' && !tab)}
+                icon={item.icon}
                 as='div'
+                label={item.id === 'profile' ? (currentUser?.isAdmin ? 'Admin' : 'User') : undefined}
+                labelColor='dark'
               >
-                Dashboard
+                {item.label}
               </Sidebar.Item>
             </Link>
-          )}
-          <Link to='/dashboard?tab=profile'>
-            <Sidebar.Item
-              active={tab === 'profile'}
-              icon={HiUser}
-              label={currentUser.isAdmin ? 'Admin' : 'User'}
-              labelColor='dark'
-              as='div'
-            >
-              Profile
-            </Sidebar.Item>
-          </Link>
-          
-            <Link to='/dashboard?tab=posts'>
-              <Sidebar.Item
-                active={tab === 'posts'}
-                icon={HiDocumentText}
-                as='div'
-              >
-                Posts
-              </Sidebar.Item>
-            </Link>
-
-          {!currentUser.isAdmin && (
-            <Link to='/dashboard?tab=createpost'>
-              <Sidebar.Item
-                active={tab === 'createpost'}
-                icon={HiDocumentText}
-                as='div'
-              >
-                Create Post
-              </Sidebar.Item>
-            </Link>
-          )} 
-
-          {currentUser.isAdmin && (
-            <>
-              <Link to='/dashboard?tab=categories'>
-                <Sidebar.Item
-                  active={tab === 'categories'}
-                  icon={HiTag}
-                  as='div'
-                >
-                  Categories
-                </Sidebar.Item>
-              </Link>
-
-              <Link to='/dashboard?tab=users'>
-                <Sidebar.Item
-                  active={tab === 'users'}
-                  icon={HiOutlineUserGroup}
-                  as='div'
-                >
-                  Users
-                </Sidebar.Item>
-              </Link>
-              
-            </>
-          )}
-
-          {/* Sign out button */}
-        {/* <div className="px-3 py-4 border-t border-gray-100">
-          <button
-            onClick={handleSignout}
-            className="flex items-center w-full p-3 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all group"
-          >
-            <HiArrowSmRight className="w-5 h-5 text-gray-500 group-hover:text-red-600" />
-            <span className="ml-3 font-medium">Sign Out</span>
-          </button>
-        </div> */}
+          ))}
         </Sidebar.ItemGroup>
       </Sidebar.Items>
     </Sidebar>

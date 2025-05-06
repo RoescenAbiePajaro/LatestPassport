@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -14,58 +14,96 @@ import {
 import { motion } from 'framer-motion';
 import LoadingSpinner from './LoadingSpinner';
 
+// Constants
+const ITEMS_PER_PAGE = 5;
+
 export default function CategoryManager() {
+  // State management
   const { currentUser } = useSelector((state) => state.user);
-  const [categories, setCategories] = useState([]);
-  const [formData, setFormData] = useState({ name: '', description: '' });
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(5);
-  const [editingId, setEditingId] = useState(null);
-  const [categoryToDelete, setCategoryToDelete] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [isPageLoading, setIsPageLoading] = useState(true);
   const navigate = useNavigate();
+  
+  const [state, setState] = useState({
+    categories: [],
+    formData: { name: '', description: '' },
+    error: null,
+    loading: false,
+    successMessage: '',
+    showCreateForm: false,
+    currentPage: 1,
+    editingId: null,
+    categoryToDelete: null,
+    showModal: false,
+    isPageLoading: true
+  });
+
+  // Destructure state for easier access
+  const {
+    categories,
+    formData,
+    error,
+    loading,
+    successMessage,
+    showCreateForm,
+    currentPage,
+    editingId,
+    categoryToDelete,
+    showModal,
+    isPageLoading
+  } = state;
+
+  // Memoized pagination calculations
+  const { currentItems, totalPages, indexOfFirstItem, indexOfLastItem } = useMemo(() => {
+    const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
+    const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
+    const currentItems = categories.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(categories.length / ITEMS_PER_PAGE);
+    
+    return { currentItems, totalPages, indexOfFirstItem, indexOfLastItem };
+  }, [categories, currentPage]);
+
+  // State updater helper
+  const updateState = (updates) => {
+    setState(prev => ({ ...prev, ...updates }));
+  };
 
   // Fetch categories
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await fetch('/api/category');
-        const data = await res.json();
-        if (res.ok) {
-          setCategories(data);
-        } else {
-          throw new Error(data.message || 'Failed to fetch categories');
-        }
-      } catch (err) {
-        console.error('Failed to fetch categories:', err);
-        setError(err.message);
-      } finally {
-        setIsPageLoading(false);
+  const fetchCategories = useCallback(async () => {
+    try {
+      const res = await fetch('/api/category');
+      const data = await res.json();
+      
+      if (res.ok) {
+        updateState({ categories: data, isPageLoading: false });
+      } else {
+        throw new Error(data.message || 'Failed to fetch categories');
       }
-    };
-    fetchCategories();
-  }, [successMessage]);
+    } catch (err) {
+      console.error('Failed to fetch categories:', err);
+      updateState({ error: err.message, isPageLoading: false });
+    }
+  }, []);
 
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories, successMessage]);
+
+  // Event handlers
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.id]: e.target.value });
-    setError(null);
+    updateState({ 
+      formData: { ...formData, [e.target.id]: e.target.value },
+      error: null 
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
   
     if (!formData.name.trim()) {
-      setError('Category name is required');
+      updateState({ error: 'Category name is required' });
       return;
     }
   
-    setLoading(true);
-    setError(null);
+    updateState({ loading: true, error: null });
   
     try {
       const token = localStorage.getItem('token');
@@ -87,30 +125,38 @@ export default function CategoryManager() {
         throw new Error(data.message || 'Something went wrong');
       }
   
-      setSuccessMessage(editingId ? 'Category updated successfully!' : 'Category created successfully!');
-      setFormData({ name: '', description: '' });
-      setEditingId(null);
-      setShowCreateForm(false);
+      updateState({
+        successMessage: editingId ? 'Category updated successfully!' : 'Category created successfully!',
+        formData: { name: '', description: '' },
+        editingId: null,
+        showCreateForm: false,
+        loading: false
+      });
     } catch (err) {
-      setError(err.message || 'Network error. Please try again.');
-    } finally {
-      setLoading(false);
+      updateState({ 
+        error: err.message || 'Network error. Please try again.',
+        loading: false 
+      });
     }
   };
 
   const handleEdit = (category) => {
-    setFormData({
-      name: category.name,
-      description: category.description || ''
+    updateState({
+      formData: {
+        name: category.name,
+        description: category.description || ''
+      },
+      editingId: category._id,
+      showCreateForm: true
     });
-    setEditingId(category._id);
-    setShowCreateForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const openDeleteModal = (categoryId) => {
-    setCategoryToDelete(categoryId);
-    setShowModal(true);
+    updateState({ 
+      categoryToDelete: categoryId,
+      showModal: true 
+    });
   };
 
   const handleDeleteConfirm = async () => {
@@ -130,23 +176,24 @@ export default function CategoryManager() {
         throw new Error(data.message || 'Failed to delete category');
       }
       
-      setSuccessMessage('Category deleted successfully!');
-      setShowModal(false);
-      setCategoryToDelete(null);
+      updateState({
+        successMessage: 'Category deleted successfully!',
+        showModal: false,
+        categoryToDelete: null
+      });
     } catch (err) {
-      setError(err.message || 'Network error. Please try again.');
-      setShowModal(false);
+      updateState({ 
+        error: err.message || 'Network error. Please try again.',
+        showModal: false 
+      });
     }
   };
 
-  // Pagination logic
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = categories.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(categories.length / itemsPerPage);
+  const paginate = (pageNumber) => {
+    updateState({ currentPage: pageNumber });
+  };
 
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
+  // Render loading state
   if (isPageLoading) {
     return (
       <div className="min-h-[500px] flex items-center justify-center">
@@ -164,7 +211,7 @@ export default function CategoryManager() {
           Category Management
         </h2>
         <button
-          onClick={() => setShowCreateForm(!showCreateForm)}
+          onClick={() => updateState({ showCreateForm: !showCreateForm })}
           className="flex items-center gap-2 bg-gradient-to-r from-teal-400 to-blue-500 dark:from-teal-500 dark:to-blue-600 text-white font-medium px-5 py-2 rounded-lg transition-all duration-300 hover:from-teal-500 hover:to-blue-600 hover:shadow-lg"
         >
           <HiOutlinePlus className="h-5 w-5" />
@@ -239,9 +286,11 @@ export default function CategoryManager() {
                 <button
                   type="button"
                   onClick={() => {
-                    setShowCreateForm(false);
-                    setEditingId(null);
-                    setFormData({ name: '', description: '' });
+                    updateState({
+                      showCreateForm: false,
+                      editingId: null,
+                      formData: { name: '', description: '' }
+                    });
                   }}
                   className="flex items-center gap-2 bg-gradient-to-r from-gray-400 to-gray-500 dark:from-gray-500 dark:to-gray-600 text-white font-medium px-5 py-2 rounded-lg transition-all duration-300 hover:from-gray-500 hover:to-gray-600 hover:shadow-lg"
                 >
@@ -406,7 +455,7 @@ export default function CategoryManager() {
         <>
           <div 
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
-            onClick={() => setShowModal(false)}
+            onClick={() => updateState({ showModal: false })}
           />
           
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -434,7 +483,7 @@ export default function CategoryManager() {
                 
                 <div className="flex gap-3 justify-center">
                   <button
-                    onClick={() => setShowModal(false)}
+                    onClick={() => updateState({ showModal: false })}
                     className="flex-1 px-4 py-2.5 bg-gray-200 text-gray-800 font-medium rounded-lg hover:bg-gray-300 transition duration-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800"
                   >
                     Cancel

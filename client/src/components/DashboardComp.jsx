@@ -4,10 +4,11 @@ import { Link } from 'react-router-dom';
 import { 
   ChevronUp, ChevronDown, Activity, Users, FileText, 
   TrendingUp, BarChart2, Eye, CalendarDays, Clock,
-  MoreHorizontal, ArrowUpRight, Search, Filter 
+  MoreHorizontal, ArrowUpRight, Search, Filter, Shield 
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
 import LoadingSpinner from './LoadingSpinner';
+import RoleDistribution from './RoleDistribution';
 
 // Constants
 const TIME_PERIODS = ['today', 'week', 'month', 'all'];
@@ -83,6 +84,8 @@ export default function DashboardComp() {
     totalUsers: 0,
     totalPosts: 0,
     totalCategories: 0,
+    totalAdmins: 0,
+    totalStaff: 0,
     lastMonthUsers: 0,
     lastMonthPosts: 0,
     lastMonthComments: 0,
@@ -147,6 +150,10 @@ export default function DashboardComp() {
         throw new Error('Failed to fetch data');
       }
 
+      // Calculate admin and staff counts
+      const adminCount = usersData.users ? usersData.users.filter(user => user.isAdmin).length : 0;
+      const staffCount = usersData.users ? usersData.users.filter(user => !user.isAdmin).length : 0;
+
       // Process content distribution
       const categoryCount = {};
       postsData.posts.forEach(post => {
@@ -186,12 +193,15 @@ export default function DashboardComp() {
 
       setData({
         users: usersData.users.slice(0, 5),
+        allUsers: usersData.users,  // Store all users for role distribution
         posts: postsData.posts.slice(0, 5),
         categories: categoriesData,
         comments: commentsData,
         totalUsers: usersData.totalUsers,
         totalPosts: postsData.totalPosts,
         totalCategories: categoriesData.length,
+        totalAdmins: adminCount,
+        totalStaff: staffCount,
         lastMonthUsers: usersData.lastMonthUsers,
         lastMonthPosts: postsData.lastMonthPosts,
         lastMonthComments: commentsData.lastMonthComments || 0,
@@ -287,7 +297,7 @@ export default function DashboardComp() {
       </div>
       
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatsCard 
           title="Total Users" 
           value={data.totalUsers} 
@@ -303,11 +313,18 @@ export default function DashboardComp() {
           growth={data.lastMonthPosts} 
         />
         <StatsCard 
-          title="Total Categories" 
-          value={data.totalCategories} 
-          icon={TrendingUp} 
-          color="bg-amber-500" 
-          growth={data.totalCategories} 
+          title="Admin Users" 
+          value={data.totalAdmins} 
+          icon={Shield} 
+          color="bg-purple-500" 
+          growth={data.totalAdmins} 
+        />
+        <StatsCard 
+          title="Staff Users" 
+          value={data.totalStaff} 
+          icon={Users} 
+          color="bg-blue-500" 
+          growth={data.totalStaff} 
         />
       </div>
 
@@ -470,57 +487,76 @@ export default function DashboardComp() {
           </div>
         </ChartCard>
 
-        {/* Top Performers */}
-        <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700">
-            <h2 className="text-lg font-semibold dark:text-white flex items-center">
-              <Users className="mr-2 text-emerald-500 w-5 h-5" />
-              Top Content Creators
-            </h2>
-            <button className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-              <MoreHorizontal className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="p-4 space-y-2">
-            {data.topPerformers.length > 0 ? (
-              data.topPerformers.map((user) => (
-                <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 bg-gray-200 rounded-full overflow-hidden flex-shrink-0 border-2 border-white dark:border-gray-700">
-                      <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+        {/* Top Performers and Role Distribution in grid layout */}
+        <div className="lg:col-span-2 grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Top Performers */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700">
+            <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700">
+              <h2 className="text-lg font-semibold dark:text-white flex items-center">
+                <Users className="mr-2 text-emerald-500 w-5 h-5" />
+                Top Content Creators
+              </h2>
+              <button className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <MoreHorizontal className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-4 space-y-2">
+              {data.topPerformers.length > 0 ? (
+                data.topPerformers.map((user) => (
+                  <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
+                    <div className="flex items-center">
+                      <div className="w-8 h-8 bg-gray-200 rounded-full overflow-hidden flex-shrink-0 border-2 border-white dark:border-gray-700">
+                        <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="ml-3">
+                        <h4 className="text-sm font-medium dark:text-white">{user.name}</h4>
+                        <p className="text-xs text-gray-500">Content Creator</p>
+                      </div>
                     </div>
-                    <div className="ml-3">
-                      <h4 className="text-sm font-medium dark:text-white">{user.name}</h4>
-                      <p className="text-xs text-gray-500">Content Creator</p>
+                    <div className="flex items-center bg-white dark:bg-gray-800 px-2 py-1 rounded-md shadow-sm">
+                      {user.trend === 'up' ? (
+                        <ChevronUp className="text-green-500 h-3 w-3" />
+                      ) : (
+                        <ChevronDown className="text-red-500 h-3 w-3" />
+                      )}
+                      <span className={`ml-1 text-xs font-medium ${user.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
+                        {user.value} posts
+                      </span>
                     </div>
                   </div>
-                  <div className="flex items-center bg-white dark:bg-gray-800 px-2 py-1 rounded-md shadow-sm">
-                    {user.trend === 'up' ? (
-                      <ChevronUp className="text-green-500 h-3 w-3" />
-                    ) : (
-                      <ChevronDown className="text-red-500 h-3 w-3" />
-                    )}
-                    <span className={`ml-1 text-xs font-medium ${user.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
-                      {user.value} posts
-                    </span>
-                  </div>
+                ))
+              ) : (
+                <div className="text-center py-6 text-gray-500">
+                  <FileText className="mx-auto h-8 w-8 mb-2 opacity-40" />
+                  <p className="text-sm">No data available</p>
                 </div>
-              ))
-            ) : (
-              <div className="text-center py-6 text-gray-500">
-                <FileText className="mx-auto h-8 w-8 mb-2 opacity-40" />
-                <p className="text-sm">No post data available</p>
-              </div>
-            )}
+              )}
+            </div>
           </div>
+
+          {/* Role Distribution */}
+          <ChartCard 
+            title="Role Distribution" 
+            headerIcon={<Users className="w-5 h-5" />}
+            className="h-full"
+          >
+            <div className="h-[200px]">
+              <RoleDistribution users={data.allUsers} />
+            </div>
+            <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+              <p>Admins: {data.totalAdmins}</p>
+              <p>Staff: {data.totalStaff}</p>
+              <p>Total Users: {data.totalUsers}</p>
+            </div>
+          </ChartCard>
         </div>
       </div>
-      
-      {/* Tables Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Recent Users Table */}
+
+      {/* Recent Activity Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        {/* Recent Users */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700">
+          <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-700">
             <h2 className="text-lg font-semibold dark:text-white flex items-center">
               <Users className="mr-2 text-blue-500 w-5 h-5" />
               Recent Users
@@ -530,49 +566,38 @@ export default function DashboardComp() {
               <Eye className="ml-1 w-4 h-4" />
             </Link>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="text-xs uppercase bg-gray-50 dark:bg-gray-700/30">
-                <tr>
-                  <th className="px-4 py-2 text-left">User</th>
-                  <th className="px-4 py-2 text-left">Email</th>
-                  <th className="px-4 py-2 text-left">Joined</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {data.users.length > 0 ? data.users.map((user) => (
-                  <tr key={user._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="w-8 h-8 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
-                          <img src={user.profilePicture || '/api/placeholder/40/40'} alt={user.username} className="w-full h-full object-cover" />
-                        </div>
-                        <span className="font-medium ml-2 dark:text-white text-sm">{user.username}</span>
+          <div className="p-5">
+            {data.users.length > 0 ? (
+              <div className="space-y-4">
+                {data.users.map((user) => (
+                  <div key={user._id} className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
+                        <img src={user.profilePicture || '/api/placeholder/40/40'} alt={user.username} className="w-full h-full object-cover" />
                       </div>
-                    </td>
-                    <td className="px-4 py-3 text-gray-500 dark:text-gray-300 whitespace-nowrap text-sm">{user.email}</td>
-                    <td className="px-4 py-3 text-gray-500 dark:text-gray-300 whitespace-nowrap text-sm">
-                      <div className="flex items-center">
-                        <CalendarDays className="w-3 h-3 mr-1 text-gray-400" />
-                        {formatDate(user.createdAt)}
+                      <div className="ml-3">
+                        <h4 className="text-sm font-medium dark:text-white">{user.username}</h4>
+                        <p className="text-xs text-gray-500">{user.email}</p>
                       </div>
-                    </td>
-                  </tr>
-                )) : (
-                  <tr>
-                    <td colSpan="3" className="px-4 py-6 text-center text-gray-500 text-sm">
-                      No users found
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Joined {formatDate(user.createdAt)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-gray-500">
+                <Users className="mx-auto h-8 w-8 mb-2 opacity-40" />
+                <p className="text-sm">No recent users</p>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Recent Posts Table */}
+        {/* Recent Posts */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700">
-          <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700">
+          <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-700">
             <h2 className="text-lg font-semibold dark:text-white flex items-center">
               <FileText className="mr-2 text-emerald-500 w-5 h-5" />
               Recent Posts
@@ -582,56 +607,38 @@ export default function DashboardComp() {
               <Eye className="ml-1 w-4 h-4" />
             </Link>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="text-xs uppercase bg-gray-50 dark:bg-gray-700/30">
-                <tr>
-                  <th className="px-4 py-2 text-left">Title</th>
-                  <th className="px-4 py-2 text-left">Category</th>
-                  <th className="px-4 py-2 text-left">Date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {data.posts.length > 0 ? data.posts.map((post) => {
-                  const matchedCategory = data.categories.find(cat => cat._id === post.category);
-                  const categoryName = matchedCategory ? matchedCategory.name : 'uncategorized';
-                  const categoryColor = matchedCategory ? matchedCategory.color || generateRandomColor() : generateRandomColor();
-
-                  return (
-                    <tr key={post._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
-                      <td className="px-4 py-3">
-                        <span className="font-medium dark:text-white text-sm line-clamp-1">
-                          {post.title}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <span 
-                          className="px-2 py-1 rounded-full text-xs font-medium capitalize"
-                          style={{ 
-                            backgroundColor: `${categoryColor}20`,
-                            color: categoryColor
-                          }}
-                        >
-                          {categoryName}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-gray-500 dark:text-gray-300 whitespace-nowrap text-sm">
-                        <div className="flex items-center">
-                          <CalendarDays className="w-3 h-3 mr-1 text-gray-400" />
-                          {formatDate(post.createdAt)}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                }) : (
-                  <tr>
-                    <td colSpan="3" className="px-4 py-6 text-center text-gray-500 text-sm">
-                      No posts found
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+          <div className="p-5">
+            {data.posts.length > 0 ? (
+              <div className="space-y-4">
+                {data.posts.map((post) => (
+                  <div key={post._id} className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                        <img src={post.image || '/api/placeholder/40/40'} alt={post.title} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="ml-3">
+                        <h4 className="text-sm font-medium dark:text-white">{post.title}</h4>
+                        <p className="text-xs text-gray-500">
+                          {data.categories.find(cat => cat._id === post.category)?.name || 'Uncategorized'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-4 text-xs text-gray-500">
+                      <div className="flex items-center">
+                        <Eye className="w-3.5 h-3.5 mr-1" />
+                        {post.views || 0}
+                      </div>
+                      <div>{formatDate(post.createdAt)}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-gray-500">
+                <FileText className="mx-auto h-8 w-8 mb-2 opacity-40" />
+                <p className="text-sm">No recent posts</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
