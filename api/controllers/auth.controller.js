@@ -5,29 +5,31 @@ import jwt from 'jsonwebtoken';
 
 export const signup = async (req, res, next) => {
   const { username, email, password } = req.body;
-
-  if (
-    !username ||
-    !email ||
-    !password ||
-    username === '' ||
-    email === '' ||
-    password === ''
-  ) {
-    next(errorHandler(400, 'All fields are required'));
+  
+  // Validation checks
+  if (!username || !email || !password) {
+    return next(errorHandler(400, 'All fields are required'));
+  }
+  
+  if (password.length < 6) {
+    return next(errorHandler(400, 'Password must be at least 6 characters'));
   }
 
   const hashedPassword = bcryptjs.hashSync(password, 10);
 
-  const newUser = new User({
-    username,
-    email,
-    password: hashedPassword,
-  });
-
   try {
+    const newUser = new User({
+      username,
+      email,
+      password: hashedPassword,
+      isApproved: false // New users are not approved by default
+    });
+
     await newUser.save();
-    res.json('Signup successful');
+    res.status(201).json({ 
+      message: 'User created successfully. Waiting for admin approval.',
+      userId: newUser._id 
+    });
   } catch (error) {
     next(error);
   }

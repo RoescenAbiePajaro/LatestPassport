@@ -33,7 +33,9 @@ export default function CategoryManager() {
     editingId: null,
     categoryToDelete: null,
     showModal: false,
-    isPageLoading: true
+    isPageLoading: true,
+    showMore: true, // Added showMore state
+    displayedItems: ITEMS_PER_PAGE // Track number of displayed items
   });
 
   // Destructure state for easier access
@@ -48,18 +50,20 @@ export default function CategoryManager() {
     editingId,
     categoryToDelete,
     showModal,
-    isPageLoading
+    isPageLoading,
+    showMore,
+    displayedItems
   } = state;
 
   // Memoized pagination calculations
   const { currentItems, totalPages, indexOfFirstItem, indexOfLastItem } = useMemo(() => {
-    const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
+    const indexOfLastItem = Math.min(currentPage * ITEMS_PER_PAGE, displayedItems);
     const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
-    const currentItems = categories.slice(indexOfFirstItem, indexOfLastItem);
+    const currentItems = categories.slice(0, indexOfLastItem);
     const totalPages = Math.ceil(categories.length / ITEMS_PER_PAGE);
     
     return { currentItems, totalPages, indexOfFirstItem, indexOfLastItem };
-  }, [categories, currentPage]);
+  }, [categories, currentPage, displayedItems]);
 
   // State updater helper
   const updateState = (updates) => {
@@ -73,7 +77,11 @@ export default function CategoryManager() {
       const data = await res.json();
       
       if (res.ok) {
-        updateState({ categories: data, isPageLoading: false });
+        updateState({ 
+          categories: data, 
+          isPageLoading: false,
+          showMore: data.length > ITEMS_PER_PAGE // Show "Show more" if there are more items
+        });
       } else {
         throw new Error(data.message || 'Failed to fetch categories');
       }
@@ -187,6 +195,15 @@ export default function CategoryManager() {
         showModal: false 
       });
     }
+  };
+
+  const handleShowMore = () => {
+    const newDisplayedItems = displayedItems + ITEMS_PER_PAGE;
+    updateState({
+      displayedItems: newDisplayedItems,
+      currentPage: Math.ceil(newDisplayedItems / ITEMS_PER_PAGE),
+      showMore: newDisplayedItems < categories.length // Hide button if all items are displayed
+    });
   };
 
   const paginate = (pageNumber) => {
@@ -383,69 +400,14 @@ export default function CategoryManager() {
           </table>
         </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="bg-gray-50 dark:bg-gray-700 px-6 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700">
-            <div className="flex-1 flex justify-between sm:hidden">
-              <button
-                onClick={() => paginate(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-                className="flex items-center gap-1 bg-gradient-to-r from-gray-400 to-gray-500 dark:from-gray-500 dark:to-gray-600 text-white font-medium px-4 py-2 rounded-lg text-sm transition-all duration-300 hover:from-gray-500 hover:to-gray-600 hover:shadow-md disabled:opacity-50"
-              >
-                <HiOutlineChevronLeft className="h-4 w-4" />
-                Previous
-              </button>
-              <button
-                onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage === totalPages}
-                className="flex items-center gap-1 bg-gradient-to-r from-gray-400 to-gray-500 dark:from-gray-500 dark:to-gray-600 text-white font-medium px-4 py-2 rounded-lg text-sm transition-all duration-300 hover:from-gray-500 hover:to-gray-600 hover:shadow-md disabled:opacity-50"
-              >
-                Next
-                <HiOutlineChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm text-gray-700 dark:text-gray-300">
-                  Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to{' '}
-                  <span className="font-medium">{Math.min(indexOfLastItem, categories.length)}</span> of{' '}
-                  <span className="font-medium">{categories.length}</span> categories
-                </p>
-              </div>
-              <div>
-                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                  <button
-                    onClick={() => paginate(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
-                    className="flex items-center gap-1 bg-gradient-to-r from-gray-400 to-gray-500 dark:from-gray-500 dark:to-gray-600 text-white font-medium px-3 py-2 rounded-l-lg text-sm transition-all duration-300 hover:from-gray-500 hover:to-gray-600 hover:shadow-md disabled:opacity-50"
-                  >
-                    <HiOutlineChevronLeft className="h-4 w-4" />
-                    <span>Previous</span>
-                  </button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
-                    <button
-                      key={number}
-                      onClick={() => paginate(number)}
-                      className={`flex items-center justify-center w-10 h-10 text-sm font-medium transition-all duration-300 ${
-                        currentPage === number
-                          ? 'bg-gradient-to-r from-teal-400 to-blue-500 dark:from-teal-500 dark:to-blue-600 text-white shadow-md'
-                          : 'bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-600 dark:to-gray-700 text-gray-700 dark:text-gray-300 hover:from-gray-200 hover:to-gray-300 dark:hover:from-gray-500 dark:hover:to-gray-600 hover:shadow-md'
-                      }`}
-                    >
-                      {number}
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
-                    disabled={currentPage === totalPages}
-                    className="flex items-center gap-1 bg-gradient-to-r from-gray-400 to-gray-500 dark:from-gray-500 dark:to-gray-600 text-white font-medium px-3 py-2 rounded-r-lg text-sm transition-all duration-300 hover:from-gray-500 hover:to-gray-600 hover:shadow-md disabled:opacity-50"
-                  >
-                    <span>Next</span>
-                    <HiOutlineChevronRight className="h-4 w-4" />
-                  </button>
-                </nav>
-              </div>
-            </div>
+        {showMore && (
+          <div className="flex justify-center mt-8">
+            <button 
+              onClick={handleShowMore}
+              className="px-6 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-full text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+            >
+              Show more categories
+            </button>
           </div>
         )}
       </div>

@@ -7,6 +7,8 @@ import {
   test,
   updateUser,
   updateRole,
+  approveUser,
+  getPendingUsers
 } from '../controllers/user.controller.js';
 import { verifyToken } from '../utils/verifyUser.js';
 
@@ -19,5 +21,7 @@ router.post('/signout', signout);
 router.get('/getusers', verifyToken, getUsers);
 router.get('/:userId', getUser);
 router.put('/updateRole/:userId', verifyToken, updateRole);
+router.put('/approve/:userId', verifyToken, approveUser);
+router.get('/pending/users', verifyToken, getPendingUsers);
 
 export default router;

@@ -156,3 +156,42 @@ export const updateRole = async (req, res, next) => {
     next(error);
   }
 };
+
+export const approveUser = async (req, res, next) => {
+  if (!req.user.isAdmin) {
+    return next(errorHandler(403, 'Only admins can approve users'));
+  }
+
+  try {
+    const user = await User.findById(req.params.userId);
+    if (!user) {
+      return next(errorHandler(404, 'User not found'));
+    }
+
+    user.isApproved = true;
+    await user.save();
+
+    const { password, ...rest } = user._doc;
+    res.status(200).json({ 
+      message: 'User approved successfully',
+      user: rest 
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getPendingUsers = async (req, res, next) => {
+  if (!req.user.isAdmin) {
+    return next(errorHandler(403, 'Only admins can view pending users'));
+  }
+
+  try {
+    const pendingUsers = await User.find({ isApproved: false })
+      .select('-password');
+    
+    res.status(200).json(pendingUsers);
+  } catch (error) {
+    next(error);
+  }
+};
