@@ -11,6 +11,7 @@ import {
 } from 'react-icons/hi';
 import { motion, AnimatePresence } from 'framer-motion';
 import LoadingSpinner from './LoadingSpinner';
+import { Clock } from 'lucide-react';
 
 // Post card component to improve code organization
 const PostCard = ({ post, index, onDeleteClick, categoryName }) => (
@@ -260,6 +261,10 @@ export default function DashPosts() {
           <HiDocumentText className="w-8 h-8 text-teal-400 dark:text-teal-500"/>
           Post Management
         </h2>
+        <div className="mt-3 md:mt-0 flex items-center text-sm text-gray-500 dark:text-gray-400">
+          <Clock className="h-4 w-4 mr-2" />
+          <span>Last updated: {new Date().toLocaleTimeString()}</span>
+        </div>
       </div>
       
       {isLoading ? (

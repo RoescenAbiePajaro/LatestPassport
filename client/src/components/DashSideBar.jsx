@@ -7,6 +7,7 @@ import {
   HiAnnotation,
   HiChartPie,
   HiTag,
+  HiUserAdd, 
 } from 'react-icons/hi';
 import { useEffect, useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -60,7 +61,7 @@ const sidebarItems = [
   {
     id: 'userapproval',
     label: 'User Approvals',
-    icon: HiOutlineUserGroup,
+    icon: HiUserAdd,
     adminOnly: true,
     path: '/dashboard?tab=userapproval'
   },

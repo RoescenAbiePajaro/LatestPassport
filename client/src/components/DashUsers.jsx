@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { HiOutlineExclamationCircle, HiOutlineUserGroup } from 'react-icons/hi';
 import { motion } from 'framer-motion';
 import LoadingSpinner from './LoadingSpinner';
+import { Clock } from 'lucide-react';
 
 // Separate component for the user table row to optimize rendering
 const UserRow = ({ user, onRoleChange, onDeleteClick }) => {
@@ -289,6 +290,10 @@ export default function DashUsers() {
           <HiOutlineUserGroup className="w-8 h-8 text-teal-400 dark:text-teal-500"/>
           User Management
         </h2>
+        <div className="mt-4 md:mt-0 flex items-center text-white text-sm bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm">
+          <Clock className="h-4 w-4 mr-2" />
+          <span>Last updated: {new Date().toLocaleTimeString()}</span>
+        </div>
       </div>
       
       {pageLoading ? (

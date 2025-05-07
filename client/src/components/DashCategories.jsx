@@ -400,7 +400,10 @@ export default function CategoryManager() {
           </table>
         </div>
 
-        {showMore && (
+        
+      </div>
+
+      {showMore && (
           <div className="flex justify-center mt-8">
             <button 
               onClick={handleShowMore}
@@ -410,7 +413,6 @@ export default function CategoryManager() {
             </button>
           </div>
         )}
-      </div>
 
       {/* Delete Confirmation Modal */}
       {showModal && (
