@@ -4,9 +4,10 @@ import { Link } from 'react-router-dom';
 import { 
   ChevronUp, ChevronDown, Activity, Users, FileText, 
   TrendingUp, BarChart2, Eye, CalendarDays, Clock,
-  MoreHorizontal, ArrowUpRight, Search, Filter, Shield 
+  MoreHorizontal, ArrowUpRight, Shield, Download
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
+import * as XLSX from 'xlsx';
 import LoadingSpinner from './LoadingSpinner';
 import RoleDistribution from './RoleDistribution';
 
@@ -23,7 +24,7 @@ const INITIAL_ACTIVITY_DATA = [
 ];
 
 // Helper functions
-const generateRandomColor = () => `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%`;
+const generateRandomColor = () => `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`;
 
 const formatDate = (dateString) => new Intl.DateTimeFormat('en-US', {
   month: 'short',
@@ -31,7 +32,60 @@ const formatDate = (dateString) => new Intl.DateTimeFormat('en-US', {
   year: 'numeric'
 }).format(new Date(dateString));
 
-// Components
+// Dropdown Menu Component
+const DropdownMenu = ({ onDownload }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const toggleDropdown = () => setIsOpen(!isOpen);
+
+  return (
+    <div className="relative">
+      <button 
+        onClick={toggleDropdown}
+        className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+      >
+        <MoreHorizontal className="w-4 h-4" />
+      </button>
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg shadow-lg z-10">
+          <button
+            onClick={() => {
+              onDownload();
+              setIsOpen(false);
+            }}
+            className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Download as Excel
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ChartCard Component
+const ChartCard = ({ title, subtitle, headerIcon, children, className = '', height = 'h-[300px]', onDownload }) => {
+  return (
+    <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700 ${className} flex flex-col`}>
+      <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-700">
+        <div>
+          <h2 className="text-lg font-semibold dark:text-white flex items-center">
+            {headerIcon && <span className="mr-2 text-indigo-500">{headerIcon}</span>}
+            {title}
+          </h2>
+          {subtitle && <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">{subtitle}</p>}
+        </div>
+        <DropdownMenu onDownload={onDownload} />
+      </div>
+      <div className={`p-5 flex-1 ${height}`}>
+        {children}
+      </div>
+    </div>
+  );
+};
+
+// StatsCard Component
 const StatsCard = ({ title, value, icon: Icon, color, growth }) => (
   <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700 h-full group">
     <div className={`absolute inset-x-0 top-0 h-1 ${color} opacity-80 group-hover:opacity-100 transition-opacity`}></div>
@@ -50,26 +104,6 @@ const StatsCard = ({ title, value, icon: Icon, color, growth }) => (
         {title}
       </h3>
       <p className="text-2xl font-bold dark:text-white mt-1">{value}</p>
-    </div>
-  </div>
-);
-
-const ChartCard = ({ title, subtitle, headerIcon, children, className = '', height = 'h-[300px]' }) => (
-  <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700 ${className} flex flex-col`}>
-    <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-700">
-      <div>
-        <h2 className="text-lg font-semibold dark:text-white flex items-center">
-          {headerIcon && <span className="mr-2 text-indigo-500">{headerIcon}</span>}
-          {title}
-        </h2>
-        {subtitle && <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">{subtitle}</p>}
-      </div>
-      <button className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-        <MoreHorizontal className="w-4 h-4" />
-      </button>
-    </div>
-    <div className={`p-5 flex-1 ${height}`}>
-      {children}
     </div>
   </div>
 );
@@ -121,6 +155,80 @@ export default function DashboardComp() {
     }),
     [data.contentDistribution]
   );
+
+  // Download handlers
+  const handleDownloadActivity = () => {
+    const worksheet = XLSX.utils.json_to_sheet(data.activityData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Activity');
+    XLSX.writeFile(workbook, 'activity_data.xlsx');
+  };
+
+  const handleDownloadContentCategories = () => {
+    const worksheet = XLSX.utils.json_to_sheet(data.contentDistribution.map(item => ({
+      Category: item.name,
+      Posts: item.value,
+      Percentage: `${contentDistributionPercentages.find(p => p.name === item.name)?.percentage}%`
+    })));
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Content Categories');
+    XLSX.writeFile(workbook, 'content_categories.xlsx');
+  };
+
+  const handleDownloadCategoryUsage = () => {
+    const worksheet = XLSX.utils.json_to_sheet(categoryUsageData.map(item => ({
+      Category: item.name,
+      Posts: item.count
+    })));
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Category Usage');
+    XLSX.writeFile(workbook, 'category_usage.xlsx');
+  };
+
+  const handleDownloadTopPerformers = () => {
+    const worksheet = XLSX.utils.json_to_sheet(data.topPerformers.map(item => ({
+      Name: item.name,
+      Posts: item.value,
+      Trend: item.trend
+    })));
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Top Performers');
+    XLSX.writeFile(workbook, 'top_performers.xlsx');
+  };
+
+  const handleDownloadRoleDistribution = () => {
+    const worksheet = XLSX.utils.json_to_sheet([{
+      Admins: data.totalAdmins,
+      Staff: data.totalStaff,
+      Total_Users: data.totalUsers
+    }]);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Role Distribution');
+    XLSX.writeFile(workbook, 'role_distribution.xlsx');
+  };
+
+  const handleDownloadRecentUsers = () => {
+    const worksheet = XLSX.utils.json_to_sheet(data.users.map(user => ({
+      Username: user.username,
+      Email: user.email,
+      Joined: formatDate(user.createdAt)
+    })));
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Recent Users');
+    XLSX.writeFile(workbook, 'recent_users.xlsx');
+  };
+
+  const handleDownloadRecentPosts = () => {
+    const worksheet = XLSX.utils.json_to_sheet(data.posts.map(post => ({
+      Title: post.title,
+      Category: data.categories.find(cat => cat._id === post.category)?.name || 'Uncategorized',
+      Views: post.views || 0,
+      Created: formatDate(post.createdAt)
+    })));
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Recent Posts');
+    XLSX.writeFile(workbook, 'recent_posts.xlsx');
+  };
 
   // Data fetching and processing
   const fetchData = useCallback(async () => {
@@ -193,7 +301,7 @@ export default function DashboardComp() {
 
       setData({
         users: usersData.users.slice(0, 5),
-        allUsers: usersData.users,  // Store all users for role distribution
+        allUsers: usersData.users,
         posts: postsData.posts.slice(0, 5),
         categories: categoriesData,
         comments: commentsData,
@@ -300,26 +408,27 @@ export default function DashboardComp() {
           value={data.totalAdmins} 
           icon={Shield} 
           color="bg-purple-500" 
-          growth={`${Math.round((data.totalAdmins / data.totalUsers) * 100)}%`} 
+          growth={`${Math.round((data.totalAdmins / data.totalUsers) * 100) || 0}%`} 
         />
         <StatsCard 
           title="Staff Users" 
           value={data.totalStaff} 
           icon={Users} 
           color="bg-blue-500" 
-          growth={`${Math.round((data.totalStaff / data.totalUsers) * 100)}%`} 
+          growth={`${Math.round((data.totalStaff / data.totalUsers) * 100) || 0}%`} 
         />
       </div>
 
       {/* Main Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-        {/* Activity Chart - Takes 2 columns on large screens */}
+        {/* Activity Chart */}
         <div className="lg:col-span-2">
           <ChartCard 
             title="User & Post Activity" 
             subtitle="Last 7 days" 
             headerIcon={<BarChart2 className="w-5 h-5" />}
             height="h-[300px]"
+            onDownload={handleDownloadActivity}
           >
             <div className="mb-3">
               <div className="flex items-center">
@@ -368,12 +477,13 @@ export default function DashboardComp() {
           </ChartCard>
         </div>
 
-        {/* Content Distribution - Takes 1 column on large screens */}
+        {/* Content Distribution */}
         <div className="lg:col-span-1">
           <ChartCard 
             title="Content Categories" 
             headerIcon={<Activity className="w-5 h-5" />}
             height="h-[300px]"
+            onDownload={handleDownloadContentCategories}
           >
             <div className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -429,6 +539,7 @@ export default function DashboardComp() {
             subtitle="Posts per category" 
             headerIcon={<Activity className="w-5 h-5" />}
             height="h-[300px]"
+            onDownload={handleDownloadCategoryUsage}
           >
             <div className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -481,15 +592,13 @@ export default function DashboardComp() {
 
         {/* Top Performers */}
         <div className="lg:col-span-1">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700 h-full">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700  h-full">
             <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-700">
               <h2 className="text-lg font-semibold dark:text-white flex items-center">
                 <Users className="mr-2 text-emerald-500 w-5 h-5" />
                 Top Content Creators
               </h2>
-              <button className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                <MoreHorizontal className="w-4 h-4" />
-              </button>
+              <DropdownMenu onDownload={handleDownloadTopPerformers} />
             </div>
             <div className="p-5 space-y-3 h-[calc(300px-73px)]">
               {data.topPerformers.length > 0 ? (
@@ -503,6 +612,7 @@ export default function DashboardComp() {
                         <h4 className="text-sm font-medium dark:text-white">{user.name}</h4>
                         <p className="text-xs text-gray-500">Content Creator</p>
                       </div>
+                    disobey
                     </div>
                     <div className="flex items-center bg-white dark:bg-gray-800 px-2 py-1 rounded-md shadow-sm">
                       {user.trend === 'up' ? (
@@ -532,6 +642,7 @@ export default function DashboardComp() {
             title="Role Distribution" 
             headerIcon={<Users className="w-5 h-5" />}
             height="h-[300px]"
+            onDownload={handleDownloadRoleDistribution}
           >
             <div className="h-[200px]">
               <RoleDistribution users={data.allUsers} />
@@ -554,10 +665,13 @@ export default function DashboardComp() {
               <Users className="mr-2 text-blue-500 w-5 h-5" />
               Recent Users
             </h2>
-            <Link to="/dashboard?tab=users" className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline flex items-center">
-              View All
-              <Eye className="ml-1 w-4 h-4" />
-            </Link>
+            <div className="flex items-center space-x-2">
+              <Link to="/dashboard?tab=users" className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline flex items-center">
+                View All
+                <Eye className="ml-1 w-4 h-4" />
+              </Link>
+              <DropdownMenu onDownload={handleDownloadRecentUsers} />
+            </div>
           </div>
           <div className="p-5">
             {data.users.length > 0 ? (
@@ -595,10 +709,13 @@ export default function DashboardComp() {
               <FileText className="mr-2 text-emerald-500 w-5 h-5" />
               Recent Posts
             </h2>
-            <Link to="/dashboard?tab=posts" className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline flex items-center">
-              View All
-              <Eye className="ml-1 w-4 h-4" />
-            </Link>
+            <div className="flex items-center space-x-2">
+              <Link to="/dashboard?tab=posts" className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline flex items-center">
+                View All
+                <Eye className="ml-1 w-4 h-4" />
+              </Link>
+              <DropdownMenu onDownload={handleDownloadRecentPosts} />
+            </div>
           </div>
           <div className="p-5">
             {data.posts.length > 0 ? (
