@@ -3,14 +3,16 @@ import { AiFillGoogleCircle } from 'react-icons/ai';
 import { GoogleAuthProvider, signInWithPopup, getAuth } from 'firebase/auth';
 import { app } from '../firebase';
 import { useDispatch } from 'react-redux';
-import { signInSuccess } from '../redux/user/userSlice';
+import { signInSuccess, signInFailure } from '../redux/user/userSlice';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 export default function OAuth() {
     const auth = getAuth(app)
     const dispatch = useDispatch()
     const navigate = useNavigate()
-    const handleGoogleClick = async () =>{
+    
+    const handleGoogleClick = async () => {
         const provider = new GoogleAuthProvider()
         provider.setCustomParameters({ prompt: 'select_account' })
         try {
@@ -23,20 +25,26 @@ export default function OAuth() {
                     email: resultsFromGoogle.user.email,
                     googlePhotoUrl: resultsFromGoogle.user.photoURL,
                 }),
-                })
+            })
             const data = await res.json()
-            if (res.ok){
+            if (res.ok) {
                 dispatch(signInSuccess(data))
                 navigate('/')
+            } else {
+                dispatch(signInFailure(data.message || 'Google authentication failed'))
+                toast.error(data.message || 'Google authentication failed')
             }
         } catch (error) {
             console.log(error);
+            dispatch(signInFailure(error.message))
+            toast.error(error.message)
         }
     } 
-  return (
-    <Button type='button' gradientDuoTone='pinkToOrange' outline onClick={handleGoogleClick} className='flex justify-center items-center w-full'>
-        <AiFillGoogleCircle className='w-6 h-6 mr-2'/>
-        Continue with Google
-    </Button>
-  )
+    
+    return (
+        <Button type='button' gradientDuoTone='pinkToOrange' outline onClick={handleGoogleClick} className='flex justify-center items-center w-full'>
+            <AiFillGoogleCircle className='w-6 h-6 mr-2'/>
+            Continue with Google
+        </Button>
+    )
 }

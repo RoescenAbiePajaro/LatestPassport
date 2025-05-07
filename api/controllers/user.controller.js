@@ -181,6 +181,21 @@ export const approveUser = async (req, res, next) => {
   }
 };
 
+export const rejectUser = async (req, res, next) => {
+  if (!req.user.isAdmin) {
+    return next(errorHandler(403, 'Only admins can reject users'));
+  }
+
+  try {
+    await User.findByIdAndDelete(req.params.userId);
+    res.status(200).json({ 
+      message: 'User rejected and deleted successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getPendingUsers = async (req, res, next) => {
   if (!req.user.isAdmin) {
     return next(errorHandler(403, 'Only admins can view pending users'));

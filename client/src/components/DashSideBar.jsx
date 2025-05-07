@@ -57,6 +57,13 @@ const sidebarItems = [
     adminOnly: true,
     path: '/dashboard?tab=users'
   },
+  {
+    id: 'userapproval',
+    label: 'User Approvals',
+    icon: HiOutlineUserGroup,
+    adminOnly: true,
+    path: '/dashboard?tab=userapproval'
+  },
 ];
 
 export default function DashSidebar() {

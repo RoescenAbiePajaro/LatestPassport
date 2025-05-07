@@ -51,8 +51,16 @@ export default function SignIn() {
         body: JSON.stringify(formData),
       });
       const data = await res.json();
+      
       if (data.success === false) {
         dispatch(signInFailure(data.message));
+        return;
+      }
+      
+      // Check if the user is approved
+      if (data.isApproved === false) {
+        dispatch(signInFailure('Your account is pending approval. Please wait for an administrator to approve your account.'));
+        return;
       }
 
       if (res.ok) {
@@ -185,8 +193,6 @@ export default function SignIn() {
                   Remember me
                 </label>
               </div>
-              
-              
             </div>
             
             <button
@@ -213,7 +219,7 @@ export default function SignIn() {
               </div>
             </div>
             
-            <div >
+            <div>
               <OAuth />
             </div>
           </form>
