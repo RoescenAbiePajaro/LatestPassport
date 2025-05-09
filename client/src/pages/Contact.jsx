@@ -13,7 +13,7 @@ export default function Contact() {
               <div className='mt-6 space-y-4'>
                 <div>
                   <h3 className='text-lg font-semibold text-gray-700 dark:text-gray-300'>Email</h3>
-                  <p className='text-gray-600 dark:text-gray-400'>support@civicview.com</p>
+                  <p className='text-gray-600 dark:text-gray-400'>info@civicview.com</p>
                 </div>
                 <div>
                   <h3 className='text-lg font-semibold text-gray-700 dark:text-gray-300'>Phone</h3>

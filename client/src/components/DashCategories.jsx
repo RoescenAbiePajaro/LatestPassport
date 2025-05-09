@@ -35,7 +35,8 @@ export default function CategoryManager() {
     editingId: null,
     categoryToDelete: null,
     showModal: false,
-    isPageLoading: true
+    isPageLoading: true,
+    searchTerm: '' // Add this line
   });
 
   // Destructure state for easier access
@@ -54,14 +55,20 @@ export default function CategoryManager() {
   } = state;
 
   // Memoized pagination calculations
-  const { currentItems, totalPages } = useMemo(() => {
+  const { currentItems, totalPages, filteredCount } = useMemo(() => {
+    // Filter categories based on search term
+    const filteredCategories = categories.filter(category => 
+      category.name.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
+      (category.description && category.description.toLowerCase().includes(state.searchTerm.toLowerCase()))
+    );
+
     const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
     const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
-    const currentItems = categories.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(categories.length / ITEMS_PER_PAGE);
+    const currentItems = filteredCategories.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredCategories.length / ITEMS_PER_PAGE);
     
-    return { currentItems, totalPages };
-  }, [categories, currentPage]);
+    return { currentItems, totalPages, filteredCount: filteredCategories.length };
+  }, [categories, currentPage, state.searchTerm]);
 
   // State updater helper
   const updateState = (updates) => {
@@ -234,6 +241,17 @@ export default function CategoryManager() {
           {showCreateForm ? 'Hide Form' : 'Create Category'}
         </button>
       </div>
+
+      {/* Add SearchBar here */}
+      <SearchBar 
+        searchTerm={state.searchTerm}
+        onSearchChange={(value) => {
+          updateState({ 
+            searchTerm: value,
+            currentPage: 1 // Reset to first page when searching
+          });
+        }}
+      />
 
       {successMessage && (
         <motion.div
@@ -436,9 +454,11 @@ export default function CategoryManager() {
             <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm text-gray-700 dark:text-gray-300">
-                  Showing <span className="font-medium">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> to{' '}
-                  <span className="font-medium">{Math.min(currentPage * ITEMS_PER_PAGE, categories.length)}</span> of{' '}
-                  <span className="font-medium">{categories.length}</span> categories
+                  Showing <span className="font-medium">{currentItems.length ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to{' '}
+                  <span className="font-medium">
+                    {Math.min(currentPage * ITEMS_PER_PAGE, filteredCount)}
+                  </span> of{' '}
+                  <span className="font-medium">{filteredCount}</span> {state.searchTerm ? 'filtered' : ''} categories
                 </p>
               </div>
               <div>
@@ -551,3 +571,25 @@ export default function CategoryManager() {
     </div>
   );
 }
+
+// Add this new component after the existing imports
+const SearchBar = ({ searchTerm, onSearchChange }) => {
+  return (
+    <div className="mb-6">
+      <div className="relative">
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder="Search categories..."
+          className="w-full px-4 py-3 pl-10 rounded-lg border bg-white dark:bg-gray-700 focus:ring-2 focus:ring-teal-500 dark:text-white"
+        />
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  );
+};

@@ -74,7 +74,6 @@ export default function FooterComponent() {
             <ul className="space-y-4">
               <li><Link to="/about" className="text-gray-300 hover:text-teal-400 transition duration-300">About CivicView</Link></li>
               <li><Link to="/contact" className="text-gray-300 hover:text-teal-400 transition duration-300">Contact Us</Link></li>
-              <li><Link to="/news" className="text-gray-300 hover:text-teal-400 transition duration-300">News & Updates</Link></li>
             </ul>
           </div>
           

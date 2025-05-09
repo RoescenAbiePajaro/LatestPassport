@@ -232,13 +232,7 @@ export default function CreatePost() {
               {isLoadingCategories ? 'Loading categories...' : 
                categories.length === 0 && !categoryError ? 'No categories available. Please create one first.' : ''}
             </span>
-            <button
-              type="button"
-              onClick={() => navigate('/category-manager')}
-              className="ml-auto text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-            >
-              Manage Categories
-            </button>
+            
           </div>
         </div>
 

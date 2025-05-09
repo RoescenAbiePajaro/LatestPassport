@@ -1,18 +1,9 @@
-//DashUsers.jsx
-
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { HiOutlineExclamationCircle, HiOutlineUserGroup } from 'react-icons/hi';
 import { motion } from 'framer-motion';
 import LoadingSpinner from './LoadingSpinner';
 import { Clock } from 'lucide-react';
-import { 
-  HiOutlineChevronLeft,
-  HiOutlineChevronRight
-} from 'react-icons/hi';
-
-// Constants
-const ITEMS_PER_PAGE = 5;
 
 // Separate component for the user table row to optimize rendering
 const UserRow = ({ user, onRoleChange, onDeleteClick }) => {
@@ -145,6 +136,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, confirm
 const SearchFilters = ({ searchTerm, setSearchTerm, userType, setUserType }) => {
   return (
     <div className='flex flex-col sm:flex-row gap-4 mb-6'>
+      
       <div className='flex-1'>
         <input
           type="text"
@@ -172,57 +164,38 @@ const SearchFilters = ({ searchTerm, setSearchTerm, userType, setUserType }) => 
 export default function DashUsers() {
   const { currentUser } = useSelector((state) => state.user);
   const [users, setUsers] = useState([]);
+  const [showMore, setShowMore] = useState(true);
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, userId: '' });
   const [roleModal, setRoleModal] = useState({ isOpen: false, user: null });
   const [searchTerm, setSearchTerm] = useState('');
   const [userType, setUserType] = useState('all');
   const [isLoading, setIsLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
   
-  // Memoized pagination calculations
-  const { currentItems, totalPages } = useMemo(() => {
-    const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
-    const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
-    
-    // Filter users based on search and type
-    const filtered = users.filter(user => {
-      const matchesSearch = 
-        !searchTerm || 
-        user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase());
-        
-      const matchesType = 
-        userType === 'all' ? true :
-        userType === 'admin' ? user.isAdmin :
-        !user.isAdmin;
-        
-      return matchesSearch && matchesType;
-    });
-    
-    const currentItems = filtered.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-    
-    return { currentItems, totalPages, filteredUsers: filtered };
-  }, [users, currentPage, searchTerm, userType]);
-
-  // Fetch all users
-  const fetchUsers = useCallback(async () => {
+  // Fetch users - memoized callback to prevent unnecessary re-renders
+  const fetchUsers = useCallback(async (startIndex = 0) => {
     if (!currentUser?.isAdmin) return;
     
-    setPageLoading(true);
+    const loadingState = startIndex === 0 ? setPageLoading : setIsLoading;
+    loadingState(true);
     
     try {
-      const res = await fetch(`/api/user/getusers`);
+      const res = await fetch(`/api/user/getusers?startIndex=${startIndex}`);
       const data = await res.json();
       
       if (res.ok) {
-        setUsers(data.users);
+        if (startIndex === 0) {
+          setUsers(data.users);
+        } else {
+          setUsers(prev => [...prev, ...data.users]);
+        }
+        
+        setShowMore(data.users.length >= 9);
       }
     } catch (error) {
       console.error("Failed to fetch users:", error.message);
     } finally {
-      setPageLoading(false);
+      loadingState(false);
     }
   }, [currentUser?.isAdmin]);
   
@@ -285,6 +258,23 @@ export default function DashUsers() {
     }
   };
   
+  // Memoized filtered users to prevent re-computation on every render
+  const filteredUsers = useMemo(() => {
+    return users.filter(user => {
+      const matchesSearch = 
+        !searchTerm || 
+        user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase());
+        
+      const matchesType = 
+        userType === 'all' ? true :
+        userType === 'admin' ? user.isAdmin :
+        !user.isAdmin;
+        
+      return matchesSearch && matchesType;
+    });
+  }, [users, searchTerm, userType]);
+  
   // Handlers for user actions
   const handleRoleClick = useCallback((user) => {
     setRoleModal({ isOpen: true, user });
@@ -293,11 +283,6 @@ export default function DashUsers() {
   const handleDeleteClick = useCallback((userId) => {
     setDeleteModal({ isOpen: true, userId });
   }, []);
-
-  // Pagination handler
-  const paginate = (pageNumber) => {
-    setCurrentPage(pageNumber);
-  };
 
   return (
     <div className='w-full max-w-full p-4'>
@@ -337,8 +322,8 @@ export default function DashUsers() {
                 </tr>
               </thead>
               <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
-                {currentItems.length > 0 ? (
-                  currentItems.map((user) => (
+                {filteredUsers.length > 0 ? (
+                  filteredUsers.map((user) => (
                     <UserRow
                       key={user._id}
                       user={user}
@@ -357,83 +342,20 @@ export default function DashUsers() {
             </table>
           </div>
           
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-              <div className="flex-1 flex justify-between sm:hidden">
-                <button
-                  onClick={() => paginate(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className={`relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md ${
-                    currentPage === 1 
-                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed' 
-                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                  className={`ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md ${
-                    currentPage === totalPages 
-                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed' 
-                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  Next
-                </button>
-              </div>
-              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
-                    Showing <span className="font-medium">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> to{' '}
-                    <span className="font-medium">{Math.min(currentPage * ITEMS_PER_PAGE, currentItems.length)}</span> of{' '}
-                    <span className="font-medium">{currentItems.length}</span> users
-                  </p>
-                </div>
-                <div>
-                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                    <button
-                      onClick={() => paginate(Math.max(1, currentPage - 1))}
-                      disabled={currentPage === 1}
-                      className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium ${
-                        currentPage === 1 
-                          ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' 
-                          : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      <span className="sr-only">Previous</span>
-                      <HiOutlineChevronLeft className="h-5 w-5" aria-hidden="true" />
-                    </button>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
-                      <button
-                        key={number}
-                        onClick={() => paginate(number)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                          currentPage === number
-                            ? 'z-10 bg-teal-50 dark:bg-teal-900/30 border-teal-500 text-teal-600 dark:text-teal-400'
-                            : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-                        }`}
-                      >
-                        {number}
-                      </button>
-                    ))}
-                    <button
-                      onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
-                      disabled={currentPage === totalPages}
-                      className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium ${
-                        currentPage === totalPages 
-                          ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' 
-                          : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      <span className="sr-only">Next</span>
-                      <HiOutlineChevronRight className="h-5 w-5" aria-hidden="true" />
-                    </button>
-                  </nav>
-                </div>
-              </div>
+          {filteredUsers.length > 0 && showMore && (
+            <div className="flex justify-center mt-8">
+              <button 
+                onClick={() => fetchUsers(users.length)}
+                disabled={isLoading}
+                className="px-6 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-full text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:opacity-70"
+              >
+                {isLoading ? (
+                  <div className="flex items-center justify-center">
+                    <LoadingSpinner size="sm" color="primary" />
+                    <span className="ml-2">Loading...</span>
+                  </div>
+                ) : 'Show more users'}
+              </button>
             </div>
           )}
         </>
