@@ -1,3 +1,5 @@
+//DashCategories
+
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -33,9 +35,7 @@ export default function CategoryManager() {
     editingId: null,
     categoryToDelete: null,
     showModal: false,
-    isPageLoading: true,
-    showMore: true, // Added showMore state
-    displayedItems: ITEMS_PER_PAGE // Track number of displayed items
+    isPageLoading: true
   });
 
   // Destructure state for easier access
@@ -50,25 +50,33 @@ export default function CategoryManager() {
     editingId,
     categoryToDelete,
     showModal,
-    isPageLoading,
-    showMore,
-    displayedItems
+    isPageLoading
   } = state;
 
   // Memoized pagination calculations
-  const { currentItems, totalPages, indexOfFirstItem, indexOfLastItem } = useMemo(() => {
-    const indexOfLastItem = Math.min(currentPage * ITEMS_PER_PAGE, displayedItems);
+  const { currentItems, totalPages } = useMemo(() => {
+    const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
     const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
-    const currentItems = categories.slice(0, indexOfLastItem);
+    const currentItems = categories.slice(indexOfFirstItem, indexOfLastItem);
     const totalPages = Math.ceil(categories.length / ITEMS_PER_PAGE);
     
-    return { currentItems, totalPages, indexOfFirstItem, indexOfLastItem };
-  }, [categories, currentPage, displayedItems]);
+    return { currentItems, totalPages };
+  }, [categories, currentPage]);
 
   // State updater helper
   const updateState = (updates) => {
     setState(prev => ({ ...prev, ...updates }));
   };
+
+  // Auto-clear success message after 5 seconds
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        updateState({ successMessage: '' });
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
 
   // Fetch categories
   const fetchCategories = useCallback(async () => {
@@ -79,8 +87,7 @@ export default function CategoryManager() {
       if (res.ok) {
         updateState({ 
           categories: data, 
-          isPageLoading: false,
-          showMore: data.length > ITEMS_PER_PAGE // Show "Show more" if there are more items
+          isPageLoading: false
         });
       } else {
         throw new Error(data.message || 'Failed to fetch categories');
@@ -155,7 +162,8 @@ export default function CategoryManager() {
         description: category.description || ''
       },
       editingId: category._id,
-      showCreateForm: true
+      showCreateForm: true,
+      successMessage: '' // Clear success message when editing starts
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -197,15 +205,6 @@ export default function CategoryManager() {
     }
   };
 
-  const handleShowMore = () => {
-    const newDisplayedItems = displayedItems + ITEMS_PER_PAGE;
-    updateState({
-      displayedItems: newDisplayedItems,
-      currentPage: Math.ceil(newDisplayedItems / ITEMS_PER_PAGE),
-      showMore: newDisplayedItems < categories.length // Hide button if all items are displayed
-    });
-  };
-
   const paginate = (pageNumber) => {
     updateState({ currentPage: pageNumber });
   };
@@ -228,7 +227,7 @@ export default function CategoryManager() {
           Category Management
         </h2>
         <button
-          onClick={() => updateState({ showCreateForm: !showCreateForm })}
+          onClick={() => updateState({ showCreateForm: !showCreateForm, successMessage: '' })}
           className="flex items-center gap-2 bg-gradient-to-r from-teal-400 to-blue-500 dark:from-teal-500 dark:to-blue-600 text-white font-medium px-5 py-2 rounded-lg transition-all duration-300 hover:from-teal-500 hover:to-blue-600 hover:shadow-lg"
         >
           <HiOutlinePlus className="h-5 w-5" />
@@ -240,6 +239,7 @@ export default function CategoryManager() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
           className="mb-6 p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-900 rounded-lg flex items-center gap-3"
         >
           <HiOutlineCheckCircle className="h-5 w-5 text-green-500 dark:text-green-400" />
@@ -306,7 +306,8 @@ export default function CategoryManager() {
                     updateState({
                       showCreateForm: false,
                       editingId: null,
-                      formData: { name: '', description: '' }
+                      formData: { name: '', description: '' },
+                      successMessage: ''
                     });
                   }}
                   className="flex items-center gap-2 bg-gradient-to-r from-gray-400 to-gray-500 dark:from-gray-500 dark:to-gray-600 text-white font-medium px-5 py-2 rounded-lg transition-all duration-300 hover:from-gray-500 hover:to-gray-600 hover:shadow-lg"
@@ -363,7 +364,12 @@ export default function CategoryManager() {
                       {category.name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                      {category.description || '—'}
+                      {category.description 
+                        ? category.description.length > 50 
+                          ? `${category.description.substring(0, 50)}...` 
+                          : category.description
+                        : '—'
+                      }
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                       {category.postCount || 0}
@@ -400,19 +406,86 @@ export default function CategoryManager() {
           </table>
         </div>
 
-        
-      </div>
-
-      {showMore && (
-          <div className="flex justify-center mt-8">
-            <button 
-              onClick={handleShowMore}
-              className="px-6 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-full text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
-            >
-              Show more categories
-            </button>
+        {/* Pagination */}
+        {categories.length > ITEMS_PER_PAGE && (
+          <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <div className="flex-1 flex justify-between sm:hidden">
+              <button
+                onClick={() => paginate(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className={`relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md ${
+                  currentPage === 1 
+                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed' 
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className={`ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md ${
+                  currentPage === totalPages 
+                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed' 
+                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                Next
+              </button>
+            </div>
+            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-gray-700 dark:text-gray-300">
+                  Showing <span className="font-medium">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> to{' '}
+                  <span className="font-medium">{Math.min(currentPage * ITEMS_PER_PAGE, categories.length)}</span> of{' '}
+                  <span className="font-medium">{categories.length}</span> categories
+                </p>
+              </div>
+              <div>
+                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                  <button
+                    onClick={() => paginate(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium ${
+                      currentPage === 1 
+                        ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' 
+                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    <span className="sr-only">Previous</span>
+                    <HiOutlineChevronLeft className="h-5 w-5" aria-hidden="true" />
+                  </button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
+                    <button
+                      key={number}
+                      onClick={() => paginate(number)}
+                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                        currentPage === number
+                          ? 'z-10 bg-teal-50 dark:bg-teal-900/30 border-teal-500 text-teal-600 dark:text-teal-400'
+                          : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      {number}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium ${
+                      currentPage === totalPages 
+                        ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' 
+                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    <span className="sr-only">Next</span>
+                    <HiOutlineChevronRight className="h-5 w-5" aria-hidden="true" />
+                  </button>
+                </nav>
+              </div>
+            </div>
           </div>
         )}
+      </div>
 
       {/* Delete Confirmation Modal */}
       {showModal && (
