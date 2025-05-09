@@ -100,6 +100,15 @@ const EmptyState = () => (
   </div>
 );
 
+// No search results component
+const NoSearchResults = () => (
+  <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800/50 rounded-xl p-10 text-center">
+    <Search className="w-16 h-16 text-gray-400 dark:text-gray-500 mb-4" />
+    <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">No users match your search criteria</h3>
+    <p className="text-gray-500 dark:text-gray-400 mb-6">Try adjusting your search or clear it to see all pending users.</p>
+  </div>
+);
+
 export default function PendingUsersApproval() {
   const [pendingUsers, setPendingUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -143,7 +152,7 @@ export default function PendingUsersApproval() {
   };
 
   // Memoized filtered and paginated users
-  const { filteredUsers, totalPages } = useMemo(() => {
+  const { filteredUsers, totalPages, totalFilteredUsers } = useMemo(() => {
     const filtered = pendingUsers.filter(user => 
       user.username.toLowerCase().includes(searchTerm.toLowerCase()) || 
       user.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -376,6 +385,8 @@ export default function PendingUsersApproval() {
             <>
               {pendingUsers.length === 0 ? (
                 <EmptyState />
+              ) : totalFilteredUsers === 0 && searchTerm ? (
+                <NoSearchResults />
               ) : (
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
