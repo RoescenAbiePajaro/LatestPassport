@@ -103,9 +103,9 @@ export default function Header() {
             Home
             {activeLinkStyle('/')}
           </Link>
-          <Link to="/faqs" className={navLinkClass('/faqs')}>
-            FAQs
-            {activeLinkStyle('/faqs')}
+          <Link to="/about" className={navLinkClass('/about')}>
+            About CivicView
+            {activeLinkStyle('/about')}
           </Link>
           <Link to="/contact" className={navLinkClass('/contact')}>
             Contact Us

@@ -38,11 +38,6 @@ export default function About() {
               </div>
 
               <div className='p-4 border dark:border-gray-700 rounded-lg'>
-                <h3 className='text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2'>Digital Accessibility</h3>
-                <p className='text-gray-600 dark:text-gray-400'>24/7 access to important documents and announcements from anywhere, at any time.</p>
-              </div>
-
-              <div className='p-4 border dark:border-gray-700 rounded-lg'>
                 <h3 className='text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2'>User-Friendly Interface</h3>
                 <p className='text-gray-600 dark:text-gray-400'>Intuitive design makes it easy for everyone to find and use the information they need.</p>
               </div>

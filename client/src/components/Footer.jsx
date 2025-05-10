@@ -53,16 +53,13 @@ export default function FooterComponent() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     </svg>
-                    <span className="text-gray-300">123 Civic Street, Suite 456</span>
+                    <span className="text-gray-300">Olongapo,City</span>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
                     <svg className="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     </svg>
-                    <span className="text-gray-300">New York, NY 10001, USA</span>
                   </div>
                 </div>
               </div>
@@ -77,7 +74,6 @@ export default function FooterComponent() {
             <ul className="space-y-4">
               <li><Link to="/about" className="text-gray-300 hover:text-teal-400 transition duration-300">About CivicView</Link></li>
               <li><Link to="/contact" className="text-gray-300 hover:text-teal-400 transition duration-300">Contact Us</Link></li>
-              <li><Link to="/news" className="text-gray-300 hover:text-teal-400 transition duration-300">News & Updates</Link></li>
             </ul>
           </div>
           
@@ -90,32 +86,9 @@ export default function FooterComponent() {
               <li><Link to="/privacy-policy" className="text-gray-300 hover:text-teal-400 transition duration-300">Privacy Policy</Link></li>
               <li><Link to="/terms-conditions" className="text-gray-300 hover:text-teal-400 transition duration-300">Terms & Conditions</Link></li>
               <li><Link to="/data-protection" className="text-gray-300 hover:text-teal-400 transition duration-300">Data Protection</Link></li>
-              <li><Link to="/accessibility" className="text-gray-300 hover:text-teal-400 transition duration-300">Accessibility</Link></li>
             </ul>
           </div>
-          
-          {/* Newsletter Section */}
-          <div className="mt-8 md:mt-0">
-            <h3 className="text-lg font-semibold mb-6 text-white relative pb-2 after:content-[''] after:absolute after:left-0 after:bottom-0 after:h-1 after:w-12 after:bg-gradient-to-r after:from-teal-400 after:to-blue-500">
-              Stay Connected
-            </h3>
-            <p className="text-gray-300 mb-4 text-sm">Subscribe to our newsletter for updates</p>
-            <form className="flex flex-col space-y-4">
-              <input 
-                type="email" 
-                placeholder="Your email address" 
-                className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500 text-gray-300 text-sm"
-              />
-              <button 
-                type="submit" 
-                className="bg-gradient-to-r from-teal-500 to-blue-500 text-white rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90 transition duration-300"
-              >
-                Subscribe
-              </button>
-            </form>
-            
-            
-          </div>
+       
         </div>
       </div>
       

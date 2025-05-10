@@ -15,7 +15,7 @@ const CallToAction = () => (
         CivicView <span className="bg-gradient-to-r from-teal-400 to-blue-500 dark:from-teal-500 dark:to-blue-600 text-transparent bg-clip-text">Portal</span>
       </h1>
       <p className="text-lg text-gray-600 dark:text-gray-300 max-w-xl">
-        Streamline your application process with our intuitive platform designed for civic engagement and community development.
+        CivicView - Your Digital Gateway to Official Website Services.Real-time information access and efficient guidelines
       </p>
       <div className="flex flex-wrap gap-4 pt-2">
         <Link 

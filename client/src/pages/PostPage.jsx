@@ -194,7 +194,7 @@ export default function PostPage() {
       <div className="bg-slate-100 dark:bg-slate-900 py-20">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white mb-12 text-center">
-            More CivicView Guidelines
+            More Similar Post
           </h2>
           
           {recentPosts?.length > 0 ? (
@@ -217,12 +217,12 @@ export default function PostPage() {
       {/* Edit Post Button */}
       {post && (
         <div className="max-w-4xl mx-auto px-4 py-6">
-          <Link 
+          {/* <Link 
             to={`/update-post/${post.slug}`} 
             className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             Edit Post
-          </Link>
+          </Link> */}
         </div>
       )}
     </main>

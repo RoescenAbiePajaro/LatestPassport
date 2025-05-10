@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import PostCard from '../components/PostCard';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { HiOutlineChevronLeft, HiOutlineChevronRight } from 'react-icons/hi';
+
+// Constants
+const ITEMS_PER_PAGE = 6;
 
 export default function Search() {
   const [searchParams, setSearchParams] = useState({
@@ -15,9 +19,17 @@ export default function Search() {
   const [showMore, setShowMore] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPosts, setTotalPosts] = useState(0);
 
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Calculate pagination values
+  const totalPages = Math.ceil(totalPosts / ITEMS_PER_PAGE);
+  const indexOfLastPost = currentPage * ITEMS_PER_PAGE;
+  const indexOfFirstPost = indexOfLastPost - ITEMS_PER_PAGE;
+  const currentPosts = posts.slice(indexOfFirstPost, indexOfLastPost);
 
   // Fetch categories when component mounts
   useEffect(() => {
@@ -75,6 +87,7 @@ export default function Search() {
         
         const data = await res.json();
         setPosts(data.posts);
+        setTotalPosts(data.posts.length);
         setShowMore(data.posts.length === 9);
       } catch (error) {
         console.error('Error fetching posts:', error);
@@ -92,6 +105,7 @@ export default function Search() {
       ...prev, 
       [id]: value 
     }));
+    setCurrentPage(1); // Reset to first page when filters change
   };
 
   const handleShowMore = async () => {
@@ -107,6 +121,7 @@ export default function Search() {
       
       const data = await res.json();
       setPosts(prev => [...prev, ...data.posts]);
+      setTotalPosts(prev => prev + data.posts.length);
       setShowMore(data.posts.length === 9);
     } catch (error) {
       console.error('Error fetching more posts:', error);
@@ -123,6 +138,11 @@ export default function Search() {
 
   const toggleFilters = () => {
     setIsFilterOpen(!isFilterOpen);
+  };
+
+  const paginate = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -224,7 +244,7 @@ export default function Search() {
             Search Results
             {!loading && posts.length > 0 && (
               <span className="ml-2 text-sm bg-gray-100 text-gray-600 py-1 px-2 rounded-full dark:bg-gray-700 dark:text-gray-300">
-                {posts.length} posts
+                {totalPosts} posts
               </span>
             )}
           </h2>
@@ -247,29 +267,112 @@ export default function Search() {
               Clear filters
             </button>
           </div>
+          
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-              {posts.map((post) => (
+              {currentPosts.map((post) => (
                 <PostCard key={post._id} post={post} />
               ))}
             </div>
             
-            {showMore && (
-            <div className="flex justify-center mt-8">
-              <button 
-                onClick={handleShowMore}
-                className="px-6 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-full text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
-              >
-                {loading ? (
-                  <div className="flex items-center justify-center">
-                    <LoadingSpinner size="sm" color="primary" />
-                    <span className="ml-2">Loading...</span>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <div className="flex-1 flex justify-between sm:hidden">
+                  <button
+                    onClick={() => paginate(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className={`relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md ${
+                      currentPage === 1 
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed' 
+                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className={`ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md ${
+                      currentPage === totalPages 
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed' 
+                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    Next
+                  </button>
+                </div>
+                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      Showing <span className="font-medium">{indexOfFirstPost + 1}</span> to{' '}
+                      <span className="font-medium">
+                        {Math.min(indexOfLastPost, totalPosts)}
+                      </span> of{' '}
+                      <span className="font-medium">{totalPosts}</span> results
+                    </p>
                   </div>
-                ) : 'Show more users'}
-              </button>
-            </div>
-          )}
+                  <div>
+                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                      <button
+                        onClick={() => paginate(Math.max(1, currentPage - 1))}
+                        disabled={currentPage === 1}
+                        className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium ${
+                          currentPage === 1 
+                            ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' 
+                            : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        <span className="sr-only">Previous</span>
+                        <HiOutlineChevronLeft className="h-5 w-5" aria-hidden="true" />
+                      </button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
+                        <button
+                          key={number}
+                          onClick={() => paginate(number)}
+                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                            currentPage === number
+                              ? 'z-10 bg-teal-50 dark:bg-teal-900/30 border-teal-500 text-teal-600 dark:text-teal-400'
+                              : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                          }`}
+                        >
+                          {number}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
+                        disabled={currentPage === totalPages}
+                        className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium ${
+                          currentPage === totalPages 
+                            ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' 
+                            : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        <span className="sr-only">Next</span>
+                        <HiOutlineChevronRight className="h-5 w-5" aria-hidden="true" />
+                      </button>
+                    </nav>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {showMore && (
+              <div className="flex justify-center mt-8">
+                <button 
+                  onClick={handleShowMore}
+                  className="px-6 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-full text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                >
+                  {loading ? (
+                    <div className="flex items-center justify-center">
+                      <LoadingSpinner size="sm" color="primary" />
+                      <span className="ml-2">Loading...</span>
+                    </div>
+                  ) : 'Show more posts'}
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>
