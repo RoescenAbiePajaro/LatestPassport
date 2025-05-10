@@ -28,7 +28,7 @@ export default function CallToAction() {
       main: "CivicView",
       highlight: "Portal"
     },
-    description: "Streamline your application process with our intuitive platform designed for civic engagement and community development.",
+    description: "CivicView - Your Digital Gateway to Official Website Services.Real-time information access and efficient guidelines",
     button: {
       text: "View all posts",
       icon: <ArrowRight size={18} />

@@ -195,7 +195,6 @@ export default function UpdatePost() {
       {isLoading ? (
         <div className="flex flex-col items-center justify-center h-64">
           <LoadingSpinner size="lg" />
-          <p className="mt-4 text-gray-600">Loading post data...</p>
         </div>
       ) : (
         <form className="space-y-8" onSubmit={handleSubmit}>
@@ -253,13 +252,7 @@ export default function UpdatePost() {
                 {isLoadingCategories ? 'Loading categories...' : 
                  categories.length === 0 && !categoryError ? 'No categories available. Please create one first.' : ''}
               </span>
-              <button
-                type="button"
-                onClick={() => navigate('/category-manager')}
-                className="ml-auto text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-              >
-                Manage Categories
-              </button>
+              
             </div>
           </div>
 

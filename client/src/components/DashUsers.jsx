@@ -136,6 +136,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, confirm
 const SearchFilters = ({ searchTerm, setSearchTerm, userType, setUserType }) => {
   return (
     <div className='flex flex-col sm:flex-row gap-4 mb-6'>
+      
       <div className='flex-1'>
         <input
           type="text"
@@ -159,6 +160,18 @@ const SearchFilters = ({ searchTerm, setSearchTerm, userType, setUserType }) => 
     </div>
   );
 };
+
+// No search results component
+const NoSearchResults = () => (
+  <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800/50 rounded-xl p-10 text-center">
+    <svg xmlns="http://www.w3.org/2000/svg" className="w-16 h-16 text-gray-400 dark:text-gray-500 mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8"></circle>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+    <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">No users match your search criteria</h3>
+    <p className="text-gray-500 dark:text-gray-400 mb-6">Try adjusting your search or clear it to see all users.</p>
+  </div>
+);
 
 export default function DashUsers() {
   const { currentUser } = useSelector((state) => state.user);
@@ -309,37 +322,33 @@ export default function DashUsers() {
             setUserType={setUserType}
           />
           
-          <div className='overflow-x-auto rounded-lg shadow-md'>
-            <table className='w-full bg-white dark:bg-gray-800 border-collapse'>
-              <thead>
-                <tr className='bg-gray-50 dark:bg-gray-700 text-left'>
-                  <th className='px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider'>Date Created</th>
-                  <th className='px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider'>User</th>
-                  <th className='px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider'>Email</th>
-                  <th className='px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider text-center'>Role</th>
-                  <th className='px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider text-center'>Actions</th>
-                </tr>
-              </thead>
-              <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
-                {filteredUsers.length > 0 ? (
-                  filteredUsers.map((user) => (
+          {filteredUsers.length > 0 ? (
+            <div className='overflow-x-auto rounded-lg shadow-md'>
+              <table className='w-full bg-white dark:bg-gray-800 border-collapse'>
+                <thead>
+                  <tr className='bg-gray-50 dark:bg-gray-700 text-left'>
+                    <th className='px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider'>Date Created</th>
+                    <th className='px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider'>User</th>
+                    <th className='px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider'>Email</th>
+                    <th className='px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider text-center'>Role</th>
+                    <th className='px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider text-center'>Actions</th>
+                  </tr>
+                </thead>
+                <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
+                  {filteredUsers.map((user) => (
                     <UserRow
                       key={user._id}
                       user={user}
                       onRoleChange={handleRoleClick}
                       onDeleteClick={handleDeleteClick}
                     />
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="5" className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                      No users match your search criteria
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <NoSearchResults />
+          )}
           
           {filteredUsers.length > 0 && showMore && (
             <div className="flex justify-center mt-8">

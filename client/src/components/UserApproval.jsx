@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   CheckCircle, 
   XCircle, 
@@ -13,6 +13,10 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import LoadingSpinner from './LoadingSpinner';
+import { HiOutlineChevronLeft, HiOutlineChevronRight } from 'react-icons/hi';
+
+// Constants
+const ITEMS_PER_PAGE = 6;
 
 // User card component for better organization
 const UserCard = ({ user, actionInProgress, onApprove, onReject }) => (
@@ -96,6 +100,15 @@ const EmptyState = () => (
   </div>
 );
 
+// No search results component
+const NoSearchResults = () => (
+  <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800/50 rounded-xl p-10 text-center">
+    <Search className="w-16 h-16 text-gray-400 dark:text-gray-500 mb-4" />
+    <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">No users match your search criteria</h3>
+    <p className="text-gray-500 dark:text-gray-400 mb-6">Try adjusting your search or clear it to see all pending users.</p>
+  </div>
+);
+
 export default function PendingUsersApproval() {
   const [pendingUsers, setPendingUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -104,6 +117,7 @@ export default function PendingUsersApproval() {
   const [actionInProgress, setActionInProgress] = useState({});
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchPendingUsers = useCallback(async () => {
     setLoading(true);
@@ -134,12 +148,27 @@ export default function PendingUsersApproval() {
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
+    setCurrentPage(1); // Reset to first page when searching
   };
 
-  const filteredUsers = pendingUsers.filter(user => 
-    user.username.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Memoized filtered and paginated users
+  const { filteredUsers, totalPages, totalFilteredUsers } = useMemo(() => {
+    const filtered = pendingUsers.filter(user => 
+      user.username.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
+    const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
+    const paginatedUsers = filtered.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+
+    return { filteredUsers: paginatedUsers, totalPages, totalFilteredUsers: filtered.length };
+  }, [pendingUsers, searchTerm, currentPage]);
+
+  const paginate = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
 
   const handleApprove = useCallback(async (userId) => {
     setActionInProgress(prev => ({ ...prev, [userId]: 'approve' }));
@@ -266,43 +295,43 @@ export default function PendingUsersApproval() {
           <span>Last updated: {new Date().toLocaleTimeString()}</span>
         </div>
       </div>
-      
-      {/* Search and Actions */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 mb-6">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-grow">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="text-gray-400" size={18} />
-            </div>
-            <input
-              type="text"
-              placeholder="Search by username or email..."
-              value={searchTerm}
-              onChange={handleSearch}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200"
-            />
-          </div>
-          
-          <div className="flex gap-2">
-            <button 
-              onClick={fetchPendingUsers}
-              className="flex items-center justify-center px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-all"
-            >
-              <RefreshCw size={18} className="mr-2" />
-              Refresh
-            </button>
-            
-            <button 
-              onClick={approveAll}
-              className="flex items-center gap-2 bg-gradient-to-r from-teal-400 to-blue-500 dark:from-teal-500 dark:to-blue-600 text-white font-medium px-5 py-2 rounded-lg transition-all duration-300 hover:from-teal-500 hover:to-blue-600 hover:shadow-lg"
-              disabled={pendingUsers.length === 0 || Object.keys(actionInProgress).length > 0}
-            >
-              <CheckCircle size={18} className="mr-2" />
-              Approve All
-            </button>
-          </div>
-        </div>
+
+  {/* Search and Actions */}
+<div className="mb-6">
+  <div className="flex flex-col sm:flex-row gap-3 w-full items-stretch">
+    <div className="relative flex-grow">
+      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <Search className="text-gray-400" size={18} />
       </div>
+      <input
+        type="text"
+        placeholder="Search by username or email..."
+        value={searchTerm}
+        onChange={handleSearch}
+        className="w-full pl-10 pr-4 py-2 h-full border-2 border-white bg-white dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+      />
+    </div>
+    
+    <div className="flex gap-2 sm:flex-nowrap flex-wrap">
+      <button 
+        onClick={fetchPendingUsers}
+        className="flex items-center justify-center px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-all h-full"
+      >
+        <RefreshCw size={18} className="mr-2" />
+        Refresh
+      </button>
+      
+      <button 
+        onClick={approveAll}
+        className="flex items-center justify-center gap-2 bg-gradient-to-r from-teal-400 to-blue-500 dark:from-teal-500 dark:to-blue-600 text-white font-medium px-5 py-2 rounded-lg transition-all duration-300 hover:from-teal-500 hover:to-blue-600 hover:shadow-lg h-full"
+        disabled={pendingUsers.length === 0 || Object.keys(actionInProgress).length > 0}
+      >
+        <CheckCircle size={18} className="mr-2" />
+        Approve All
+      </button>
+    </div>
+  </div>
+</div>
 
       {/* Notification Messages */}
       <AnimatePresence>
@@ -356,18 +385,102 @@ export default function PendingUsersApproval() {
             <>
               {pendingUsers.length === 0 ? (
                 <EmptyState />
+              ) : totalFilteredUsers === 0 && searchTerm ? (
+                <NoSearchResults />
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredUsers.map((user) => (
-                    <UserCard 
-                      key={user._id}
-                      user={user}
-                      actionInProgress={actionInProgress}
-                      onApprove={handleApprove}
-                      onReject={handleReject}
-                    />
-                  ))}
-                </div>
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredUsers.map((user) => (
+                      <UserCard 
+                        key={user._id}
+                        user={user}
+                        actionInProgress={actionInProgress}
+                        onApprove={handleApprove}
+                        onReject={handleReject}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="mt-8 flex items-center justify-between">
+                      <div className="flex-1 flex justify-between sm:hidden">
+                        <button
+                          onClick={() => paginate(Math.max(1, currentPage - 1))}
+                          disabled={currentPage === 1}
+                          className={`relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md ${
+                            currentPage === 1 
+                              ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed' 
+                              : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                          }`}
+                        >
+                          Previous
+                        </button>
+                        <button
+                          onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
+                          disabled={currentPage === totalPages}
+                          className={`ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md ${
+                            currentPage === totalPages 
+                              ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed' 
+                              : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                          }`}
+                        >
+                          Next
+                        </button>
+                      </div>
+                      <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                        <div>
+                          <p className="text-sm text-gray-700 dark:text-gray-300">
+                            Showing <span className="font-medium">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> to{' '}
+                            <span className="font-medium">{Math.min(currentPage * ITEMS_PER_PAGE, filteredUsers.length)}</span> of{' '}
+                            <span className="font-medium">{pendingUsers.length}</span> users
+                          </p>
+                        </div>
+                        <div>
+                          <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                            <button
+                              onClick={() => paginate(Math.max(1, currentPage - 1))}
+                              disabled={currentPage === 1}
+                              className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium ${
+                                currentPage === 1 
+                                  ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' 
+                                  : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                              }`}
+                            >
+                              <span className="sr-only">Previous</span>
+                              <HiOutlineChevronLeft className="h-5 w-5" aria-hidden="true" />
+                            </button>
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
+                              <button
+                                key={number}
+                                onClick={() => paginate(number)}
+                                className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                                  currentPage === number
+                                    ? 'z-10 bg-teal-50 dark:bg-teal-900/30 border-teal-500 text-teal-600 dark:text-teal-400'
+                                    : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                }`}
+                              >
+                                {number}
+                              </button>
+                            ))}
+                            <button
+                              onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
+                              disabled={currentPage === totalPages}
+                              className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium ${
+                                currentPage === totalPages 
+                                  ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed' 
+                                  : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                              }`}
+                            >
+                              <span className="sr-only">Next</span>
+                              <HiOutlineChevronRight className="h-5 w-5" aria-hidden="true" />
+                            </button>
+                          </nav>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}
