@@ -408,14 +408,14 @@ export default function CategoryManager() {
                               title="Edit"
                             >
                               <HiOutlinePencil className="h-4 w-4 mr-1" />
-                              <span>Edit</span>
+                              
                             </button>
                             <button
                               onClick={() => openDeleteModal(category._id)}
                               className="text-red-500 hover:text-red-700 dark:hover:text-red-400 flex items-center transition-colors duration-300"
                             >
                               <HiOutlineTrash className="w-4 h-4 mr-1" />
-                              <span className="text-sm font-medium">Delete</span>
+                              
                             </button>
                           </div>
                         </td>

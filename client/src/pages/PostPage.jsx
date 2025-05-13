@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Button } from 'flowbite-react';
 import PostCard from '../components/PostCard';
 import LoadingSpinner from '../components/LoadingSpinner';
+import CommentSection from '../components/CommentSection';
 
 export default function PostPage() {
   const { postSlug } = useParams();
@@ -12,6 +13,7 @@ export default function PostPage() {
   const [recentPosts, setRecentPosts] = useState(null);
   const [categoryName, setCategoryName] = useState('');
 
+  // Fetch post data
   useEffect(() => {
     const fetchPost = async () => {
       try {
@@ -25,16 +27,14 @@ export default function PostPage() {
         }
         if (res.ok) {
           setPost(data.posts[0]);
-          
-          // Fetch category name if category exists
           if (data.posts[0]?.category) {
             fetchCategoryName(data.posts[0].category);
           }
-          
           setLoading(false);
           setError(false);
         }
       } catch (error) {
+        console.error('Error fetching post:', error);
         setError(true);
         setLoading(false);
       }
@@ -42,12 +42,38 @@ export default function PostPage() {
     fetchPost();
   }, [postSlug]);
 
-  // Function to fetch category name
+  // Track post view
+  useEffect(() => {
+    const trackView = async () => {
+      if (!post?._id) return;
+
+      try {
+        const res = await fetch(`/api/post/view/${post._id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+        if (!res.ok) {
+          throw new Error('Failed to track view');
+        }
+        // Optionally, handle response data if needed
+        const data = await res.json();
+        console.log('View tracked:', data);
+      } catch (error) {
+        console.error('Error tracking view:', error);
+      }
+    };
+
+    trackView();
+  }, [post?._id]);
+
+  // Fetch category name
   const fetchCategoryName = async (categoryId) => {
     try {
       const res = await fetch(`/api/category/${categoryId}`);
       const data = await res.json();
-      
       if (res.ok && data) {
         setCategoryName(data.name);
       }
@@ -56,19 +82,20 @@ export default function PostPage() {
     }
   };
 
+  // Fetch recent posts
   useEffect(() => {
-    try {
-      const fetchRecentPosts = async () => {
+    const fetchRecentPosts = async () => {
+      try {
         const res = await fetch(`/api/post/getposts?limit=3`);
         const data = await res.json();
         if (res.ok) {
           setRecentPosts(data.posts);
         }
-      };
-      fetchRecentPosts();
-    } catch (error) {
-      console.log(error.message);
-    }
+      } catch (error) {
+        console.error('Error fetching recent posts:', error);
+      }
+    };
+    fetchRecentPosts();
   }, []);
 
   if (loading) {
@@ -82,13 +109,24 @@ export default function PostPage() {
     );
   }
 
-  if (error) {
+  if (error || !post) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900">
         <div className="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-2xl max-w-md text-center border border-slate-100 dark:border-slate-700">
           <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-8 w-8 text-red-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-3">Article Not Found</h2>
@@ -113,21 +151,14 @@ export default function PostPage() {
     <main className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 min-h-screen">
       {/* Hero Section with Fixed Image */}
       <div className="relative w-full h-[500px] md:h-[600px] overflow-hidden">
-        {/* Background gradient overlay for consistent look even if image fails */}
         <div className="absolute inset-0 bg-gradient-to-b from-slate-900/40 via-slate-900/60 to-slate-900/80 z-10"></div>
-        
-        {/* Backup solid color in case image fails */}
         <div className="absolute inset-0 bg-slate-800 dark:bg-slate-900"></div>
-        
-        {/* Image with error handling */}
-        <img 
+        <img
           src={heroImageUrl}
-          alt={post?.title || "Article hero image"}
+          alt={post?.title || 'Article hero image'}
           className="absolute inset-0 w-full h-full object-cover"
           onError={handleImageError}
         />
-        
-        {/* Content overlay */}
         <div className="absolute inset-0 z-20 flex flex-col justify-end p-6 md:p-16">
           <div className="max-w-4xl mx-auto w-full">
             {post?.category && (
@@ -144,11 +175,14 @@ export default function PostPage() {
               {post?.title}
             </h1>
             <div className="flex items-center text-white text-opacity-90 text-sm md:text-base backdrop-blur-sm bg-black/20 px-4 py-2 rounded-full inline-flex">
-              <span>{post && new Date(post.createdAt).toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              })}</span>
+              <span>
+                {post &&
+                  new Date(post.createdAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+              </span>
               <span className="mx-2">•</span>
               <span>{post && (post.content.length / 1000).toFixed(0)} min read</span>
             </div>
@@ -165,28 +199,29 @@ export default function PostPage() {
               dangerouslySetInnerHTML={{ __html: post?.content }}
             />
           </div>
-          
+
           {/* Author Information */}
           {post?.author && (
             <div className="border-t border-slate-200 dark:border-slate-700 p-6 md:p-8 bg-slate-50 dark:bg-slate-800/50">
               <div className="flex items-center">
-                <img 
-                  src={post.author.avatar || "/default-avatar.jpg"} 
-                  alt={post.author.username} 
+                <img
+                  src={post.author.avatar || '/default-avatar.jpg'}
+                  alt={post.author.username}
                   className="w-14 h-14 rounded-full object-cover mr-5 border-2 border-blue-500 shadow-md"
-                  onError={(e) => e.target.src = "/default-avatar.jpg"}
+                  onError={(e) => (e.target.src = '/default-avatar.jpg')}
                 />
                 <div>
-                  <h3 className="font-bold text-lg text-slate-900 dark:text-white">
-                    {post.author.username}
-                  </h3>
-                  <p className="text-slate-600 dark:text-slate-400">
-                    {post.author.bio || "Content Writer"}
-                  </p>
+                  <h3 className="font-bold text-lg text-slate-900 dark:text-white">{post.author.username}</h3>
+                  <p className="text-slate-600 dark:text-slate-400">{post.author.bio || 'Content Writer'}</p>
                 </div>
               </div>
             </div>
           )}
+
+          {/* Comment Section */}
+          <div className="border-t border-slate-200 dark:border-slate-700">
+            {post && <CommentSection postId={post._id} />}
+          </div>
         </article>
       </div>
 
@@ -194,9 +229,8 @@ export default function PostPage() {
       <div className="bg-slate-100 dark:bg-slate-900 py-20">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white mb-12 text-center">
-            More Similar Post
+            More Similar Posts
           </h2>
-          
           {recentPosts?.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {recentPosts.map((post) => (
@@ -205,26 +239,11 @@ export default function PostPage() {
             </div>
           ) : (
             <div className="text-center py-10 bg-white dark:bg-slate-800 rounded-xl shadow-md">
-              <p className="text-slate-600 dark:text-slate-400">
-                No related articles found.
-              </p>
-            </div>
+              <p className="text-slate-600 dark:text-slate-400">No related articles found.</p>
+</div>
           )}
-          
         </div>
       </div>
-
-      {/* Edit Post Button */}
-      {post && (
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          {/* <Link 
-            to={`/update-post/${post.slug}`} 
-            className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Edit Post
-          </Link> */}
-        </div>
-      )}
     </main>
   );
 }

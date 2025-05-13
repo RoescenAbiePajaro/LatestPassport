@@ -137,3 +137,39 @@ export const updatepost = async (req, res, next) => {
     next(error);
   }
 };
+
+// In your post.controller.js
+export const getPostViews = async (req, res) => {
+  if (!req.user.isAdmin) {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+  
+  try {
+    // Get all posts with view data and populate user info
+    const posts = await Post.find()
+      .select('title views viewHistory')
+      .populate({
+        path: 'viewHistory.userId',
+        select: 'username profilePicture email'
+      })
+      .sort({ views: -1 })
+      .limit(10);
+    
+    // Process view history data
+    const viewData = posts.map(post => ({
+      title: post.title,
+      totalViews: post.views || 0,
+      uniqueViewers: post.viewHistory?.length || 0,
+      viewHistory: post.viewHistory?.map(view => ({
+        username: view.userId?.username || 'Anonymous',
+        profilePicture: view.userId?.profilePicture || '/default-avatar.jpg',
+        email: view.userId?.email || '',
+        viewedAt: view.viewedAt
+      })) || []
+    }));
+    
+    res.status(200).json(viewData);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

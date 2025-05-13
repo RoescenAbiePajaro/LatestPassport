@@ -1,134 +1,392 @@
 import { Modal, Button } from 'flowbite-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import { HiOutlineExclamationCircle } from 'react-icons/hi';
-import { Icon } from '@iconify/react';
+import { HiOutlineExclamationCircle, HiOutlineTrash, HiAnnotation, HiOutlineChevronLeft, HiOutlineChevronRight } from 'react-icons/hi';
+import { motion } from 'framer-motion';
+import { Clock } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function DashComments() {
   const { currentUser } = useSelector((state) => state.user);
   const [comments, setComments] = useState([]);
-  const [showMore, setShowMore] = useState(true);
+  const [users, setUsers] = useState({});
+  const [posts, setPosts] = useState({});
   const [showModal, setShowModal] = useState(false);
   const [commentIdToDelete, setCommentIdToDelete] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 9;
 
-  useEffect(() => {
-    const fetchComments = async () => {
-      try {
-        const res = await fetch(`/api/comment/getcomments`);
-        const data = await res.json();
-        if (res.ok) {
-          setComments(data.comments);
-          if (data.comments.length < 9) {
-            setShowMore(false);
-          }
-        }
-      } catch (error) {
-        console.log(error.message);
-      }
-    };
-    if (currentUser.isAdmin) {
-      fetchComments();
-    }
-  }, [currentUser._id]);
-
-  const handleShowMore = async () => {
-    const startIndex = comments.length;
+  const fetchComments = useCallback(async () => {
     try {
-      const res = await fetch(`/api/comment/getcomments?startIndex=${startIndex}`);
+      setLoading(true);
+      setError(null);
+      const res = await fetch(`/api/comment/getcomments`);
       const data = await res.json();
       if (res.ok) {
-        setComments((prev) => [...prev, ...data.comments]);
-        if (data.comments.length < 9) {
-          setShowMore(false);
-        }
+        setComments(data.comments);
+        await fetchUserAndPostDetails(data.comments);
+      } else {
+        setError(data.message || 'Failed to fetch comments');
       }
     } catch (error) {
-      console.log(error.message);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchUserAndPostDetails = async (comments) => {
+    try {
+      const userIds = [...new Set(comments.map((c) => c.userId))];
+      const postIds = [...new Set(comments.map((c) => c.postId))];
+
+      const userPromises = userIds.map(async (userId) => {
+        const res = await fetch(`/api/user/${userId}`);
+        if (res.ok) {
+          const data = await res.json();
+          return { userId, data };
+        }
+        return { userId, data: null };
+      });
+      
+      const userResults = await Promise.all(userPromises);
+      const userMap = userResults.reduce((acc, { userId, data }) => {
+        if (data) acc[userId] = data;
+        return acc;
+      }, {});
+      setUsers(userMap);
+
+      const postPromises = postIds.map(async (postId) => {
+        const res = await fetch(`/api/post/${postId}`);
+        if (res.ok) {
+          const data = await res.json();
+          return { postId, data };
+        }
+        return { postId, data: null };
+      });
+      
+      const postResults = await Promise.all(postPromises);
+      const postMap = postResults.reduce((acc, { postId, data }) => {
+        if (data) acc[postId] = data;
+        return acc;
+      }, {});
+      setPosts(postMap);
+    } catch (error) {
+      console.error('Error fetching user/post details:', error.message);
     }
   };
 
+  useEffect(() => {
+    if (currentUser.isAdmin) {
+      fetchComments();
+      // Set up polling for real-time updates
+      const interval = setInterval(fetchComments, 30000); // Poll every 30 seconds
+      return () => clearInterval(interval);
+    }
+  }, [currentUser.isAdmin, fetchComments]);
+
   const handleDeleteComment = async () => {
-    setShowModal(false);
+    setDeleting(true);
     try {
       const res = await fetch(`/api/comment/deleteComment/${commentIdToDelete}`, {
         method: 'DELETE',
       });
       const data = await res.json();
       if (res.ok) {
-        setComments((prev) => prev.filter((comment) => comment._id !== commentIdToDelete));
+        setComments((prev) => {
+          const newComments = prev.filter((comment) => comment._id !== commentIdToDelete);
+          const totalPages = Math.ceil(newComments.length / ITEMS_PER_PAGE);
+          if (currentPage > totalPages && totalPages > 0) {
+            setCurrentPage(totalPages);
+          }
+          return newComments;
+        });
         setShowModal(false);
       } else {
-        console.log(data.message);
+        setError(data.message || 'Failed to delete comment');
       }
     } catch (error) {
-      console.log(error.message);
+      setError(error.message);
+    } finally {
+      setDeleting(false);
     }
   };
 
+  const paginate = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Calculate pagination data
+  const totalPages = Math.ceil(comments.length / ITEMS_PER_PAGE);
+  const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
+  const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
+  const currentItems = comments.slice(indexOfFirstItem, indexOfLastItem);
+
   return (
-    <div className='overflow-x-auto p-3 scrollbar scrollbar-track-gray-100 scrollbar-thumb-gray-300 dark:scrollbar-track-gray-700 dark:scrollbar-thumb-gray-500'>
-      {currentUser.isAdmin && comments.length > 0 ? (
+    <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
+      <div className="flex justify-between items-center mb-6 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6">
+        <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-3">
+          <HiAnnotation className="w-8 h-8 text-teal-400 dark:text-teal-500" />
+          Comment Management
+        </h2>
+        <div className="mt-3 md:mt-0 flex items-center text-sm text-gray-500 dark:text-gray-400">
+          <Clock className="h-4 w-4 mr-2" />
+          <span>Last updated: {new Date().toLocaleTimeString()}</span>
+        </div>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-lg text-sm mb-4">
+          {error}
+        </div>
+      )}
+
+      <div className="flex items-center justify-between mb-4 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-xs border border-gray-100 dark:border-gray-700">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Total comments:</span>
+          <motion.span
+            key={comments.length}
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200"
+          >
+            {comments.length}
+          </motion.span>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500"></div>
+        </div>
+      ) : currentUser.isAdmin && comments.length > 0 ? (
         <>
-          <table className='shadow-md w-full border-collapse border border-gray-300 rounded-lg overflow-hidden'>
-            <thead>
-              <tr className='bg-gray-200'>
-                <th className='border p-2'>Date Updated</th>
-                <th className='border p-2'>Comment</th>
-                <th className='border p-2'>Likes</th>
-                <th className='border p-2'>Post ID</th>
-                <th className='border p-2'>User ID</th>
-                <th className='border p-2'>Delete</th>
-              </tr>
-            </thead>
-            <tbody>
-              {comments.map((comment) => (
-                <tr key={comment._id} className='bg-white border'>
-                  <td className='border p-2'>{new Date(comment.updatedAt).toLocaleDateString()}</td>
-                  <td className='border p-2'>{comment.content}</td>
-                  <td className='border p-2 text-center'>{comment.numberOfLikes}</td>
-                  <td className='border p-2'>{comment.postId}</td>
-                  <td className='border p-2'>{comment.userId}</td>
-                  <td className='border p-2 text-center'>
-                    <span
-                      onClick={() => {
-                        setShowModal(true);
-                        setCommentIdToDelete(comment._id);
-                      }}
-                      className='text-red-500 hover:text-red-700 cursor-pointer'
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Comment
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Likes
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Post
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      User
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {currentItems.map((comment) => (
+                    <motion.tr
+                      key={comment._id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700/50"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 1024 1024">
-                      <path fill="currentColor" d="M160 256H96a32 32 0 0 1 0-64h256V95.936a32 32 0 0 1 32-32h256a32 32 0 0 1 32 32V192h256a32 32 0 1 1 0 64h-64v672a32 32 0 0 1-32 32H192a32 32 0 0 1-32-32zm448-64v-64H416v64zM224 896h576V256H224zm192-128a32 32 0 0 1-32-32V416a32 32 0 0 1 64 0v320a32 32 0 0 1-32 32m192 0a32 32 0 0 1-32-32V416a32 32 0 0 1 64 0v320a32 32 0 0 1-32 32"/></svg>
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {showMore && (
-            <button onClick={handleShowMore} className='w-full text-teal-500 self-center text-sm py-7'>
-              Show more
-            </button>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {new Date(comment.updatedAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-800 dark:text-gray-200 max-w-xs">
+                        <div className="line-clamp-2">{comment.content}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-400">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200">
+                          {comment.numberOfLikes}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {posts[comment.postId] ? (
+                          <Link
+                            to={`/post/${comment.postId}`}
+                            className="text-blue-600 dark:text-blue-400 hover:underline truncate max-w-[150px] block"
+                          >
+                            {posts[comment.postId].title || comment.postId}
+                          </Link>
+                        ) : (
+                          comment.postId
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {users[comment.userId] ? (
+                          <Link
+                            to={`/profile/${comment.userId}`}
+                            className="text-blue-600 dark:text-blue-400 hover:underline truncate max-w-[150px] block"
+                          >
+                            {users[comment.userId].username}
+                          </Link>
+                        ) : (
+                          comment.userId
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => {
+                            setShowModal(true);
+                            setCommentIdToDelete(comment._id);
+                          }}
+                          className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200"
+                        >
+                          <HiOutlineTrash className="h-5 w-5" />
+                        </motion.button>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <div className="flex-1 flex justify-between sm:hidden">
+                <button
+                  onClick={() => paginate(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className={`relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md ${
+                    currentPage === 1
+                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className={`ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md ${
+                    currentPage === totalPages
+                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
+              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    Showing <span className="font-medium">{currentItems.length ? indexOfFirstItem + 1 : 0}</span> to{' '}
+                    <span className="font-medium">{Math.min(indexOfLastItem, comments.length)}</span> of{' '}
+                    <span className="font-medium">{comments.length}</span> comments
+                  </p>
+                </div>
+                <div>
+                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <button
+                      onClick={() => paginate(Math.max(1, currentPage - 1))}
+                      disabled={currentPage === 1}
+                      className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium ${
+                        currentPage === 1
+                          ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                          : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      <span className="sr-only">Previous</span>
+                      <HiOutlineChevronLeft className="h-5 w-5" aria-hidden="true" />
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
+                      <button
+                        key={number}
+                        onClick={() => paginate(number)}
+                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                          currentPage === number
+                            ? 'z-10 bg-teal-50 dark:bg-teal-900/30 border-teal-500 text-teal-600 dark:text-teal-400'
+                            : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        {number}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
+                      disabled={currentPage === totalPages}
+                      className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium ${
+                        currentPage === totalPages
+                          ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                          : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      <span className="sr-only">Next</span>
+                      <HiOutlineChevronRight className="h-5 w-5" aria-hidden="true" />
+                    </button>
+                  </nav>
+                </div>
+              </div>
+            </div>
           )}
         </>
       ) : (
-        <p>You have no comments yet!</p>
+        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
+          <div className="mx-auto h-24 w-24 text-gray-400 dark:text-gray-500 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+          </div>
+          <h3 className="mt-2 text-lg font-medium text-gray-900 dark:text-white">No comments yet</h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            {currentUser.isAdmin ? 'There are no comments to display.' : "You don't have permission to view comments."}
+          </p>
+        </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      <Modal show={showModal} onClose={() => setShowModal(false)} popup size='md'>
-        <Modal.Header />
+      <Modal show={showModal} onClose={() => setShowModal(false)} popup size="md">
+        <Modal.Header className="border-b border-gray-200 dark:border-gray-700" />
         <Modal.Body>
-          <div className='text-center'>
-            <HiOutlineExclamationCircle className='h-14 w-14 text-gray-400 dark:text-gray-200 mb-4 mx-auto' />
-            <h3 className='mb-5 text-lg text-gray-500 dark:text-gray-400'>
+          <div className="text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30 mb-4">
+              <HiOutlineExclamationCircle className="h-8 w-8 text-red-600 dark:text-red-500" />
+            </div>
+            <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
               Are you sure you want to delete this comment?
             </h3>
-            <div className='flex justify-center gap-4'>
-              <Button color='failure' onClick={handleDeleteComment}>
-                Yes, I'm sure
+            <div className="flex justify-center gap-4">
+              <Button color="gray" onClick={() => setShowModal(false)} className="px-5 py-2.5">
+                Cancel
               </Button>
-              <Button color='gray' onClick={() => setShowModal(false)}>
-                No, cancel
+              <Button color="failure" onClick={handleDeleteComment} disabled={deleting} className="px-5 py-2.5">
+                {deleting ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete'
+                )}
               </Button>
             </div>
           </div>
