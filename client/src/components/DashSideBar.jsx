@@ -65,6 +65,13 @@ const sidebarItems = [
     adminOnly: true,
     path: '/dashboard?tab=userapproval'
   },
+  {
+    id: 'comments',
+    label: 'Comments',
+    icon: HiAnnotation,
+    adminOnly: true,
+    path: '/dashboard?tab=comments'
+  },
 ];
 
 export default function DashSidebar() {

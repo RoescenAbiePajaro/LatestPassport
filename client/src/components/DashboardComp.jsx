@@ -433,17 +433,18 @@ export default function DashboardComp() {
           growth={`${data.lastMonthPosts}%`} 
         />
         <StatsCard 
-          title="Total Views" // New StatsCard for total views
-          value={totalViews} 
-          icon={Eye} 
-          color="bg-orange-500" 
-          growth={`${Math.round((totalViews / (totalViews + 1)) * 100) || 0}%`} 
+          title="Total Admins" 
+          value={data.totalAdmins} 
+          icon={Shield} 
+          color="bg-purple-500" 
+          growth={`${Math.round((data.totalAdmins / (data.totalAdmins + 1)) * 100) || 0}%`} 
         />
         <StatsCard 
-          title="Unique Viewers" // New StatsCard for unique viewers
-          value={totalUniqueViewers} 
+          title="Total Staff" 
+          value={data.totalStaff} 
           icon={Users} 
-          color="bg-blue-500"
+          color="bg-blue-500" 
+          growth={`${Math.round((data.totalStaff / (data.totalStaff + 1)) * 100) || 0}%`} 
         />
       </div>
 
