@@ -29,6 +29,13 @@ const postSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    views: { type: Number, default: 0 },
+    viewHistory: [
+      {
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        viewedAt: { type: Date, default: Date.now }
+      }
+    ]
   },
   { timestamps: true }
 );

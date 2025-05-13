@@ -91,7 +91,7 @@ export default function Header() {
           </button>
           <Link to="/" className="flex items-center">
             <img 
-              src={`src/${theme === 'light' ? '3' : '3'}.png`} 
+              src={`src/3.png`} 
               alt="Logo" 
               className="h-8 sm:h-10 transform hover:scale-105 transition-transform duration-300" 
             />

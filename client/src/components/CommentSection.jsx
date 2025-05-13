@@ -1,9 +1,10 @@
-import { Alert, Button, Modal, TextInput, Textarea } from 'flowbite-react';
+import { Alert, Button, Modal, Textarea } from 'flowbite-react';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import Comment from './Comment';
 import { HiOutlineExclamationCircle } from 'react-icons/hi';
+import EmojiPicker from 'emoji-picker-react';
 
 export default function CommentSection({ postId }) {
   const { currentUser } = useSelector((state) => state.user);
@@ -12,7 +13,9 @@ export default function CommentSection({ postId }) {
   const [comments, setComments] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const navigate = useNavigate();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (comment.length > 200) {
@@ -35,9 +38,10 @@ export default function CommentSection({ postId }) {
         setComment('');
         setCommentError(null);
         setComments([data, ...comments]);
+        setShowEmojiPicker(false);
       }
     } catch (error) {
-      setCommentError(error.message);
+      setCommentWork(error.message);
     }
   };
 
@@ -47,7 +51,9 @@ export default function CommentSection({ postId }) {
         const res = await fetch(`/api/comment/getPostComments/${postId}`);
         if (res.ok) {
           const data = await res.json();
-          setComments(data);
+          // Build a tree structure for comments
+          const commentTree = buildCommentTree(data);
+          setComments(commentTree);
         }
       } catch (error) {
         console.log(error.message);
@@ -55,6 +61,29 @@ export default function CommentSection({ postId }) {
     };
     getComments();
   }, [postId]);
+
+  // Helper function to build comment tree
+  const buildCommentTree = (comments) => {
+    const commentMap = {};
+    const tree = [];
+
+    // Initialize comment map
+    comments.forEach((comment) => {
+      comment.replies = [];
+      commentMap[comment._id] = comment;
+    });
+
+    // Build tree structure
+    comments.forEach((comment) => {
+      if (comment.parentId) {
+        commentMap[comment.parentId].replies.push(comment);
+      } else {
+        tree.push(comment);
+      }
+    });
+
+    return tree;
+  };
 
   const handleLike = async (commentId) => {
     try {
@@ -67,17 +96,10 @@ export default function CommentSection({ postId }) {
       });
       if (res.ok) {
         const data = await res.json();
-        setComments(
-          comments.map((comment) =>
-            comment._id === commentId
-              ? {
-                  ...comment,
-                  likes: data.likes,
-                  numberOfLikes: data.likes.length,
-                }
-              : comment
-          )
-        );
+        setComments(updateCommentInTree(comments, commentId, {
+          likes: data.likes,
+          numberOfLikes: data.likes.length,
+        }));
       }
     } catch (error) {
       console.log(error.message);
@@ -85,11 +107,9 @@ export default function CommentSection({ postId }) {
   };
 
   const handleEdit = async (comment, editedContent) => {
-    setComments(
-      comments.map((c) =>
-        c._id === comment._id ? { ...c, content: editedContent } : c
-      )
-    );
+    setComments(updateCommentInTree(comments, comment._id, {
+      content: editedContent,
+    }));
   };
 
   const handleDelete = async (commentId) => {
@@ -103,13 +123,66 @@ export default function CommentSection({ postId }) {
         method: 'DELETE',
       });
       if (res.ok) {
-        const data = await res.json();
-        setComments(comments.filter((comment) => comment._id !== commentId));
+        setComments(removeCommentFromTree(comments, commentId));
       }
     } catch (error) {
       console.log(error.message);
     }
   };
+
+  const handleReply = (newReply) => {
+    setComments(addReplyToTree(comments, newReply));
+  };
+
+  // Helper functions for tree operations
+  const updateCommentInTree = (comments, commentId, updates) => {
+    return comments.map((comment) => {
+      if (comment._id === commentId) {
+        return { ...comment, ...updates };
+      }
+      if (comment.replies.length > 0) {
+        return {
+          ...comment,
+          replies: updateCommentInTree(comment.replies, commentId, updates),
+        };
+      }
+      return comment;
+    });
+  };
+
+  const removeCommentFromTree = (comments, commentId) => {
+    return comments
+      .filter((comment) => comment._id !== commentId)
+      .map((comment) => ({
+        ...comment,
+        replies: removeCommentFromTree(comment.replies, commentId),
+      }));
+  };
+
+  const addReplyToTree = (comments, reply) => {
+    if (!reply.parentId) return [reply, ...comments];
+    
+    return comments.map((comment) => {
+      if (comment._id === reply.parentId) {
+        return {
+          ...comment,
+          replies: [reply, ...comment.replies],
+        };
+      }
+      if (comment.replies.length > 0) {
+        return {
+          ...comment,
+          replies: addReplyToTree(comment.replies, reply),
+        };
+      }
+      return comment;
+    });
+  };
+
+  const handleEmojiClick = (emojiObject) => {
+    setComment((prevComment) => prevComment + emojiObject.emoji);
+  };
+
   return (
     <div className='max-w-2xl mx-auto w-full p-3'>
       {currentUser ? (
@@ -147,14 +220,28 @@ export default function CommentSection({ postId }) {
             onChange={(e) => setComment(e.target.value)}
             value={comment}
           />
-          <div className='flex justify-between items-center mt-5'>
-            <p className='text-gray-500 text-xs'>
-              {200 - comment.length} characters remaining
-            </p>
+          <div className='flex justify-between items-center mt-2'>
+            <div className='flex items-center gap-2'>
+              <button
+                type='button'
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className='text-gray-500 hover:text-gray-700'
+              >
+                😊
+              </button>
+              <p className='text-gray-500 text-xs'>
+                {200 - comment.length} characters remaining
+              </p>
+            </div>
             <Button outline gradientDuoTone='purpleToBlue' type='submit'>
               Submit
             </Button>
           </div>
+          {showEmojiPicker && (
+            <div className='mt-2'>
+              <EmojiPicker onEmojiClick={handleEmojiClick} />
+            </div>
+          )}
           {commentError && (
             <Alert color='failure' className='mt-5'>
               {commentError}
@@ -182,6 +269,7 @@ export default function CommentSection({ postId }) {
                 setShowModal(true);
                 setCommentToDelete(commentId);
               }}
+              onReply={handleReply}
             />
           ))}
         </>
