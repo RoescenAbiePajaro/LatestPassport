@@ -106,9 +106,13 @@ export default function Comment({
       
       const data = await res.json();
       if (res.ok) {
-        onReply(data);
+        // Added repliesAtBottom check to ensure replies are properly added at the bottom
+        onReply(data, repliesAtBottom);
         setReplyContent('');
         setIsReplying(false);
+        
+        // Make sure replies are visible when a new reply is added
+        setShowReplies(true);
       }
     } catch (error) {
       console.log(error.message);
@@ -313,19 +317,27 @@ export default function Comment({
         </div>
       </div>
       
-      {/* Replies - Fixed to always be at bottom and consistent with app style */}
+      {/* Replies section with replies displayed in chronological order */}
       {comment.replies && comment.replies.length > 0 && showReplies && (
-        <div className="mt-3 ml-12 pl-6 border-l-2 border-gray-200 dark:border-gray-700">
-          {comment.replies.map((reply) => (
-            <div key={reply._id} className="mt-3 first:mt-0">
-              <Comment
-                comment={reply}
-                onLike={onLike}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                onReply={onReply}
-                repliesAtBottom={true}
-              />
+        <div className="mt-3 ml-12">
+          {comment.replies.map((reply, index) => (
+            <div key={reply._id} className="flex items-start gap-3 py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
+              <span className="text-gray-500 dark:text-gray-400 font-medium">{index + 1}.</span>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="font-medium text-gray-700 dark:text-gray-300">{reply.userId === user._id ? user.username : 'User'}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{format(reply.createdAt)}</span>
+                </div>
+                <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{reply.content}</p>
+                <div className="mt-1">
+                  <button 
+                    onClick={() => setIsReplying(!isReplying)}
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                  >
+                    Reply
+                  </button>
+                </div>
+              </div>
             </div>
           ))}
         </div>
