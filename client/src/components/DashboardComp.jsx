@@ -2,9 +2,9 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { 
-  ChevronUp, ChevronDown, Activity, Users, FileText, 
-  TrendingUp, BarChart2, MessageSquare, CalendarDays, Clock,
-  MoreHorizontal, ArrowUpRight, Shield, Download, Eye
+  ChevronUp, Activity, Users, FileText, 
+  BarChart2, MessageSquare, Clock, MoreHorizontal, 
+  ArrowUpRight, Shield, Download, Eye
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
 import * as XLSX from 'xlsx';
@@ -139,7 +139,7 @@ export default function DashboardComp() {
     if (data.categories.length === 0) return 'N/A';
     return data.categories.reduce((prev, current) => 
       (data.posts.filter(p => p.category === prev._id).length > 
-      data.posts.filter(p => p.category === current._id).length ? prev : current)
+       data.posts.filter(p => p.category === current._id).length ? prev : current)
     ).name;
   }, [data.categories, data.posts]);
 
@@ -159,10 +159,10 @@ export default function DashboardComp() {
     [data.contentDistribution]
   );
 
-  // New comment-related calculations
+  // Comment-related calculations
   const totalComments = useMemo(() => 
-    data.comments.length,
-    [data.comments]
+    data.totalComments,
+    [data.totalComments]
   );
 
   const avgCommentsPerPost = useMemo(() => {
@@ -289,7 +289,10 @@ export default function DashboardComp() {
 
   // Data fetching and processing
   const fetchData = useCallback(async () => {
-    if (!currentUser.isAdmin) return;
+    if (!currentUser || !currentUser.isAdmin) {
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -302,7 +305,7 @@ export default function DashboardComp() {
       const [usersRes, postsRes, commentsRes] = await Promise.all([
         fetch('/api/user/getusers'),
         fetch('/api/post/getposts'),
-        fetch('/api/comment/getcomments')
+        fetch('/api/comment/getcomments?limit=5') // Limit to 5 for recent comments
       ]);
       
       const [usersData, postsData, commentsData] = await Promise.all([
@@ -318,6 +321,13 @@ export default function DashboardComp() {
       // Calculate admin and staff counts
       const adminCount = usersData.users ? usersData.users.filter(user => user.isAdmin).length : 0;
       const staffCount = usersData.users ? usersData.users.filter(user => !user.isAdmin).length : 0;
+
+      // Calculate last month comments (note: limited by ?limit=5)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const lastMonthComments = commentsData.comments.filter(comment => 
+        new Date(comment.createdAt) >= thirtyDaysAgo
+      ).length;
 
       // Process content distribution
       const categoryCount = {};
@@ -358,26 +368,26 @@ export default function DashboardComp() {
       });
 
       // Calculate top performers
-      const topPerformers = calculateTopPerformers(usersData.users, postsData.posts);
-      
+      const topPerformers = calculateTopPerformers(usersData.users || [], postsData.posts || []);
+
       // Calculate top commenters
-      const topCommenters = calculateTopCommenters(usersData.users, commentsData.comments);
+      const topCommenters = calculateTopCommenters(usersData.users || [], commentsData.comments || []);
 
       setData({
-        users: usersData.users.slice(0, 5),
-        allUsers: usersData.users,
-        posts: postsData.posts.slice(0, 5),
-        categories: categoriesData,
-        comments: commentsData.comments.slice(0, 5),
-        totalUsers: usersData.totalUsers,
-        totalPosts: postsData.totalPosts,
-        totalCategories: categoriesData.length,
+        users: usersData.users?.slice(0, 5) || [],
+        allUsers: usersData.users || [],
+        posts: postsData.posts?.slice(0, 5) || [],
+        categories: categoriesData || [],
+        comments: commentsData.comments?.slice(0, 5) || [],
+        totalUsers: usersData.totalUsers || 0,
+        totalPosts: postsData.totalPosts || 0,
+        totalCategories: categoriesData?.length || 0,
         totalAdmins: adminCount,
         totalStaff: staffCount,
-        lastMonthUsers: usersData.lastMonthUsers,
-        lastMonthPosts: postsData.lastMonthPosts,
-        lastMonthComments: commentsData.lastMonthComments || 0,
-        totalComments: commentsData.comments.length,
+        lastMonthUsers: usersData.lastMonthUsers || 0,
+        lastMonthPosts: postsData.lastMonthPosts || 0,
+        lastMonthComments,
+        totalComments: commentsData.totalComments || commentsData.comments?.length || 0, // Use totalComments from endpoint
         activityData: dailyActivity,
         contentDistribution: Object.keys(categoryCount).map(categoryName => ({
           name: categoryName,
@@ -393,7 +403,7 @@ export default function DashboardComp() {
     } finally {
       setLoading(false);
     }
-  }, [currentUser.isAdmin]);
+  }, [currentUser]);
 
   useEffect(() => {
     fetchData();
@@ -495,7 +505,7 @@ export default function DashboardComp() {
           value={totalComments} 
           icon={MessageSquare} 
           color="bg-orange-500" 
-          growth={`${data.lastMonthComments}%`} 
+          growth={`${Math.round((data.lastMonthComments / (totalComments || 1)) * 100)}%`} 
         />
         <StatsCard 
           title="Users by Role" 

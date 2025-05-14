@@ -1,8 +1,9 @@
 import Comment from '../models/comment.model.js';
+import { errorHandler } from '../utils/error.js'; // I'm assuming you have this imported elsewhere
 
 export const createComment = async (req, res, next) => {
   try {
-    const { content, postId, userId } = req.body;
+    const { content, postId, userId, parentId } = req.body;
 
     if (userId !== req.user.id) {
       return next(
@@ -10,12 +11,37 @@ export const createComment = async (req, res, next) => {
       );
     }
 
+    // Create a new comment object
     const newComment = new Comment({
       content,
       postId,
       userId,
     });
-    await newComment.save();
+
+    // If parentId exists, this is a reply
+    if (parentId) {
+      // Find the parent comment
+      const parentComment = await Comment.findById(parentId);
+      
+      if (!parentComment) {
+        return next(errorHandler(404, 'Parent comment not found'));
+      }
+      
+      // Set reply-specific fields
+      newComment.parentId = parentId;
+      newComment.isReply = true;
+      
+      // Save the reply
+      await newComment.save();
+      
+      // Update the parent comment's replies array and replyCount
+      parentComment.replies.push(newComment._id);
+      parentComment.replyCount += 1;
+      await parentComment.save();
+    } else {
+      // This is a regular comment, not a reply
+      await newComment.save();
+    }
 
     res.status(200).json(newComment);
   } catch (error) {
@@ -25,10 +51,41 @@ export const createComment = async (req, res, next) => {
 
 export const getPostComments = async (req, res, next) => {
   try {
-    const comments = await Comment.find({ postId: req.params.postId }).sort({
+    // Get top-level comments (not replies) for the post
+    const comments = await Comment.find({ 
+      postId: req.params.postId,
+      isReply: false 
+    }).sort({
       createdAt: -1,
     });
+    
     res.status(200).json(comments);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getReplies = async (req, res, next) => {
+  try {
+    const parentComment = await Comment.findById(req.params.commentId);
+    
+    if (!parentComment) {
+      return next(errorHandler(404, 'Comment not found'));
+    }
+    
+    // If the parent comment has replies
+    if (parentComment.replyCount > 0) {
+      // Find all reply comments where parentId equals the comment ID
+      const replies = await Comment.find({ 
+        parentId: req.params.commentId 
+      }).sort({
+        createdAt: -1,
+      });
+      
+      res.status(200).json(replies);
+    } else {
+      res.status(200).json([]);
+    }
   } catch (error) {
     next(error);
   }
@@ -91,7 +148,29 @@ export const deleteComment = async (req, res, next) => {
         errorHandler(403, 'You are not allowed to delete this comment')
       );
     }
+
+    // If this is a parent comment with replies, delete all its replies too
+    if (!comment.isReply && comment.replyCount > 0) {
+      await Comment.deleteMany({ parentId: req.params.commentId });
+    }
+    
+    // If this is a reply, update the parent comment's replies array and replyCount
+    if (comment.isReply && comment.parentId) {
+      const parentComment = await Comment.findById(comment.parentId);
+      if (parentComment) {
+        // Remove this reply from parent's replies array
+        const replyIndex = parentComment.replies.indexOf(req.params.commentId);
+        if (replyIndex !== -1) {
+          parentComment.replies.splice(replyIndex, 1);
+          parentComment.replyCount -= 1;
+          await parentComment.save();
+        }
+      }
+    }
+    
+    // Delete the comment itself
     await Comment.findByIdAndDelete(req.params.commentId);
+    
     res.status(200).json('Comment has been deleted');
   } catch (error) {
     next(error);
