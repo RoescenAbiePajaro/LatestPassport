@@ -3,8 +3,8 @@ import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { 
   ChevronUp, ChevronDown, Activity, Users, FileText, 
-  TrendingUp, BarChart2, Eye, CalendarDays, Clock,
-  MoreHorizontal, ArrowUpRight, Shield, Download
+  TrendingUp, BarChart2, MessageSquare, CalendarDays, Clock,
+  MoreHorizontal, ArrowUpRight, Shield, Download, Eye
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
 import * as XLSX from 'xlsx';
@@ -14,13 +14,13 @@ import RoleDistribution from './RoleDistribution';
 // Constants
 const TIME_PERIODS = ['today', 'week', 'month', 'all'];
 const INITIAL_ACTIVITY_DATA = [
-  { name: 'Mon', users: 0, posts: 0 },
-  { name: 'Tue', users: 0, posts: 0 },
-  { name: 'Wed', users: 0, posts: 0 },
-  { name: 'Thu', users: 0, posts: 0 },
-  { name: 'Fri', users: 0, posts: 0 },
-  { name: 'Sat', users: 0, posts: 0 },
-  { name: 'Sun', users: 0, posts: 0 },
+  { name: 'Mon', users: 0, posts: 0, comments: 0 },
+  { name: 'Tue', users: 0, posts: 0, comments: 0 },
+  { name: 'Wed', users: 0, posts: 0, comments: 0 },
+  { name: 'Thu', users: 0, posts: 0, comments: 0 },
+  { name: 'Fri', users: 0, posts: 0, comments: 0 },
+  { name: 'Sat', users: 0, posts: 0, comments: 0 },
+  { name: 'Sun', users: 0, posts: 0, comments: 0 },
 ];
 
 // Helper functions
@@ -123,10 +123,12 @@ export default function DashboardComp() {
     lastMonthUsers: 0,
     lastMonthPosts: 0,
     lastMonthComments: 0,
+    totalComments: 0,
     activityData: INITIAL_ACTIVITY_DATA,
     contentDistribution: [],
     topPerformers: [],
-    viewData: [], // New state for view statistics
+    topCommenters: [],
+    commentData: [],
   });
   const [loading, setLoading] = useState(true);
   const [activeTimeframe, setActiveTimeframe] = useState('week');
@@ -157,17 +159,25 @@ export default function DashboardComp() {
     [data.contentDistribution]
   );
 
-  // New memoized calculation for total views
-  const totalViews = useMemo(() => 
-    data.viewData.reduce((sum, item) => sum + item.totalViews, 0),
-    [data.viewData]
+  // New comment-related calculations
+  const totalComments = useMemo(() => 
+    data.comments.length,
+    [data.comments]
   );
 
-  // New memoized calculation for total unique viewers
-  const totalUniqueViewers = useMemo(() => 
-    data.viewData.reduce((sum, item) => sum + item.uniqueViewers, 0),
-    [data.viewData]
-  );
+  const avgCommentsPerPost = useMemo(() => {
+    if (data.posts.length === 0) return 0;
+    return (totalComments / data.posts.length).toFixed(1);
+  }, [totalComments, data.posts]);
+
+  const mostCommentedPosts = useMemo(() => {
+    const postCommentCounts = data.posts.map(post => ({
+      title: post.title,
+      commentCount: data.comments.filter(comment => comment.postId === post._id).length,
+      postId: post._id
+    }));
+    return postCommentCounts.sort((a, b) => b.commentCount - a.commentCount).slice(0, 5);
+  }, [data.posts, data.comments]);
 
   // Download handlers
   const handleDownloadActivity = () => {
@@ -209,6 +219,17 @@ export default function DashboardComp() {
     XLSX.writeFile(workbook, 'top_performers.xlsx');
   };
 
+  const handleDownloadTopCommenters = () => {
+    const worksheet = XLSX.utils.json_to_sheet(data.topCommenters.map(item => ({
+      Name: item.name,
+      Comments: item.value,
+      Trend: item.trend
+    })));
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Top Commenters');
+    XLSX.writeFile(workbook, 'top_commenters.xlsx');
+  };
+
   const handleDownloadRoleDistribution = () => {
     const worksheet = XLSX.utils.json_to_sheet([{
       Admins: data.totalAdmins,
@@ -235,7 +256,7 @@ export default function DashboardComp() {
     const worksheet = XLSX.utils.json_to_sheet(data.posts.map(post => ({
       Title: post.title,
       Category: data.categories.find(cat => cat._id === post.category)?.name || 'Uncategorized',
-      Views: post.views || 0,
+      Comments: data.comments.filter(comment => comment.postId === post._id).length,
       Created: formatDate(post.createdAt)
     })));
     const workbook = XLSX.utils.book_new();
@@ -243,17 +264,27 @@ export default function DashboardComp() {
     XLSX.writeFile(workbook, 'recent_posts.xlsx');
   };
 
-  // New download handler for view data
-  const handleDownloadViewData = () => {
-    const worksheet = XLSX.utils.json_to_sheet(data.viewData.map(item => ({
-      Title: item.title,
-      Total_Views: item.totalViews,
-      Unique_Viewers: item.uniqueViewers,
-      Last_Viewed: item.viewHistory.length > 0 ? formatDate(item.viewHistory[0].viewedAt) : 'N/A'
+  const handleDownloadRecentComments = () => {
+    const worksheet = XLSX.utils.json_to_sheet(data.comments.map(comment => ({
+      Content: comment.content,
+      User: data.users.find(user => user._id === comment.userId)?.username || 'Unknown',
+      Post: data.posts.find(post => post._id === comment.postId)?.title || 'Unknown',
+      Created: formatDate(comment.createdAt)
     })));
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Post Views');
-    XLSX.writeFile(workbook, 'post_views.xlsx');
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Recent Comments');
+    XLSX.writeFile(workbook, 'recent_comments.xlsx');
+  };
+
+  const handleDownloadCommentData = () => {
+    const worksheet = XLSX.utils.json_to_sheet(mostCommentedPosts.map(item => ({
+      Post_Title: item.title,
+      Comment_Count: item.commentCount,
+      Post_ID: item.postId
+    })));
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Comment Statistics');
+    XLSX.writeFile(workbook, 'comment_statistics.xlsx');
   };
 
   // Data fetching and processing
@@ -268,21 +299,19 @@ export default function DashboardComp() {
       
       if (!categoriesRes.ok) throw new Error('Failed to fetch categories');
       
-      const [usersRes, postsRes, commentsRes, viewsRes] = await Promise.all([
+      const [usersRes, postsRes, commentsRes] = await Promise.all([
         fetch('/api/user/getusers'),
         fetch('/api/post/getposts'),
-        fetch('/api/comment/getcomments'),
-        fetch('/api/post/postviews')
+        fetch('/api/comment/getcomments')
       ]);
       
-      const [usersData, postsData, commentsData, viewsData] = await Promise.all([
+      const [usersData, postsData, commentsData] = await Promise.all([
         usersRes.json(),
         postsRes.json(),
-        commentsRes.json(),
-        viewsRes.json()
+        commentsRes.json()
       ]);
       
-      if (!usersRes.ok || !postsRes.ok || !commentsRes.ok || !viewsRes.ok) {
+      if (!usersRes.ok || !postsRes.ok || !commentsRes.ok) {
         throw new Error('Failed to fetch data');
       }
 
@@ -321,18 +350,25 @@ export default function DashboardComp() {
           new Date(user.createdAt).toISOString().split('T')[0] === date
         ).length : 0;
         
-        return { name: dayName, posts: dayPosts, users: dayUsers };
+        const dayComments = commentsData.comments.filter(comment =>
+          new Date(comment.createdAt).toISOString().split('T')[0] === date
+        ).length;
+        
+        return { name: dayName, posts: dayPosts, users: dayUsers, comments: dayComments };
       });
 
       // Calculate top performers
       const topPerformers = calculateTopPerformers(usersData.users, postsData.posts);
+      
+      // Calculate top commenters
+      const topCommenters = calculateTopCommenters(usersData.users, commentsData.comments);
 
       setData({
         users: usersData.users.slice(0, 5),
         allUsers: usersData.users,
         posts: postsData.posts.slice(0, 5),
         categories: categoriesData,
-        comments: commentsData,
+        comments: commentsData.comments.slice(0, 5),
         totalUsers: usersData.totalUsers,
         totalPosts: postsData.totalPosts,
         totalCategories: categoriesData.length,
@@ -341,6 +377,7 @@ export default function DashboardComp() {
         lastMonthUsers: usersData.lastMonthUsers,
         lastMonthPosts: postsData.lastMonthPosts,
         lastMonthComments: commentsData.lastMonthComments || 0,
+        totalComments: commentsData.comments.length,
         activityData: dailyActivity,
         contentDistribution: Object.keys(categoryCount).map(categoryName => ({
           name: categoryName,
@@ -348,7 +385,8 @@ export default function DashboardComp() {
           color: categoryCount[categoryName].color
         })),
         topPerformers,
-        viewData: viewsData // Store view data
+        topCommenters,
+        commentData: mostCommentedPosts
       });
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -376,6 +414,26 @@ export default function DashboardComp() {
         avatar: user.profilePicture || '/api/placeholder/40/40',
         value: (userPostCounts[user._id] || 0).toString(),
         trend: (userPostCounts[user._id] || 0) > 0 ? 'up' : 'down'
+      }))
+      .sort((a, b) => parseInt(b.value) - parseInt(a.value))
+      .slice(0, 4);
+  };
+
+  const calculateTopCommenters = (users = [], comments = []) => {
+    if (users.length === 0 || comments.length === 0) return [];
+  
+    const userCommentCounts = comments.reduce((acc, comment) => {
+      acc[comment.userId] = (acc[comment.userId] || 0) + 1;
+      return acc;
+    }, {});
+  
+    return users
+      .map((user) => ({
+        id: user._id,
+        name: user.username,
+        avatar: user.profilePicture || '/api/placeholder/40/40',
+        value: (userCommentCounts[user._id] || 0).toString(),
+        trend: (userCommentCounts[user._id] || 0) > 0 ? 'up' : 'down'
       }))
       .sort((a, b) => parseInt(b.value) - parseInt(a.value))
       .slice(0, 4);
@@ -433,18 +491,18 @@ export default function DashboardComp() {
           growth={`${data.lastMonthPosts}%`} 
         />
         <StatsCard 
-          title="Total Admins" 
-          value={data.totalAdmins} 
-          icon={Shield} 
-          color="bg-purple-500" 
-          growth={`${Math.round((data.totalAdmins / (data.totalAdmins + 1)) * 100) || 0}%`} 
+          title="Total Comments" 
+          value={totalComments} 
+          icon={MessageSquare} 
+          color="bg-orange-500" 
+          growth={`${data.lastMonthComments}%`} 
         />
         <StatsCard 
-          title="Total Staff" 
-          value={data.totalStaff} 
-          icon={Users} 
-          color="bg-blue-500" 
-          growth={`${Math.round((data.totalStaff / (data.totalStaff + 1)) * 100) || 0}%`} 
+          title="Users by Role" 
+          value={`${data.totalAdmins} Admins / ${data.totalStaff} Staff`} 
+          icon={Shield} 
+          color="bg-purple-500" 
+          growth={`${Math.round(((data.totalAdmins + data.totalStaff) / (data.totalUsers || 1)) * 100)}%`} 
         />
       </div>
 
@@ -453,7 +511,7 @@ export default function DashboardComp() {
         {/* Activity Chart */}
         <div className="lg:col-span-2">
           <ChartCard 
-            title="User & Post Activity" 
+            title="User, Post & Comment Activity" 
             subtitle="Last 7 days" 
             headerIcon={<BarChart2 className="w-5 h-5" />}
             height="h-[300px]"
@@ -461,9 +519,9 @@ export default function DashboardComp() {
           >
             <div className="mb-3">
               <div className="flex items-center">
-                <h3 className="text-xl font-bold dark:text-white">{data.totalUsers + data.totalPosts}</h3>
+                <h3 className="text-xl font-bold dark:text-white">{data.totalUsers + data.totalPosts + totalComments}</h3>
                 <div className="ml-auto flex items-center">
-                  <span className="text-green-500 text-xs">+{data.lastMonthUsers + data.lastMonthPosts}%</span>
+                  <span className="text-green-500 text-xs">+{data.lastMonthUsers + data.lastMonthPosts + data.lastMonthComments}%</span>
                   <ChevronUp className="text-green-500 h-3 w-3 ml-1" />
                 </div>
               </div>
@@ -485,6 +543,7 @@ export default function DashboardComp() {
                   />
                   <Bar dataKey="users" name="Users" fill="#A5B4FC" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="posts" name="Posts" fill="#34D399" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="comments" name="Comments" fill="#F97316" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -619,19 +678,19 @@ export default function DashboardComp() {
           </ChartCard>
         </div>
 
-        {/* View Counter Chart */}
+        {/* Comment Statistics Chart */}
         <div className="lg:col-span-1">
           <ChartCard 
-            title="Post View Statistics" 
-            subtitle="Top viewed posts" 
-            headerIcon={<Eye className="w-5 h-5" />}
+            title="Comment Statistics" 
+            subtitle="Most commented posts" 
+            headerIcon={<MessageSquare className="w-5 h-5" />}
             height="h-[300px]"
-            onDownload={handleDownloadViewData}
+            onDownload={handleDownloadCommentData}
           >
             <div className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={data.viewData.slice(0, 5)} // Show top 5 posts
+                  data={mostCommentedPosts}
                   layout="vertical"
                   margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                 >
@@ -652,49 +711,72 @@ export default function DashboardComp() {
                       boxShadow: '0 0 15px rgba(0,0,0,0.1)',
                       padding: '10px'
                     }}
-                    formatter={(value, name) => [
-                      name === 'totalViews' ? `${value} views` : `${value} unique viewers`,
-                      name === 'totalViews' ? 'Total Views' : 'Unique Viewers'
-                    ]}
+                    formatter={(value) => [`${value} comments`, 'Comments']}
                   />
-                  <Bar dataKey="totalViews" name="Total Views" fill="#F97316" radius={[0, 4, 4, 0]} />
-                  <Bar dataKey="uniqueViewers" name="Unique Viewers" fill="#3B82F6" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="commentCount" name="Comments" fill="#F97316" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
             <div className="flex justify-between items-center mt-3 text-xs">
               <div className="text-gray-500 dark:text-gray-400">
-                Total Views: {totalViews}
+                Total: {totalComments}
               </div>
               <div className="font-medium dark:text-white">
-                Unique Viewers: {totalUniqueViewers}
+                Avg/Post: {avgCommentsPerPost}
               </div>
             </div>
           </ChartCard>
         </div>
 
-        {/* Role Distribution */}
+        {/* Top Commenters Chart */}
         <div className="lg:col-span-1">
           <ChartCard 
-            title="Role Distribution" 
+            title="Top Commenters" 
+            subtitle="Most active commenters" 
             headerIcon={<Users className="w-5 h-5" />}
             height="h-[300px]"
-            onDownload={handleDownloadRoleDistribution}
+            onDownload={handleDownloadTopCommenters}
           >
             <div className="h-[200px]">
-              <RoleDistribution users={data.allUsers} />
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={data.topCommenters}
+                  layout="vertical"
+                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                >
+                  <XAxis type="number" axisLine={false} tickLine={false} />
+                  <YAxis 
+                    dataKey="name" 
+                    type="category" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    width={80}
+                    tick={{ fontSize: 12, fill: '#9CA3AF' }}
+                  />
+                  <Tooltip 
+                    cursor={{fill: 'rgba(243, 244, 246, 0.2)'}} 
+                    contentStyle={{
+                      borderRadius: '8px', 
+                      border: 'none', 
+                      boxShadow: '0 0 15px rgba(0,0,0,0.1)',
+                      padding: '10px'
+                    }}
+                    formatter={(value) => [`${value} comments`, 'Comments']}
+                  />
+                  <Bar dataKey="value" name="Comments" fill="#3B82F6" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
             <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-              <p>Admins: {data.totalAdmins}</p>
-              <p>Staff: {data.totalStaff}</p>
-              <p>Total Users: {data.totalUsers}</p>
+              <p>Total Commenters: {data.users.length}</p>
+              <p>Active Commenters: {data.topCommenters.length}</p>
             </div>
           </ChartCard>
         </div>
       </div>
 
       {/* Recent Activity Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         {/* Recent Users */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700">
           <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-700">
@@ -772,8 +854,8 @@ export default function DashboardComp() {
                     </div>
                     <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
                       <div className="flex items-center">
-                        <Eye className="w-3.5 h-3.5 mr-1" />
-                        {post.views || 0}
+                        <MessageSquare className="w-3.5 h-3.5 mr-1" />
+                        {data.comments.filter(comment => comment.postId === post._id).length}
                       </div>
                       <div>{formatDate(post.createdAt)}</div>
                     </div>
@@ -784,6 +866,59 @@ export default function DashboardComp() {
               <div className="text-center py-6 text-gray-500">
                 <FileText className="mx-auto h-8 w-8 mb-2 opacity-40" />
                 <p className="text-sm">No recent posts</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Recent Comments */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-gray-700">
+            <h2 className="text-lg font-semibold dark:text-white flex items-center">
+              <MessageSquare className="mr-2 text-orange-500 w-5 h-5" />
+              Recent Comments
+            </h2>
+            <div className="flex items-center space-x-2">
+              <Link to="/dashboard?tab=comments" className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline flex items-center">
+                View All
+                <Eye className="ml-1 w-4 h-4" />
+              </Link>
+              <DropdownMenu onDownload={handleDownloadRecentComments} />
+            </div>
+          </div>
+          <div className="p-5">
+            {data.comments.length > 0 ? (
+              <div className="space-y-4">
+                {data.comments.map((comment) => (
+                  <div key={comment._id} className="flex items-start justify-between">
+                    <div className="flex items-start">
+                      <div className="w-10 h-10 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
+                        <img 
+                          src={data.users.find(user => user._id === comment.userId)?.profilePicture || '/api/placeholder/40/40'} 
+                          alt="User" 
+                          className="w-full h-full object-cover" 
+                        />
+                      </div>
+                      <div className="ml-3">
+                        <h4 className="text-sm font-medium dark:text-white">
+                          {data.users.find(user => user._id === comment.userId)?.username || 'Unknown'}
+                        </h4>
+                        <p className="text-xs text-gray-500 line-clamp-2">{comment.content}</p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          On: {data.posts.find(post => post._id === comment.postId)?.title || 'Unknown'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {formatDate(comment.createdAt)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-gray-500">
+                <MessageSquare className="mx-auto h-8 w-8 mb-2 opacity-40" />
+                <p className="text-sm">No recent comments</p>
               </div>
             )}
           </div>
