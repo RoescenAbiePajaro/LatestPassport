@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Avatar, Button, Dropdown, Navbar, TextInput } from 'flowbite-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AiOutlineSearch } from 'react-icons/ai';
-import { FaMoon, FaSun, FaBars, FaTimes } from 'react-icons/fa';
+import { FaMoon, FaSun, FaBars, FaTimes, FaWpforms } from 'react-icons/fa';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleTheme } from '../redux/theme/themeSlice';
 import { signoutSuccess } from '../redux/user/userSlice';
@@ -110,6 +110,13 @@ export default function Header() {
           <Link to="/contact" className={navLinkClass('/contact')}>
             Contact Us
             {activeLinkStyle('/contact')}
+          </Link>
+          <Link to="/form" className={navLinkClass('/form')}>
+            <div className="flex items-center gap-1">
+              <FaWpforms className="text-blue-500" />
+              Personal Form
+            </div>
+            {activeLinkStyle('/form')}
           </Link>
         </div>
 
@@ -270,6 +277,12 @@ export default function Header() {
                   </Link>
                   <Link to="/contact" onClick={() => setIsSidebarOpen(false)} className={mobileLinkClass('/contact')}>
                     Contact Us
+                  </Link>
+                  <Link to="/form" onClick={() => setIsSidebarOpen(false)} className={mobileLinkClass('/form')}>
+                    <div className="flex items-center gap-2">
+                      <FaWpforms className="text-blue-500" />
+                      Personal Form
+                    </div>
                   </Link>
                   
                   <div className="my-6 border-t border-gray-100 dark:border-gray-700"></div>
