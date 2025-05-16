@@ -22,6 +22,22 @@ const commentSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    parentId: {
+      type: String,
+      default: null, 
+    },
+    isReply: {
+      type: Boolean,
+      default: false,
+    },
+    replies: {
+      type: Array,
+      default: [], 
+    },
+    replyCount: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );

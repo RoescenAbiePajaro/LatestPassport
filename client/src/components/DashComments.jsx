@@ -18,15 +18,18 @@ export default function DashComments() {
   const [deleting, setDeleting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 9;
+  const [totalComments, setTotalComments] = useState(0);
 
   const fetchComments = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await fetch(`/api/comment/getcomments`);
+      const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+      const res = await fetch(`/api/comment/getcomments?startIndex=${startIndex}&limit=${ITEMS_PER_PAGE}`);
       const data = await res.json();
       if (res.ok) {
         setComments(data.comments);
+        setTotalComments(data.totalComments);
         await fetchUserAndPostDetails(data.comments);
       } else {
         setError(data.message || 'Failed to fetch comments');
@@ -36,7 +39,7 @@ export default function DashComments() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentPage]);
 
   const fetchUserAndPostDetails = async (comments) => {
     try {
@@ -60,10 +63,11 @@ export default function DashComments() {
       setUsers(userMap);
 
       const postPromises = postIds.map(async (postId) => {
-        const res = await fetch(`/api/post/${postId}`);
+        const res = await fetch(`/api/post/getposts?postId=${postId}`);
         if (res.ok) {
           const data = await res.json();
-          return { postId, data };
+          const post = data.posts && data.posts.length > 0 ? data.posts[0] : null;
+          return { postId, data: post };
         }
         return { postId, data: null };
       });
@@ -82,8 +86,7 @@ export default function DashComments() {
   useEffect(() => {
     if (currentUser.isAdmin) {
       fetchComments();
-      // Set up polling for real-time updates
-      const interval = setInterval(fetchComments, 30000); // Poll every 30 seconds
+      const interval = setInterval(fetchComments, 30000);
       return () => clearInterval(interval);
     }
   }, [currentUser.isAdmin, fetchComments]);
@@ -98,7 +101,8 @@ export default function DashComments() {
       if (res.ok) {
         setComments((prev) => {
           const newComments = prev.filter((comment) => comment._id !== commentIdToDelete);
-          const totalPages = Math.ceil(newComments.length / ITEMS_PER_PAGE);
+          setTotalComments((prevTotal) => prevTotal - 1);
+          const totalPages = Math.ceil((totalComments - 1) / ITEMS_PER_PAGE);
           if (currentPage > totalPages && totalPages > 0) {
             setCurrentPage(totalPages);
           }
@@ -120,11 +124,8 @@ export default function DashComments() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Calculate pagination data
-  const totalPages = Math.ceil(comments.length / ITEMS_PER_PAGE);
-  const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
-  const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
-  const currentItems = comments.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(totalComments / ITEMS_PER_PAGE);
+  const currentItems = comments;
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
@@ -149,13 +150,13 @@ export default function DashComments() {
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Total comments:</span>
           <motion.span
-            key={comments.length}
+            key={totalComments}
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.3 }}
             className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200"
           >
-            {comments.length}
+            {totalComments}
           </motion.span>
         </div>
       </div>
@@ -221,10 +222,10 @@ export default function DashComments() {
                             to={`/post/${comment.postId}`}
                             className="text-blue-600 dark:text-blue-400 hover:underline truncate max-w-[150px] block"
                           >
-                            {posts[comment.postId].title || comment.postId}
+                            {posts[comment.postId].title || 'Untitled Post'}
                           </Link>
                         ) : (
-                          comment.postId
+                          'Loading...'
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
@@ -288,9 +289,9 @@ export default function DashComments() {
               <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm text-gray-700 dark:text-gray-300">
-                    Showing <span className="font-medium">{currentItems.length ? indexOfFirstItem + 1 : 0}</span> to{' '}
-                    <span className="font-medium">{Math.min(indexOfLastItem, comments.length)}</span> of{' '}
-                    <span className="font-medium">{comments.length}</span> comments
+                    Showing <span className="font-medium">{currentItems.length ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0}</span> to{' '}
+                    <span className="font-medium">{Math.min(currentPage * ITEMS_PER_PAGE, totalComments)}</span> of{' '}
+                    <span className="font-medium">{totalComments}</span> comments
                   </p>
                 </div>
                 <div>
@@ -352,42 +353,78 @@ export default function DashComments() {
         </div>
       )}
 
-      <Modal show={showModal} onClose={() => setShowModal(false)} popup size="md">
-        <Modal.Header className="border-b border-gray-200 dark:border-gray-700" />
-        <Modal.Body>
-          <div className="text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30 mb-4">
-              <HiOutlineExclamationCircle className="h-8 w-8 text-red-600 dark:text-red-500" />
-            </div>
-            <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-              Are you sure you want to delete this comment?
-            </h3>
-            <div className="flex justify-center gap-4">
-              <Button color="gray" onClick={() => setShowModal(false)} className="px-5 py-2.5">
-                Cancel
-              </Button>
-              <Button color="failure" onClick={handleDeleteComment} disabled={deleting} className="px-5 py-2.5">
-                {deleting ? (
-                  <>
-                    <svg
-                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Deleting...
-                  </>
-                ) : (
-                  'Delete'
-                )}
-              </Button>
+      <Modal 
+        show={showModal} 
+        onClose={() => setShowModal(false)} 
+        popup 
+        size="md"
+        className="backdrop-blur-sm"
+      >
+        <Modal.Body className="p-0">
+          <div className="relative">
+            <button
+              onClick={() => setShowModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 transition-colors duration-200"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <div className="text-center px-8 py-10">
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 20 }}
+                className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-red-100 to-red-50 dark:from-red-900/20 dark:to-red-900/40 mb-6 shadow-inner"
+              >
+                <HiOutlineExclamationCircle className="h-10 w-10 text-red-500 dark:text-red-400" />
+              </motion.div>
+              <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">
+                Delete Comment
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">
+                This action cannot be undone. The comment will be permanently removed from the system.
+              </p>
+              <div className="flex justify-center gap-3">
+                <motion.button
+                  whileHover={{ y: -1 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setShowModal(false)}
+                  className="px-6 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200 text-sm font-medium"
+                >
+                  Cancel
+                </motion.button>
+                <motion.button
+                  whileHover={{ y: -1 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleDeleteComment}
+                  disabled={deleting}
+                  className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 text-sm font-medium relative overflow-hidden"
+                >
+                  {deleting ? (
+                    <>
+                      <span className="absolute inset-0 flex items-center justify-center">
+                        <svg
+                          className="animate-spin h-5 w-5 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                      </span>
+                      <span className="invisible">Deleting...</span>
+                    </>
+                  ) : (
+                    'Delete'
+                  )}
+                </motion.button>
+              </div>
             </div>
           </div>
         </Modal.Body>

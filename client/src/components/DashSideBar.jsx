@@ -7,7 +7,8 @@ import {
   HiAnnotation,
   HiChartPie,
   HiTag,
-  HiUserAdd, 
+  HiUserAdd,
+  HiChatAlt, // Added for feedback icon
 } from 'react-icons/hi';
 import { useEffect, useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -71,6 +72,13 @@ const sidebarItems = [
     icon: HiAnnotation,
     adminOnly: true,
     path: '/dashboard?tab=comments'
+  },
+  {
+    id: 'feedback',
+    label: 'Feedback',
+    icon: HiChatAlt, 
+    adminOnly: true,
+    path: '/dashboard?tab=feedback'
   },
 ];
 
