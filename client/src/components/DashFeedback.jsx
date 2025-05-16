@@ -31,10 +31,18 @@ export default function FeedbackCRUD() {
   const fetchFeedback = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(API_URL);
-      if (response.data.success) {
-        setFeedback(response.data.data);
-        calculateStats(response.data.data);
+      const response = await fetch('/api/feedback/', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setFeedback(data.data);
+        calculateStats(data.data);
       }
     } catch (err) {
       setError('Failed to fetch feedback data');
@@ -47,9 +55,11 @@ export default function FeedbackCRUD() {
   // Fetch feedback statistics
   const fetchStats = async () => {
     try {
-      const response = await axios.get(`${API_URL}/statistics/overview`);
-      if (response.data.success) {
-        const statsData = response.data.data.stats;
+      const response = await fetch(`/api/feedback/statistics/overview`);
+
+      const data = await response.json();
+      if (data.success) {
+        const statsData = data.data.stats;
         setStats({
           totalFeedbacks: statsData.totalFeedbacks || 0,
           // Since the backend doesn't directly provide unresolved count,
@@ -136,19 +146,39 @@ export default function FeedbackCRUD() {
     try {
       if (isEditMode && currentFeedback) {
         // Update existing feedback
-        const response = await axios.put(`${API_URL}/${currentFeedback}`, formData);
-        if (response.data.success) {
+        const response = await fetch(`/api/feedback/${currentFeedback}`,
+          {
+          method: 'PUT',
+          headers: 
+          {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+        const data = await response.json();
+
+        if (data.success) {
           setFeedback(feedback.map(item => 
             item._id === currentFeedback 
-              ? response.data.data
+              ? data.data
               : item
           ));
         }
       } else {
         // Create new feedback
-        const response = await axios.post(API_URL, formData);
-        if (response.data.success) {
-          setFeedback([...feedback, response.data.data]);
+        const response = await fetch('/api/feedback/', 
+          {
+          method: 'POST',
+          headers: 
+          {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          setFeedback([...feedback, data.data]);
         }
       }
       
@@ -165,10 +195,21 @@ export default function FeedbackCRUD() {
   // Delete feedback
   const deleteFeedback = async (id) => {
     try {
-      const response = await axios.delete(`${API_URL}/${id}`);
-      if (response.data.success) {
-        setFeedback(feedback.filter(item => item._id !== id));
-        calculateStats(feedback.filter(item => item._id !== id));
+      const response = await fetch(`/api/feedback/${id}`, 
+        {
+        method: 'DELETE',
+        headers: 
+        {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        const updatedFeedback = feedback.filter(item => item._id !== id);
+        setFeedback(updatedFeedback);
+        calculateStats(updatedFeedback);
       }
     } catch (err) {
       console.error('Error deleting feedback:', err);

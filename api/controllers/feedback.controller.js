@@ -117,7 +117,8 @@ export const updateFeedback = async (req, res) => {
 // Delete feedback
 export const deleteFeedback = async (req, res) => {
   try {
-    const feedback = await Feedback.findById(req.params.id);
+    const { id } = req.params;
+    const feedback = await Feedback.findById(id);
     
     if (!feedback) {
       return res.status(404).json({
@@ -126,11 +127,11 @@ export const deleteFeedback = async (req, res) => {
       });
     }
     
-    await feedback.remove();
+    await Feedback.findByIdAndDelete(id);
     
     res.status(200).json({
       success: true,
-      data: {}
+      message: 'Feedback deleted successfully',
     });
   } catch (error) {
     res.status(500).json({
