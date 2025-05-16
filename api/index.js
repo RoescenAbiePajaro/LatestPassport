@@ -7,7 +7,7 @@ import postRoutes from './routes/post.route.js';
 import commentRoutes from './routes/comment.route.js';
 import categoryRoutes from './routes/category.route.js';
 import personRoutes from './routes/person.route.js';
-import appointmentRoutes from './routes/appointment.route.js';
+import feedbackRoutes from './routes/feedback.route.js';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 
@@ -35,7 +35,7 @@ app.use('/api/post', postRoutes);
 app.use('/api/comment', commentRoutes);
 app.use('/api/category', categoryRoutes);
 app.use('/api/persons', personRoutes);
-app.use('/api/appointments', appointmentRoutes);
+app.use('/api/feedback', feedbackRoutes);
 
 
 app.use(express.static(path.join(__dirname, '/client/dist')));

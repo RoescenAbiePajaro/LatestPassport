@@ -12,6 +12,7 @@ import CreatePost from './CreatePost';
 import UpdatePost from './UpdatePost';
 import LoadingSpinner from '../components/LoadingSpinner';
 import UserApproval from '../components/UserApproval';
+import DashFeedback from '../components/DashFeedback';
 import { Link } from 'react-router-dom';
 
 export default function Dashboard() {
@@ -69,6 +70,8 @@ export default function Dashboard() {
         {tab === 'updatepost' && <UpdatePost postId={postId} />}
         {tab === 'updatecategory' && <UpdateCategory categoryId={categoryId} />}
         {tab === 'userapproval' && <UserApproval />}
+        {tab === 'feedback' && <DashFeedback />}
+
       </div>
     </div>
   );
