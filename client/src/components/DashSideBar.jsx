@@ -8,7 +8,8 @@ import {
   HiChartPie,
   HiTag,
   HiUserAdd,
-  HiChatAlt, // Added for feedback icon
+  HiChatAlt,
+  HiPencil, // Added HiPencil import
 } from 'react-icons/hi';
 import { useEffect, useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -27,22 +28,21 @@ const sidebarItems = [
     id: 'profile',
     label: 'Profile',
     icon: HiUser,
-    adminOnly: false,
+    adminOnly: true,
     path: '/dashboard?tab=profile'
   },
   {
     id: 'posts',
     label: 'Posts',
     icon: HiDocumentText,
-    adminOnly: false,
+    adminOnly: true,
     path: '/dashboard?tab=posts'
   },
   {
     id: 'createpost',
     label: 'Create Post',
-    icon: HiDocumentText,
-    adminOnly: false,
-    userOnly: true,
+    icon: HiPencil, // Changed from HiDocumentText to HiPencil
+    adminOnly: true,
     path: '/dashboard?tab=createpost'
   },
   {
@@ -76,7 +76,7 @@ const sidebarItems = [
   {
     id: 'feedback',
     label: 'Feedback',
-    icon: HiChatAlt, 
+    icon: HiChatAlt,
     adminOnly: true,
     path: '/dashboard?tab=feedback'
   },

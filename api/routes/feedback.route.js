@@ -1,21 +1,18 @@
 import express from 'express';
-import { check } from 'express-validator';
 import {
-  getAllFeedback,
-  createFeedback,
+  submitFeedback,
+  getFeedback,
   getFeedbackById,
   updateFeedback,
   deleteFeedback,
-  getFeedbackStats
 } from '../controllers/feedback.controller.js';
 
 const router = express.Router();
 
-router.get('/', getAllFeedback);
-router.post('/', createFeedback);
-router.get('/:id', getFeedbackById);
-router.put('/:id', updateFeedback);
-router.delete('/:id', deleteFeedback);
-router.get('/statistics/overview', getFeedbackStats);
+router.post("/feedback", submitFeedback);
+router.get("/feedback", getFeedback);
+router.get("/feedback/:id", getFeedbackById);
+router.put("/feedback/:id", updateFeedback);
+router.delete("/feedback/:id", deleteFeedback);
 
 export default router;

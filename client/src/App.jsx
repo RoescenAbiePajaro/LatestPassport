@@ -15,7 +15,7 @@ import UpdatePost from './pages/UpdatePost';
 import PostPage from './pages/PostPage';
 import ScrollToTop from './components/ScrollToTop';
 import Search from './pages/Search';
-import PersonalInfoForm from './pages/PersonalInfoForm';
+import PersonalInfoForm from './components/FeedbackForm';
 
 
 export default function App() {
@@ -45,7 +45,6 @@ export default function App() {
         <Route path='/projects' element={<Projects />} />
         <Route path='/post/:postSlug' element={<PostPage />} />
       </Routes>
-      <Footer />
     </BrowserRouter>
   );
 }

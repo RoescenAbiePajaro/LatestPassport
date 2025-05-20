@@ -103,21 +103,6 @@ export default function Header() {
             Home
             {activeLinkStyle('/')}
           </Link>
-          <Link to="/about" className={navLinkClass('/about')}>
-            About CivicView
-            {activeLinkStyle('/about')}
-          </Link>
-          <Link to="/contact" className={navLinkClass('/contact')}>
-            Contact Us
-            {activeLinkStyle('/contact')}
-          </Link>
-          <Link to="/form" className={navLinkClass('/form')}>
-            <div className="flex items-center gap-1">
-              <FaWpforms className="text-blue-500" />
-              Personal Form
-            </div>
-            {activeLinkStyle('/form')}
-          </Link>
         </div>
 
         <div className="flex items-center gap-4">
@@ -275,16 +260,6 @@ export default function Header() {
                   <Link to="/faqs" onClick={() => setIsSidebarOpen(false)} className={mobileLinkClass('/faqs')}>
                     FAQs
                   </Link>
-                  <Link to="/contact" onClick={() => setIsSidebarOpen(false)} className={mobileLinkClass('/contact')}>
-                    Contact Us
-                  </Link>
-                  <Link to="/form" onClick={() => setIsSidebarOpen(false)} className={mobileLinkClass('/form')}>
-                    <div className="flex items-center gap-2">
-                      <FaWpforms className="text-blue-500" />
-                      Personal Form
-                    </div>
-                  </Link>
-                  
                   <div className="my-6 border-t border-gray-100 dark:border-gray-700"></div>
                   
                   <form onSubmit={handleSubmit} className="mb-4">
