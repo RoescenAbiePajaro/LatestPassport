@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import supabase, { CDNURL } from '../supabase';
 import { v4 as uuidv4 } from 'uuid';
@@ -7,13 +7,15 @@ import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function CreatePost() {
   const [file, setFile] = useState(null);
+  const [fileType, setFileType] = useState(null); // 'image' or 'video'
   const [preview, setPreview] = useState(null);
-  const [imageUploadError, setImageUploadError] = useState(null);
+  const [mediaUploadError, setMediaUploadError] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
     category: '',
-    image: ''
+    image: '',
+    video: ''
   });
   const [publishError, setPublishError] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -22,8 +24,13 @@ export default function CreatePost() {
   const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [categoryError, setCategoryError] = useState(null);
   const [isPageLoading, setIsPageLoading] = useState(true);
+  const videoRef = useRef(null);
 
   const navigate = useNavigate();
+
+  // Maximum file sizes (in bytes)
+  const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+  const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
 
   useEffect(() => {
     // Simulate initial page load
@@ -108,33 +115,50 @@ export default function CreatePost() {
     }
   };
 
-  const handleUploadImage = async () => {
+  const handleUploadMedia = async () => {
     if (!file) {
-      setImageUploadError('Please select an image');
+      setMediaUploadError('Please select a file');
+      return;
+    }
+
+    // Check file size
+    if (fileType === 'image' && file.size > MAX_IMAGE_SIZE) {
+      setMediaUploadError(`Image size exceeds maximum allowed (5MB)`);
+      return;
+    } else if (fileType === 'video' && file.size > MAX_VIDEO_SIZE) {
+      setMediaUploadError(`Video size exceeds maximum allowed (50MB)`);
       return;
     }
 
     setUploading(true);
-    setImageUploadError(null);
+    setMediaUploadError(null);
 
     try {
       const fileName = `${uuidv4()}-${file.name}`;
+      const folderPath = fileType === 'image' ? 'images/' : 'videos/';
+      const filePath = folderPath + fileName;
 
       // Upload file to Supabase storage
       const { data, error } = await supabase.storage
         .from('passportinteractiveboard')
-        .upload(fileName, file);
+        .upload(filePath, file);
 
       if (error) {
         throw new Error(error.message);
       }
 
       // Construct public URL
-      const imageUrl = `${CDNURL}${fileName}`;
-      setFormData(prev => ({ ...prev, image: imageUrl }));
+      const mediaUrl = `${CDNURL}${filePath}`;
+      
+      // Update the appropriate field based on file type
+      if (fileType === 'image') {
+        setFormData(prev => ({ ...prev, image: mediaUrl }));
+      } else {
+        setFormData(prev => ({ ...prev, video: mediaUrl }));
+      }
     } catch (error) {
       console.error('Upload failed:', error);
-      setImageUploadError(error.message || 'Image upload failed');
+      setMediaUploadError(error.message || 'File upload failed');
     } finally {
       setUploading(false);
     }
@@ -142,16 +166,41 @@ export default function CreatePost() {
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      setFile(selectedFile);
+    if (!selectedFile) return;
+    
+    setFile(selectedFile);
+    
+    // Determine file type
+    if (selectedFile.type.startsWith('image/')) {
+      setFileType('image');
       
-      // Create preview URL
+      // Create image preview URL
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result);
       };
       reader.readAsDataURL(selectedFile);
+    } else if (selectedFile.type.startsWith('video/')) {
+      setFileType('video');
+      
+      // Create video preview URL
+      const url = URL.createObjectURL(selectedFile);
+      setPreview(url);
+      
+      // Clean up the URL when component unmounts or preview changes
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setFile(null);
+      setMediaUploadError('Invalid file type. Please select an image or video.');
     }
+  };
+
+  const handleMediaTypeChange = (type) => {
+    // Reset file and preview when switching media type
+    setFile(null);
+    setPreview(null);
+    setFileType(type);
+    setMediaUploadError(null);
   };
 
   if (isPageLoading) {
@@ -232,15 +281,42 @@ export default function CreatePost() {
               {isLoadingCategories ? 'Loading categories...' : 
                categories.length === 0 && !categoryError ? 'No categories available. Please create one first.' : ''}
             </span>
-            
           </div>
         </div>
 
+        {/* Media Upload Section */}
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
-              Cover Image
+            <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">
+              Media Upload
             </label>
+            
+            {/* Media Type Tabs */}
+            <div className="flex border-b border-gray-200 mb-4">
+              <button
+                type="button"
+                onClick={() => handleMediaTypeChange('image')}
+                className={`py-2 px-4 mr-2 ${
+                  fileType === 'image' || fileType === null
+                    ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Upload Image
+              </button>
+              <button
+                type="button"
+                onClick={() => handleMediaTypeChange('video')}
+                className={`py-2 px-4 ${
+                  fileType === 'video'
+                    ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Upload Video
+              </button>
+            </div>
+            
             <div className="flex items-center space-x-4">
               <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors dark:border-gray-600 dark:hover:bg-gray-800">
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -250,17 +326,22 @@ export default function CreatePost() {
                   <p className="text-sm text-gray-500">
                     <span className="font-medium">Click to upload</span> or drag and drop
                   </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {fileType === 'video' 
+                      ? 'MP4, WebM, Ogg (max 50MB)' 
+                      : 'PNG, JPG, GIF (max 5MB)'}
+                  </p>
                 </div>
                 <input 
                   type="file" 
                   className="hidden" 
-                  accept="image/*" 
+                  accept={fileType === 'video' ? 'video/*' : 'image/*'} 
                   onChange={handleFileChange}
                 />
               </label>
               <button
                 type="button"
-                onClick={handleUploadImage}
+                onClick={handleUploadMedia}
                 disabled={uploading || !file}
                 className={`px-4 py-2 rounded-lg transition-colors ${
                   uploading || !file
@@ -277,13 +358,19 @@ export default function CreatePost() {
               </button>
             </div>
             
-            {imageUploadError && (
-              <p className="mt-2 text-sm text-red-600">{imageUploadError}</p>
+            {mediaUploadError && (
+              <p className="mt-2 text-sm text-red-600">{mediaUploadError}</p>
+            )}
+            
+            {!mediaUploadError && file && (
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                Selected file: {file.name} ({(file.size / (1024 * 1024)).toFixed(2)} MB)
+              </p>
             )}
           </div>
 
-          {/* Image Preview */}
-          {(preview || formData.image) && (
+          {/* Media Preview */}
+          {fileType === 'image' && (preview || formData.image) && (
             <div className="mt-4">
               <div className="relative rounded-lg overflow-hidden shadow-md">
                 <img 
@@ -292,6 +379,26 @@ export default function CreatePost() {
                   className="w-full h-64 object-cover"
                 />
                 {formData.image && (
+                  <div className="absolute bottom-2 right-2">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Uploaded
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {fileType === 'video' && (preview || formData.video) && (
+            <div className="mt-4">
+              <div className="relative rounded-lg overflow-hidden shadow-md">
+                <video 
+                  ref={videoRef}
+                  src={formData.video || preview} 
+                  controls
+                  className="w-full h-64 object-contain bg-black"
+                />
+                {formData.video && (
                   <div className="absolute bottom-2 right-2">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                       Uploaded

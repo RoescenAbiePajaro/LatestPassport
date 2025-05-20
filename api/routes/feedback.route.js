@@ -9,10 +9,11 @@ import {
 
 const router = express.Router();
 
-router.post("/feedback", submitFeedback);
-router.get("/feedback", getFeedback);
-router.get("/feedback/:id", getFeedbackById);
-router.put("/feedback/:id", updateFeedback);
-router.delete("/feedback/:id", deleteFeedback);
+
+router.post("/", submitFeedback);
+router.get("/", getFeedback);
+router.get("/:id", getFeedbackById);
+router.put("/:id", updateFeedback);
+router.delete("/:id", deleteFeedback);
 
 export default router;

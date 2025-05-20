@@ -8,14 +8,14 @@ export const create = async (req, res, next) => {
       return next(errorHandler(401, 'Unauthorized: Please log in'));
     }
 
-    // Count exisitng post by this user
+    // Count existing post by this user
     const countPost = await Post.countDocuments({ userId: req.user.id });
     if (countPost >= 5) {
       return next(errorHandler(403, 'You have reached the maximum of 5 posts'));
     }
 
     // Validate required fields
-    const { title, content, image, category } = req.body;
+    const { title, content, image, video, category } = req.body;
     if (!title || !content) {
       return next(errorHandler(400, 'Title and content are required'));
     }
@@ -32,6 +32,7 @@ export const create = async (req, res, next) => {
       title,
       content,
       image,
+      video, // Added video field
       category: category || 'uncategorized',
       slug,
       userId: req.user.id,
@@ -128,6 +129,7 @@ export const updatepost = async (req, res, next) => {
           content: req.body.content,
           category: req.body.category,
           image: req.body.image,
+          video: req.body.video, // Added video field
         },
       },
       { new: true }
