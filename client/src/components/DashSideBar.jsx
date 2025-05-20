@@ -33,14 +33,14 @@ const sidebarItems = [
   },
   {
     id: 'posts',
-    label: 'Posts',
+    label: 'Content',
     icon: HiDocumentText,
     adminOnly: true,
     path: '/dashboard?tab=posts'
   },
   {
     id: 'createpost',
-    label: 'Create Post',
+    label: 'Create Content',
     icon: HiPencil, // Changed from HiDocumentText to HiPencil
     adminOnly: true,
     path: '/dashboard?tab=createpost'

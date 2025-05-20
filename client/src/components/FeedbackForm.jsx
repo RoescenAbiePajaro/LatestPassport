@@ -1,74 +1,107 @@
-import { useState } from "react";
-import { ThumbsUp, ThumbsDown } from "lucide-react";
+import { useState } from 'react';
 
 export default function FeedbackForm() {
-  const [feedback, setFeedback] = useState(null); // 'up' | 'down' | null
-  const [comment, setComment] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const [comment, setComment] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleClick = (type) => {
-    setFeedback((prev) => (prev === type ? null : type));
+  const handleSubmitFeedback = async (feedbackType) => {
+    setIsSubmitting(true);
+    setError(null);
+    setFeedback(feedbackType);
+    
+    try {
+      // The error likely means the API URL is incorrect. Let's use the correct path
+      // Based on your router configuration, your endpoint doesn't have /api prefix
+      const response = await fetch('/feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          feedback: feedbackType, // "up" or "down" as required by your API
+          comment: comment
+        }),
+      });
+      
+      // Check if response is ok before trying to parse JSON
+      if (!response.ok) {
+        const errorText = await response.text(); // Get the error as text instead of trying to parse JSON
+        throw new Error(`Server error: ${response.status} - ${errorText.substring(0, 100)}`);
+      }
+      
+      const data = await response.json();
+      setIsSubmitted(true);
+    } catch (err) {
+      console.error("Feedback submission error:", err);
+      setError(err.message || "Failed to connect to the server");
+      setFeedback(null);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!feedback) return;
-
-    // You can replace this with an actual API call
-    console.log("Feedback submitted:", { feedback, comment });
-
-    setSubmitted(true);
-  };
-
-  if (submitted) {
-    return (
-      <div className="p-4 rounded bg-green-100 text-green-800">
-        Thank you for your feedback!
-      </div>
-    );
-  }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex items-center space-x-6">
-        <button
-          type="button"
-          onClick={() => handleClick("up")}
-          className={`flex items-center space-x-1 text-sm transition ${
-            feedback === "up" ? "text-green-600" : "text-gray-500"
-          }`}
-        >
-          <ThumbsUp size={24} />
-          <span>Like</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => handleClick("down")}
-          className={`flex items-center space-x-1 text-sm transition ${
-            feedback === "down" ? "text-red-600" : "text-gray-500"
-          }`}
-        >
-          <ThumbsDown size={24} />
-          <span>Dislike</span>
-        </button>
+    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      <div className="bg-white rounded-lg shadow-md p-6 w-full max-w-md text-center">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4">Was this helpful?</h2>
+        
+        {!isSubmitted ? (
+          <>
+            <div className="flex justify-center gap-6 my-5">
+              <button 
+                onClick={() => handleSubmitFeedback('up')} 
+                disabled={isSubmitting}
+                className="text-4xl hover:scale-110 transition-transform duration-200 disabled:opacity-50"
+                aria-label="Thumbs up"
+              >
+                👍
+              </button>
+              
+              <button 
+                onClick={() => handleSubmitFeedback('down')} 
+                disabled={isSubmitting}
+                className="text-4xl hover:scale-110 transition-transform duration-200 disabled:opacity-50"
+                aria-label="Thumbs down"
+              >
+                👎
+              </button>
+            </div>
+            
+            {feedback && (
+              <div className="mt-4">
+                <textarea
+                  placeholder="Any additional comments?"
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  rows="3"
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                />
+                
+                <button 
+                  onClick={() => handleSubmitFeedback(feedback)}
+                  disabled={isSubmitting}
+                  className="mt-3 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
+                </button>
+              </div>
+            )}
+            
+            {error && (
+              <div className="mt-4 text-red-600">
+                Error: {error}
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="mt-4 text-green-600 font-semibold">
+            Thank you for your feedback!
+          </div>
+        )}
       </div>
-
-      <textarea
-        value={comment}
-        onChange={(e) => setComment(e.target.value)}
-        placeholder="Optional comment..."
-        className="w-full p-2 border rounded resize-none"
-        rows={3}
-      />
-
-      <button
-        type="submit"
-        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-        disabled={!feedback}
-      >
-        Submit Feedback
-      </button>
-    </form>
+    </div>
   );
 }

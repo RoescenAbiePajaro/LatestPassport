@@ -104,6 +104,12 @@ export default function Header() {
             {activeLinkStyle('/')}
           </Link>
         </div>
+        <div className="hidden md:flex gap-8 items-center">
+          <Link to="/" className={navLinkClass('/faqs')}>
+            FAQs
+            {activeLinkStyle('/faqs')}
+          </Link>
+        </div>
 
         <div className="flex items-center gap-4">
           <button 
