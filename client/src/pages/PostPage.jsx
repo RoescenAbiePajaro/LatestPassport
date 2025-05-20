@@ -141,8 +141,10 @@ export default function PostPage() {
     );
   }
 
-  // Image fallback handling
+  // Media handling
   const heroImageUrl = post?.image || '/default-post-image.jpg';
+  const hasVideo = post?.video && post.video.trim() !== '';
+
   const handleImageError = (e) => {
     e.target.src = '/default-post-image.jpg';
   };
@@ -181,6 +183,22 @@ export default function PostPage() {
       {/* Article Content */}
       <div className="max-w-4xl mx-auto px-4 py-12 -mt-16 md:-mt-24 relative z-30">
         <article className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-700">
+          {/* Video Player (if available) */}
+          {hasVideo && (
+            <div className="w-full bg-black">
+              <div className="max-w-4xl mx-auto">
+                <video
+                  src={post.video}
+                  controls
+                  className="w-full aspect-video"
+                  poster={post.image}
+                >
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            </div>
+          )}
+
           <div className="p-6 md:p-12">
             <div
               className="prose prose-slate dark:prose-invert prose-lg prose-img:rounded-xl prose-headings:font-serif prose-headings:tracking-tight prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline max-w-none"
