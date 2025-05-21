@@ -197,14 +197,6 @@ export default function Header() {
                     My Posts
                   </Dropdown.Item>
                 </Link>
-                {/* Add Logo Management option for admins */}
-                {currentUser.isAdmin && (
-                  <Link to="/dashboard?tab=logo">
-                    <Dropdown.Item className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                      Logo Management
-                    </Dropdown.Item>
-                  </Link>
-                )}
                 <Dropdown.Divider />
                 <Dropdown.Item 
                   onClick={handleSignout} 

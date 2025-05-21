@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import supabase, { CDNURL } from '../supabase';
 import { v4 as uuidv4 } from 'uuid';
-import LoadingSpinner from './LoadingSpinner';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function LogoManagement() {
   const { currentUser } = useSelector(state => state.user);
@@ -268,7 +268,7 @@ export default function LogoManagement() {
 
   return (
     <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-      <h1 className="text-4xl font-bold text-center mb-10 text-gray-900 dark:text-white">Logo Management</h1>
+      <h1 className="text-4xl font-bold text-center mb-10 text-gray-900 dark:text-white">Create Logo</h1>
 
       {publishError && (
         <div className="mb-6 p-4 border-l-4 border-red-500 bg-red-50 text-red-700 rounded dark:bg-red-900 dark:border-red-400 dark:text-red-300">
@@ -282,38 +282,6 @@ export default function LogoManagement() {
         </div>
       )}
       
-      {/* Current Logo Preview */}
-      {currentLogo && (
-        <div className="mb-8 p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Current Logo</h2>
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg">
-                <img 
-                  src={currentLogo.image} 
-                  alt={currentLogo.title} 
-                  className="w-24 h-24 object-contain"
-                />
-              </div>
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white">{currentLogo.title}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Last updated: {new Date(currentLogo.updatedAt).toLocaleDateString()}
-                </p>
-              </div>
-            </div>
-            
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={isSubmitting}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:bg-red-400 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? 'Deleting...' : 'Delete Logo'}
-            </button>
-          </div>
-        </div>
-      )}
 
       <form className="space-y-8" onSubmit={handleSubmit}>
         <div>
