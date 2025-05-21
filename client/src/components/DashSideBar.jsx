@@ -9,7 +9,8 @@ import {
   HiTag,
   HiUserAdd,
   HiChatAlt,
-  HiPencil, // Added HiPencil import
+  HiPencil,
+  HiCloudUpload, 
 } from 'react-icons/hi';
 import { useEffect, useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -41,9 +42,16 @@ const sidebarItems = [
   {
     id: 'createpost',
     label: 'Create Content',
-    icon: HiPencil, // Changed from HiDocumentText to HiPencil
+    icon: HiPencil,
     adminOnly: true,
     path: '/dashboard?tab=createpost'
+  },
+  {
+    id: 'logo', 
+    label: 'Create Logo',
+    icon: HiCloudUpload,
+    adminOnly: true,
+    path: '/dashboard?tab=logo'
   },
   {
     id: 'categories',

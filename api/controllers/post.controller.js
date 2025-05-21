@@ -10,7 +10,7 @@ export const create = async (req, res, next) => {
 
     // Count existing post by this user
     const countPost = await Post.countDocuments({ userId: req.user.id });
-    if (countPost >= 5) {
+    if (countPost >= 100) {
       return next(errorHandler(403, 'You have reached the maximum of 5 posts'));
     }
 
