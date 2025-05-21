@@ -1,14 +1,9 @@
 import Logo from '../models/logo.model.js';
 
-
 export const createLogo = async (req, res) => {
   try {
     const { userId, title, image, video } = req.body;
     
-
-    const slug = slugify(title, { lower: true });
-    
-   
     const existingLogo = await Logo.findOne({ title });
     if (existingLogo) {
       return res.status(400).json({ message: 'Logo with this title already exists' });
@@ -17,9 +12,9 @@ export const createLogo = async (req, res) => {
     const newLogo = new Logo({
       userId,
       title,
-      slug,
-      image: image || undefined,
-      video: video || undefined
+      // Only set these if they're provided, otherwise let schema defaults handle it
+      ...(image && { image }),
+      ...(video && { video })
     });
     
     const savedLogo = await newLogo.save();
@@ -29,7 +24,6 @@ export const createLogo = async (req, res) => {
   }
 };
 
-
 export const getAllLogos = async (req, res) => {
   try {
     const logos = await Logo.find().sort({ createdAt: -1 });
@@ -38,7 +32,6 @@ export const getAllLogos = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 
 export const getLogoById = async (req, res) => {
   try {
@@ -52,7 +45,6 @@ export const getLogoById = async (req, res) => {
   }
 };
 
-
 export const getLogosByUserId = async (req, res) => {
   try {
     const logos = await Logo.find({ userId: req.params.userId }).sort({ createdAt: -1 });
@@ -61,7 +53,6 @@ export const getLogosByUserId = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 
 export const updateLogo = async (req, res) => {
   try {
@@ -72,8 +63,7 @@ export const updateLogo = async (req, res) => {
       return res.status(404).json({ message: 'Logo not found' });
     }
     
-    
-    let slug = logoToUpdate.slug;
+    // Check if new title already exists for another logo
     if (title && title !== logoToUpdate.title) {
       const existingLogo = await Logo.findOne({ 
         title, 
@@ -83,18 +73,17 @@ export const updateLogo = async (req, res) => {
       if (existingLogo) {
         return res.status(400).json({ message: 'Logo with this title already exists' });
       }
-      
-      slug = slugify(title, { lower: true });
     }
+    
+    // Build update object with only properties that are provided
+    const updateData = {};
+    if (title) updateData.title = title;
+    if (image) updateData.image = image;
+    if (video) updateData.video = video;
     
     const updatedLogo = await Logo.findByIdAndUpdate(
       req.params.id,
-      {
-        title: title || logoToUpdate.title,
-        slug,
-        image: image || logoToUpdate.image,
-        video: video || logoToUpdate.video
-      },
+      updateData,
       { new: true }
     );
     
@@ -103,7 +92,6 @@ export const updateLogo = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 
 export const deleteLogo = async (req, res) => {
   try {

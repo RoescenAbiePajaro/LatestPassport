@@ -20,11 +20,6 @@ const logoSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
-    slug: {
-      type: String,
-      required: true,
-      unique: true,
-    }
   },
   { timestamps: true }
 );

@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { Avatar, Button, Dropdown, Navbar, TextInput } from 'flowbite-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { AiOutlineSearch } from 'react-icons/ai';
-import { FaMoon, FaSun, FaBars, FaTimes, FaWpforms } from 'react-icons/fa';
+import { FaMoon, FaSun, FaBars, FaTimes } from 'react-icons/fa';
 import { useSelector, useDispatch } from 'react-redux';
 import { toggleTheme } from '../redux/theme/themeSlice';
 import { signoutSuccess } from '../redux/user/userSlice';
 import { motion, AnimatePresence } from 'framer-motion';
+import Logo from '../pages/Logo'; 
 
 export default function Header() {
   const { pathname, search } = useLocation();
@@ -89,13 +90,9 @@ export default function Header() {
           >
             {isSidebarOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
           </button>
-          <Link to="/" className="flex items-center">
-            <img 
-              src={`src/3.png`} 
-              alt="Logo" 
-              className="h-8 sm:h-10 transform hover:scale-105 transition-transform duration-300" 
-            />
-          </Link>
+          
+          {/* Replace the old logo with the new Logo component */}
+          <Logo />
         </div>
 
         <div className="hidden md:flex gap-8 items-center">
@@ -105,7 +102,7 @@ export default function Header() {
           </Link>
         </div>
         <div className="hidden md:flex gap-8 items-center">
-          <Link to="/" className={navLinkClass('/faqs')}>
+          <Link to="/faqs" className={navLinkClass('/faqs')}>
             FAQs
             {activeLinkStyle('/faqs')}
           </Link>
@@ -200,6 +197,14 @@ export default function Header() {
                     My Posts
                   </Dropdown.Item>
                 </Link>
+                {/* Add Logo Management option for admins */}
+                {currentUser.isAdmin && (
+                  <Link to="/dashboard?tab=logo">
+                    <Dropdown.Item className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      Logo Management
+                    </Dropdown.Item>
+                  </Link>
+                )}
                 <Dropdown.Divider />
                 <Dropdown.Item 
                   onClick={handleSignout} 
@@ -248,86 +253,65 @@ export default function Header() {
             >
               <div className="flex flex-col p-5 h-full">
                 <div className="flex justify-between items-center mb-8">
-                  <Link to="/" onClick={() => setIsSidebarOpen(false)}>
-                    <img src={`src/${theme === 'light' ? '3' : '3'}.png`} alt="Logo" className="h-8" />
-                  </Link>
+                  {/* Use Logo component in mobile sidebar */}
+                  <Logo onClick={() => setIsSidebarOpen(false)} />
                   <button 
                     onClick={() => setIsSidebarOpen(false)} 
-                    className="text-gray-700 dark:text-gray-300 hover:text-blue-500 hover:rotate-90 transition-all duration-300 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+                    className="text-gray-700 dark:text-gray-300 hover:text-red-500 transition-all duration-300"
                   >
-                    <FaTimes size={18} />
+                    <FaTimes size={20} />
                   </button>
                 </div>
-
-                <div className="flex flex-col space-y-1 flex-grow">
-                  <Link to="/" onClick={() => setIsSidebarOpen(false)} className={mobileLinkClass('/')}>
+                
+                <div className="space-y-1 mb-8">
+                  <Link to="/" className={mobileLinkClass('/')} onClick={() => setIsSidebarOpen(false)}>
                     Home
                   </Link>
-                  <Link to="/faqs" onClick={() => setIsSidebarOpen(false)} className={mobileLinkClass('/faqs')}>
+                  <Link to="/faqs" className={mobileLinkClass('/faqs')} onClick={() => setIsSidebarOpen(false)}>
                     FAQs
                   </Link>
-                  <div className="my-6 border-t border-gray-100 dark:border-gray-700"></div>
-                  
-                  <form onSubmit={handleSubmit} className="mb-4">
-                    <div className="relative">
-                      <TextInput 
-                        type="text" 
-                        placeholder="Search..." 
-                        value={searchTerm} 
-                        onChange={(e) => setSearchTerm(e.target.value)} 
-                        className="pl-10 w-full rounded-xl bg-gray-50 dark:bg-gray-700 border-0"
-                      />
-                      <AiOutlineSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-                    </div>
-                  </form>
                 </div>
-
-                <div className="mt-auto pt-5 border-t border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center justify-between">
-                    <Button 
-                      className="w-10 h-10" 
-                      color={theme === 'light' ? 'gray' : 'dark'} 
-                      pill 
-                      onClick={() => dispatch(toggleTheme())}
-                    >
-                      {theme === 'light' ? <FaMoon className="text-indigo-600" /> : <FaSun className="text-amber-400" />}
-                    </Button>
-                    
-                    {currentUser ? (
-                      <div className="flex items-center gap-3">
-                        <Avatar alt="user" img={currentUser.profilePicture} rounded size="sm" className="ring-2 ring-blue-500" />
-                        <div className="text-sm">
-                          <div className="font-medium">@{currentUser.username}</div>
-                          <div className="flex gap-4 mt-2">
-                            <Link 
-                              to="/dashboard?tab=profile" 
-                              className="text-blue-600 dark:text-blue-400 text-xs font-medium"
-                              onClick={() => setIsSidebarOpen(false)}
-                            >
-                              Profile
-                            </Link>
-                            <button 
-                              onClick={handleSignout} 
-                              className="text-red-500 dark:text-red-400 text-xs font-medium"
-                            >
-                              Sign out
-                            </button>
-                          </div>
-                        </div>
-                      </div>
+                
+                <div className="mt-auto pb-4">
+                  <Button 
+                    onClick={() => dispatch(toggleTheme())}
+                    className="w-full mb-4 flex items-center justify-center gap-2 rounded-xl"
+                    color={theme === 'light' ? 'gray' : 'dark'}
+                  >
+                    {theme === 'light' ? (
+                      <>
+                        <FaMoon className="text-indigo-600" />
+                        <span>Dark Mode</span>
+                      </>
                     ) : (
+                      <>
+                        <FaSun className="text-amber-400" />
+                        <span>Light Mode</span>
+                      </>
+                    )}
+                  </Button>
+                  
+                  {!currentUser && (
+                    <div className="grid grid-cols-2 gap-2">
                       <Link to="/sign-in" onClick={() => setIsSidebarOpen(false)}>
                         <Button 
                           gradientDuoTone="purpleToBlue" 
                           outline 
-                          size="sm" 
-                          className="rounded-xl"
+                          className="w-full rounded-xl"
                         >
                           Sign In
                         </Button>
                       </Link>
-                    )}
-                  </div>
+                      <Link to="/sign-up" onClick={() => setIsSidebarOpen(false)}>
+                        <Button 
+                          gradientDuoTone="purpleToBlue" 
+                          className="w-full rounded-xl"
+                        >
+                          Sign Up
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
             </motion.div>

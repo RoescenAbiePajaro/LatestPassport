@@ -1,115 +1,134 @@
-
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState, useRef } from 'react';
+import { useSelector } from 'react-redux';
 import supabase, { CDNURL } from '../supabase';
 import { v4 as uuidv4 } from 'uuid';
-import LoadingSpinner from '../components/LoadingSpinner';
+import LoadingSpinner from './LoadingSpinner';
 
-export default function SimplePost() {
+export default function LogoManagement() {
+  const { currentUser } = useSelector(state => state.user);
+  const [logos, setLogos] = useState([]);
+  const [currentLogo, setCurrentLogo] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [file, setFile] = useState(null);
-  const [fileType, setFileType] = useState(null); // 'image' or 'video'
   const [preview, setPreview] = useState(null);
   const [mediaUploadError, setMediaUploadError] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
-    content: '',
-    category: '',
-    image: '',
-    video: ''
+    image: ''
   });
   const [publishError, setPublishError] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [categories, setCategories] = useState([]);
-  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
-  const [categoryError, setCategoryError] = useState(null);
   const [isPageLoading, setIsPageLoading] = useState(true);
-  const videoRef = useRef(null);
+  const [successMessage, setSuccessMessage] = useState(null);
+  const [isEdit, setIsEdit] = useState(false);
 
-  const navigate = useNavigate();
-
-  // Maximum file sizes (in bytes)
+  // Maximum file size (in bytes)
   const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
-  const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
 
   useEffect(() => {
     // Simulate initial page load
     const timer = setTimeout(() => {
       setIsPageLoading(false);
     }, 1000);
-
+    
     return () => clearTimeout(timer);
   }, []);
 
-  // Fetch categories from API
   useEffect(() => {
-    const fetchCategories = async () => {
-      setIsLoadingCategories(true);
-      setCategoryError(null);
-      
+    const fetchLogos = async () => {
+      setIsLoading(true);
       try {
-        const res = await fetch('/api/category');
+        const res = await fetch('/api/logo');
         const data = await res.json();
         
         if (res.ok) {
-          setCategories(data);
-          // Set default category if available
-          if (data.length > 0) {
-            setFormData(prev => ({ ...prev, category: data[0]._id }));
+          setLogos(data);
+          
+          // Set current logo to the most recent one
+          if (data && data.length > 0) {
+            setCurrentLogo(data[0]);
+            // Populate form with current logo data for editing
+            setFormData({
+              title: data[0].title || '',
+              image: data[0].image || '',
+            });
+            setIsEdit(true);
           }
         } else {
-          throw new Error(data.message || 'Failed to fetch categories');
+          throw new Error(data.message || 'Failed to fetch logos');
         }
-      } catch (err) {
-        console.error('Error fetching categories:', err);
-        setCategoryError(err.message || 'Failed to load categories. Please try again later.');
+      } catch (error) {
+        console.error('Error fetching logos:', error);
       } finally {
-        setIsLoadingCategories(false);
+        setIsLoading(false);
       }
     };
-    
-    fetchCategories();
+
+    fetchLogos();
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Modified validation
+    // Validation
     if (!formData.title?.trim()) {
       setPublishError('Title is required');
       return;
     }
 
-    // Better content validation
-    const contentWithoutTags = formData.content?.replace(/<[^>]*>/g, '').trim();
-    const hasContent = contentWithoutTags && contentWithoutTags.length > 0;
-
-    if (!hasContent) {
-      setPublishError('Content is required');
+    if (!formData.image?.trim()) {
+      setPublishError('Logo image is required');
       return;
     }
 
     setIsSubmitting(true);
+    setPublishError(null);
+
     try {
-      const res = await fetch('/api/post/create', {
-        method: 'POST',
+      // Determine if we're creating a new logo or updating existing one
+      const url = isEdit ? `/api/logo/${currentLogo._id}` : '/api/logo';
+      const method = isEdit ? 'PUT' : 'POST';
+      
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
           ...formData,
-          title: formData.title.trim(),
-          content: formData.content
+          userId: currentUser._id,
         }),
       });
 
       const data = await res.json();
+      
       if (!res.ok) {
-        setPublishError(data.message);
+        setPublishError(data.message || 'Something went wrong');
         return;
       }
-      navigate(`/post/${data.slug}`);
+      
+      // Update local state
+      if (isEdit) {
+        setLogos(logos.map(logo => 
+          logo._id === currentLogo._id ? data : logo
+        ));
+        setCurrentLogo(data);
+      } else {
+        setLogos([data, ...logos]);
+        setCurrentLogo(data);
+        setIsEdit(true);
+      }
+      
+      setSuccessMessage(isEdit ? 'Logo updated successfully!' : 'New logo created successfully!');
+      setTimeout(() => setSuccessMessage(null), 3000);
+      
+      // Reset file states
+      setFile(null);
+      setPreview(null);
+      
     } catch (error) {
       setPublishError('Something went wrong');
+      console.error(error);
     } finally {
       setIsSubmitting(false);
     }
@@ -122,11 +141,8 @@ export default function SimplePost() {
     }
 
     // Check file size
-    if (fileType === 'image' && file.size > MAX_IMAGE_SIZE) {
+    if (file.size > MAX_IMAGE_SIZE) {
       setMediaUploadError(`Image size exceeds maximum allowed (5MB)`);
-      return;
-    } else if (fileType === 'video' && file.size > MAX_VIDEO_SIZE) {
-      setMediaUploadError(`Video size exceeds maximum allowed (50MB)`);
       return;
     }
 
@@ -135,8 +151,7 @@ export default function SimplePost() {
 
     try {
       const fileName = `${uuidv4()}-${file.name}`;
-      const folderPath = fileType === 'image' ? 'images/' : 'videos/';
-      const filePath = folderPath + fileName;
+      const filePath = 'logo/' + fileName;
 
       // Upload file to Supabase storage
       const { data, error } = await supabase.storage
@@ -150,12 +165,10 @@ export default function SimplePost() {
       // Construct public URL
       const mediaUrl = `${CDNURL}${filePath}`;
       
-      // Update the appropriate field based on file type
-      if (fileType === 'image') {
-        setFormData(prev => ({ ...prev, image: mediaUrl }));
-      } else {
-        setFormData(prev => ({ ...prev, video: mediaUrl }));
-      }
+      // Update form data with new image URL
+      setFormData(prev => ({ ...prev, image: mediaUrl }));
+      setSuccessMessage('Image uploaded successfully');
+      setTimeout(() => setSuccessMessage(null), 3000);
     } catch (error) {
       console.error('Upload failed:', error);
       setMediaUploadError(error.message || 'File upload failed');
@@ -170,38 +183,80 @@ export default function SimplePost() {
     
     setFile(selectedFile);
     
-    // Determine file type
+    // Validate file type
     if (selectedFile.type.startsWith('image/')) {
-      setFileType('image');
-      
       // Create image preview URL
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result);
       };
       reader.readAsDataURL(selectedFile);
-    } else if (selectedFile.type.startsWith('video/')) {
-      setFileType('video');
-      
-      // Create video preview URL
-      const url = URL.createObjectURL(selectedFile);
-      setPreview(url);
-      
-      // Clean up the URL when component unmounts or preview changes
-      return () => URL.revokeObjectURL(url);
     } else {
       setFile(null);
-      setMediaUploadError('Invalid file type. Please select an image or video.');
+      setMediaUploadError('Invalid file type. Please select an image.');
     }
   };
 
-  const handleMediaTypeChange = (type) => {
-    // Reset file and preview when switching media type
-    setFile(null);
-    setPreview(null);
-    setFileType(type);
-    setMediaUploadError(null);
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this logo?')) {
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      const res = await fetch(`/api/logo/${currentLogo._id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      
+      if (!res.ok) {
+        const data = await res.json();
+        setPublishError(data.message || 'Failed to delete logo');
+        return;
+      }
+      
+      // Update local state
+      const updatedLogos = logos.filter(logo => logo._id !== currentLogo._id);
+      setLogos(updatedLogos);
+      
+      // Reset form and set new current logo if available
+      if (updatedLogos.length > 0) {
+        setCurrentLogo(updatedLogos[0]);
+        setFormData({
+          title: updatedLogos[0].title || '',
+          image: updatedLogos[0].image || '',
+        });
+      } else {
+        setCurrentLogo(null);
+        setFormData({
+          title: '',
+          image: '',
+        });
+        setIsEdit(false);
+      }
+      
+      setSuccessMessage('Logo deleted successfully');
+      setTimeout(() => setSuccessMessage(null), 3000);
+      
+    } catch (error) {
+      setPublishError('Something went wrong');
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  // Check if user is admin
+  if (currentUser?.isAdmin !== true) {
+    return (
+      <div className="flex justify-center items-center min-h-[500px]">
+        <div className="p-4 border-l-4 border-red-500 bg-red-50 text-red-700 rounded">
+          <p className="font-medium">Access denied! You do not have permission to manage logos.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isPageLoading) {
     return (
@@ -213,23 +268,62 @@ export default function SimplePost() {
 
   return (
     <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-      <h1 className="text-4xl font-bold text-center mb-10 text-gray-900 dark:text-white">Create Logo</h1>
-      
+      <h1 className="text-4xl font-bold text-center mb-10 text-gray-900 dark:text-white">Logo Management</h1>
+
       {publishError && (
         <div className="mb-6 p-4 border-l-4 border-red-500 bg-red-50 text-red-700 rounded dark:bg-red-900 dark:border-red-400 dark:text-red-300">
           <p className="font-medium">{publishError}</p>
         </div>
       )}
+
+      {successMessage && (
+        <div className="mb-6 p-4 border-l-4 border-green-500 bg-green-50 text-green-700 rounded dark:bg-green-900 dark:border-green-400 dark:text-green-300">
+          <p className="font-medium">{successMessage}</p>
+        </div>
+      )}
       
+      {/* Current Logo Preview */}
+      {currentLogo && (
+        <div className="mb-8 p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Current Logo</h2>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded-lg">
+                <img 
+                  src={currentLogo.image} 
+                  alt={currentLogo.title} 
+                  className="w-24 h-24 object-contain"
+                />
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">{currentLogo.title}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Last updated: {new Date(currentLogo.updatedAt).toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+            
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={isSubmitting}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:bg-red-400 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? 'Deleting...' : 'Delete Logo'}
+            </button>
+          </div>
+        </div>
+      )}
+
       <form className="space-y-8" onSubmit={handleSubmit}>
         <div>
           <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
-            Title <span className="text-red-500">*</span>
+            Logo Title <span className="text-red-500">*</span>
           </label>
           <input
             id="title"
             type="text"
-            placeholder="Enter post title"
+            placeholder="Enter logo title"
             required
             value={formData.title}
             onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
@@ -241,34 +335,8 @@ export default function SimplePost() {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">
-              Media Upload
+              Logo Image <span className="text-red-500">*</span>
             </label>
-            
-            {/* Media Type Tabs */}
-            <div className="flex border-b border-gray-200 mb-4">
-              <button
-                type="button"
-                onClick={() => handleMediaTypeChange('image')}
-                className={`py-2 px-4 mr-2 ${
-                  fileType === 'image' || fileType === null
-                    ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Upload Image
-              </button>
-              <button
-                type="button"
-                onClick={() => handleMediaTypeChange('video')}
-                className={`py-2 px-4 ${
-                  fileType === 'video'
-                    ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Upload Video
-              </button>
-            </div>
             
             <div className="flex items-center space-x-4">
               <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors dark:border-gray-600 dark:hover:bg-gray-800">
@@ -280,15 +348,13 @@ export default function SimplePost() {
                     <span className="font-medium">Click to upload</span> or drag and drop
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    {fileType === 'video' 
-                      ? 'MP4, WebM, Ogg (max 50MB)' 
-                      : 'PNG, JPG, GIF (max 5MB)'}
+                    PNG, JPG, SVG (max 5MB)
                   </p>
                 </div>
                 <input 
                   type="file" 
                   className="hidden" 
-                  accept={fileType === 'video' ? 'video/*' : 'image/*'} 
+                  accept="image/*" 
                   onChange={handleFileChange}
                 />
               </label>
@@ -322,48 +388,37 @@ export default function SimplePost() {
             )}
           </div>
 
-          {/* Media Preview */}
-          {fileType === 'image' && (preview || formData.image) && (
+          {/* Image Preview */}
+          {preview && (
             <div className="mt-4">
               <div className="relative rounded-lg overflow-hidden shadow-md">
                 <img 
-                  src={formData.image || preview} 
+                  src={preview} 
                   alt="Preview" 
-                  className="w-full h-64 object-cover"
+                  className="w-full h-64 object-contain bg-gray-100 dark:bg-gray-700"
                 />
-                {formData.image && (
-                  <div className="absolute bottom-2 right-2">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      Uploaded
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
           )}
           
-          {fileType === 'video' && (preview || formData.video) && (
+          {!preview && formData.image && (
             <div className="mt-4">
               <div className="relative rounded-lg overflow-hidden shadow-md">
-                <video 
-                  ref={videoRef}
-                  src={formData.video || preview} 
-                  controls
-                  className="w-full h-64 object-contain bg-black"
+                <img 
+                  src={formData.image} 
+                  alt="Current Logo" 
+                  className="w-full h-64 object-contain bg-gray-100 dark:bg-gray-700"
                 />
-                {formData.video && (
-                  <div className="absolute bottom-2 right-2">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      Uploaded
-                    </span>
-                  </div>
-                )}
+                <div className="absolute bottom-2 right-2">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Current
+                  </span>
+                </div>
               </div>
             </div>
           )}
         </div>
 
-    
         <div>
           <button
             type="submit"
@@ -377,10 +432,10 @@ export default function SimplePost() {
             {isSubmitting ? (
               <div className="flex items-center">
                 <LoadingSpinner size="sm" color="white" />
-                <span className="ml-2">Publishing...</span>
+                <span className="ml-2">{isEdit ? 'Updating...' : 'Creating...'}</span>
               </div>
             ) : (
-              'Publish Post'
+              isEdit ? 'Update Logo' : 'Create New Logo'
             )}
           </button>
         </div>
