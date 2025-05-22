@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { Modal } from 'flowbite-react';
 import { HiOutlineExclamationCircle, HiOutlineChevronLeft, HiOutlineChevronRight } from 'react-icons/hi';
-import { motion } from 'framer-motion';
 import { Clock, ThumbsUp, ThumbsDown, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -134,73 +133,34 @@ export default function FeedbackDashboard() {
       
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6"
-        >
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
           <h3 className="text-lg font-medium text-gray-500 dark:text-gray-400 mb-2">Total Feedback</h3>
-          <motion.p 
-            key={totalFeedbacks}
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="text-3xl font-bold text-teal-600 dark:text-teal-400"
-          >
+          <p className="text-3xl font-bold text-teal-600 dark:text-teal-400">
             {totalFeedbacks}
-          </motion.p>
-        </motion.div>
+          </p>
+        </div>
         
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6"
-        >
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
           <h3 className="text-lg font-medium text-gray-500 dark:text-gray-400 mb-2">Positive Rate</h3>
-          <motion.p 
-            key={stats.positiveRate}
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="text-3xl font-bold text-green-600 dark:text-green-400"
-          >
+          <p className="text-3xl font-bold text-green-600 dark:text-green-400">
             {totalFeedbacks > 0 ? `${stats.positiveRate.toFixed(0)}%` : 'N/A'}
-          </motion.p>
-        </motion.div>
+          </p>
+        </div>
         
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6"
-        >
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
           <h3 className="text-lg font-medium text-gray-500 dark:text-gray-400 mb-2">With Comments</h3>
-          <motion.p 
-            key={stats.commentRate}
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="text-3xl font-bold text-purple-600 dark:text-purple-400"
-          >
+          <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
             {totalFeedbacks > 0 ? `${stats.commentRate.toFixed(0)}%` : 'N/A'}
-          </motion.p>
-        </motion.div>
+          </p>
+        </div>
       </div>
 
       <div className="flex items-center justify-between mb-4 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-xs border border-gray-100 dark:border-gray-700">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Total feedback items:</span>
-          <motion.span
-            key={totalFeedbacks}
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200"
-          >
+          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200">
             {totalFeedbacks}
-          </motion.span>
+          </span>
         </div>
       </div>
 
@@ -231,11 +191,8 @@ export default function FeedbackDashboard() {
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {currentItems.map((item) => (
-                    <motion.tr
+                    <tr
                       key={item._id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.3 }}
                       className="hover:bg-gray-50 dark:hover:bg-gray-700/50"
                     >
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
@@ -264,9 +221,7 @@ export default function FeedbackDashboard() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
+                        <button
                           onClick={() => {
                             setShowModal(true);
                             setFeedbackIdToDelete(item._id);
@@ -276,9 +231,9 @@ export default function FeedbackDashboard() {
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
-                        </motion.button>
+                        </button>
                       </td>
-                    </motion.tr>
+                    </tr>
                   ))}
                 </tbody>
               </table>
@@ -394,14 +349,9 @@ export default function FeedbackDashboard() {
               </svg>
             </button>
             <div className="text-center px-8 py-10">
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-                className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-red-100 to-red-50 dark:from-red-900/20 dark:to-red-900/40 mb-6 shadow-inner"
-              >
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-red-100 to-red-50 dark:from-red-900/20 dark:to-red-900/40 mb-6 shadow-inner">
                 <HiOutlineExclamationCircle className="h-10 w-10 text-red-500 dark:text-red-400" />
-              </motion.div>
+              </div>
               <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">
                 Delete Feedback
               </h3>
@@ -409,17 +359,13 @@ export default function FeedbackDashboard() {
                 This action cannot be undone. The feedback will be permanently removed from the system.
               </p>
               <div className="flex justify-center gap-3">
-                <motion.button
-                  whileHover={{ y: -1 }}
-                  whileTap={{ scale: 0.98 }}
+                <button
                   onClick={() => setShowModal(false)}
                   className="px-6 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200 text-sm font-medium"
                 >
                   Cancel
-                </motion.button>
-                <motion.button
-                  whileHover={{ y: -1 }}
-                  whileTap={{ scale: 0.98 }}
+                </button>
+                <button
                   onClick={handleDeleteFeedback}
                   disabled={deleting}
                   className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 text-sm font-medium relative overflow-hidden"
@@ -446,7 +392,7 @@ export default function FeedbackDashboard() {
                   ) : (
                     'Delete'
                   )}
-                </motion.button>
+                </button>
               </div>
             </div>
           </div>

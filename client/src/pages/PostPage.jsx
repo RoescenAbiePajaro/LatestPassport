@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Button } from 'flowbite-react';
+import { HiArrowLeft } from 'react-icons/hi';
 import PostCard from '../components/PostCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import CommentSection from '../components/CommentSection';
@@ -8,6 +9,7 @@ import FeedbackForm from '../components/FeedbackForm';
 
 export default function PostPage() {
   const { postSlug } = useParams();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [post, setPost] = useState(null);
@@ -151,6 +153,15 @@ export default function PostPage() {
 
   return (
     <main className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 min-h-screen">
+      {/* Back Button */}
+      <button
+        onClick={() => navigate(-1)}
+        className="fixed top-4 left-4 z-50 flex items-center bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors duration-200 px-4 py-2 rounded-full shadow-lg hover:shadow-xl"
+      >
+        <HiArrowLeft className="w-5 h-5 mr-2" />
+        Back
+      </button>
+
       {/* Hero Section with Fixed Image */}
       <div className="relative w-full h-[500px] md:h-[600px] overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-slate-900/40 via-slate-900/60 to-slate-900/80 z-10"></div>

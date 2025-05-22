@@ -5,6 +5,7 @@ import { HiOutlineExclamationCircle, HiOutlineTrash, HiAnnotation, HiOutlineChev
 import { motion } from 'framer-motion';
 import { Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import LoadingSpinner from './LoadingSpinner';
 
 export default function DashComments() {
   const { currentUser } = useSelector((state) => state.user);
@@ -162,8 +163,8 @@ export default function DashComments() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500"></div>
+        <div className="flex justify-center items-center min-h-[500px]">
+          <LoadingSpinner size="lg" color="primary" />
         </div>
       ) : currentUser.isAdmin && comments.length > 0 ? (
         <>

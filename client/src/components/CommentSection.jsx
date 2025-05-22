@@ -607,17 +607,8 @@ export default function CommentSection({ postId }) {
             </Link>
           </div>
         ) : (
-          <div className="mb-5 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-xl border border-blue-100 dark:border-blue-900/50">
+          <div>
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 text-sm">
-              <p className="text-blue-700 dark:text-blue-300 font-medium">
-                Sign in to join the conversation
-              </p>
-              <Link
-                to="/sign-in"
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-center font-medium text-sm transition-colors"
-              >
-                Sign In
-              </Link>
             </div>
           </div>
         )}

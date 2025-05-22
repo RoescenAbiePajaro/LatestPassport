@@ -469,18 +469,17 @@ export default function DashboardComp() {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto bg-gray-50 dark:bg-gray-900 min-h-screen">
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
-            Dashboard
-            <span className="bg-indigo-100 text-indigo-800 text-xs py-1 px-2 rounded-md font-medium">Admin</span>
-          </h1>
-          <div className="flex items-center text-gray-500 dark:text-gray-400 text-sm mt-1">
-            <Clock className="w-3.5 h-3.5 mr-1" />
-            <span>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
-          </div>
+      <div className="flex justify-between items-center mb-6 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6">
+        <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-3">
+          <BarChart2 className="w-8 h-8 text-indigo-400 dark:text-indigo-500" />
+          Dashboard
+          <span className="bg-indigo-100 text-indigo-800 text-xs py-1 px-2 rounded-md font-medium">Admin</span>
+        </h2>
+        <div className="flex items-center text-gray-500 dark:text-gray-400 text-sm">
+          <Clock className="w-3.5 h-3.5 mr-1" />
+          <span>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
         </div>
       </div>
       
