@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import DashSidebar from '../components/DashSidebar';
+import DashSidebar from '../components/DashSideBar';
 import DashProfile from '../components/DashProfile';
 import DashPosts from '../components/DashPosts';
 import DashUsers from '../components/DashUsers';
@@ -15,6 +15,7 @@ import UpdateCategory from './UpdateCategory';
 import LoadingSpinner from '../components/LoadingSpinner';
 import UserApproval from '../components/UserApproval';
 import DashFeedback from '../components/DashFeedback';
+import DashFaqs from '../components/DashFaqs';
 import FAQs from './FAQs';
 
 
@@ -76,7 +77,7 @@ export default function Dashboard() {
         {tab === 'updatecategory' && <UpdateCategory categoryId={categoryId} />}
         {tab === 'userapproval' && <UserApproval />}
         {tab === 'feedback' && <DashFeedback />}
-        {tab === 'faqs' && <FAQs />}
+        {tab === 'faqs' && <DashFaqs />}
       </div>
     </div>
   );
