@@ -327,7 +327,7 @@ export default function DashPosts() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="container mx-5 px-5 py-6">
       <div className="flex justify-between items-center mb-6 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6">
         <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-3">
           <HiDocumentText className="w-8 h-8 text-teal-400 dark:text-teal-500"/>
