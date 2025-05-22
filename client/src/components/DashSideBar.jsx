@@ -8,7 +8,10 @@ import {
   HiChartPie,
   HiTag,
   HiUserAdd,
-  HiChatAlt, // Added for feedback icon
+  HiChatAlt,
+  HiPencil,
+  HiCloudUpload,
+  HiCamera,
 } from 'react-icons/hi';
 import { useEffect, useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -21,64 +24,77 @@ const sidebarItems = [
     label: 'Dashboard',
     icon: HiChartPie,
     adminOnly: true,
-    path: '/dashboard?tab=dash'
+    path: '/dashboard?tab=dash',
   },
   {
     id: 'profile',
     label: 'Profile',
     icon: HiUser,
-    adminOnly: false,
-    path: '/dashboard?tab=profile'
+    adminOnly: true,
+    path: '/dashboard?tab=profile',
   },
   {
     id: 'posts',
-    label: 'Posts',
+    label: 'Content',
     icon: HiDocumentText,
-    adminOnly: false,
-    path: '/dashboard?tab=posts'
+    adminOnly: true,
+    path: '/dashboard?tab=posts',
   },
   {
     id: 'createpost',
-    label: 'Create Post',
-    icon: HiDocumentText,
-    adminOnly: false,
-    userOnly: true,
-    path: '/dashboard?tab=createpost'
+    label: 'Create Content',
+    icon: HiPencil,
+    adminOnly: true,
+    path: '/dashboard?tab=createpost',
+  },
+  {
+    id: 'dashlogocrud',
+    label: 'Logo Management',
+    icon: HiCloudUpload,
+    adminOnly: true,
+    path: '/dashboard?tab=dashlogocrud',
+  },
+  {
+    id: 'createlogo',
+    label: 'Create Logo',
+    icon: HiCamera,
+    adminOnly: true,
+    path: '/dashboard?tab=createlogo',
   },
   {
     id: 'categories',
     label: 'Categories',
     icon: HiTag,
     adminOnly: true,
-    path: '/dashboard?tab=categories'
+    path: '/dashboard?tab=categories',
   },
   {
     id: 'users',
     label: 'Users',
     icon: HiOutlineUserGroup,
     adminOnly: true,
-    path: '/dashboard?tab=users'
+    path: '/dashboard?tab=users',
   },
   {
     id: 'userapproval',
     label: 'User Approvals',
     icon: HiUserAdd,
     adminOnly: true,
-    path: '/dashboard?tab=userapproval'
+    path: '/dashboard?tab=userapproval',
   },
   {
     id: 'comments',
     label: 'Comments',
     icon: HiAnnotation,
     adminOnly: true,
-    path: '/dashboard?tab=comments'
+    path: '/dashboard?tab=comments',
   },
   {
     id: 'feedback',
     label: 'Feedback',
-    icon: HiChatAlt, 
+    icon: HiChatAlt,
     adminOnly: true,
-    path: '/dashboard?tab=feedback'
+    path: '/dashboard?tab=feedback',
   },
 ];
 
@@ -111,7 +127,7 @@ export default function DashSidebar() {
   };
 
   const filteredItems = useMemo(() => {
-    return sidebarItems.filter(item => {
+    return sidebarItems.filter((item) => {
       if (item.adminOnly) return currentUser?.isAdmin;
       if (item.userOnly) return !currentUser?.isAdmin;
       return true;
@@ -119,17 +135,17 @@ export default function DashSidebar() {
   }, [currentUser]);
 
   return (
-    <Sidebar className='w-full md:w-56'>
+    <Sidebar className="w-full md:w-56">
       <Sidebar.Items>
-        <Sidebar.ItemGroup className='flex flex-col gap-1'>
+        <Sidebar.ItemGroup className="flex flex-col gap-1">
           {filteredItems.map((item) => (
             <Link to={item.path} key={item.id}>
               <Sidebar.Item
                 active={tab === item.id || (item.id === 'dash' && !tab)}
                 icon={item.icon}
-                as='div'
+                as="div"
                 label={item.id === 'profile' ? (currentUser?.isAdmin ? 'Admin' : 'User') : undefined}
-                labelColor='dark'
+                labelColor="dark"
               >
                 {item.label}
               </Sidebar.Item>

@@ -15,7 +15,8 @@ import UpdatePost from './pages/UpdatePost';
 import PostPage from './pages/PostPage';
 import ScrollToTop from './components/ScrollToTop';
 import Search from './pages/Search';
-import PersonalInfoForm from './pages/PersonalInfoForm';
+import FAQs from './pages/FAQs';
+
 
 
 export default function App() {
@@ -30,7 +31,7 @@ export default function App() {
          <Route path='/contact' element={<Contact />} />
         <Route path='/sign-up' element={<SignUp />} />
         <Route path='/search' element={<Search />} />
-        <Route path="/form" element={<PersonalInfoForm />} />
+        <Route path='/faqs' element={<FAQs/>} />
         <Route element={<PrivateRoute />}>
           <Route path='/dashboard' element={<Dashboard />} />
         </Route>
@@ -45,7 +46,6 @@ export default function App() {
         <Route path='/projects' element={<Projects />} />
         <Route path='/post/:postSlug' element={<PostPage />} />
       </Routes>
-      <Footer />
     </BrowserRouter>
   );
 }

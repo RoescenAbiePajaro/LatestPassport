@@ -4,6 +4,7 @@ import { Button } from 'flowbite-react';
 import PostCard from '../components/PostCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import CommentSection from '../components/CommentSection';
+import FeedbackForm from '../components/FeedbackForm';
 
 export default function PostPage() {
   const { postSlug } = useParams();
@@ -58,7 +59,6 @@ export default function PostPage() {
         if (!res.ok) {
           throw new Error('Failed to track view');
         }
-        // Optionally, handle response data if needed
         const data = await res.json();
         console.log('View tracked:', data);
       } catch (error) {
@@ -141,8 +141,10 @@ export default function PostPage() {
     );
   }
 
-  // Image fallback handling
+  // Media handling
   const heroImageUrl = post?.image || '/default-post-image.jpg';
+  const hasVideo = post?.video && post.video.trim() !== '';
+
   const handleImageError = (e) => {
     e.target.src = '/default-post-image.jpg';
   };
@@ -152,7 +154,7 @@ export default function PostPage() {
       {/* Hero Section with Fixed Image */}
       <div className="relative w-full h-[500px] md:h-[600px] overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-slate-900/40 via-slate-900/60 to-slate-900/80 z-10"></div>
-        <div className="absolute inset-0 bg-slate-800 dark:bg-slate-900"></div>
+        <div className="absolute inset-0 bg-slate-800 dark:bg- slate-900"></div>
         <img
           src={heroImageUrl}
           alt={post?.title || 'Article hero image'}
@@ -174,18 +176,6 @@ export default function PostPage() {
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white font-serif tracking-tight mb-6 leading-tight">
               {post?.title}
             </h1>
-            <div className="flex items-center text-white text-opacity-90 text-sm md:text-base backdrop-blur-sm bg-black/20 px-4 py-2 rounded-full inline-flex">
-              <span>
-                {post &&
-                  new Date(post.createdAt).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
-              </span>
-              <span className="mx-2">•</span>
-              <span>{post && (post.content.length / 1000).toFixed(0)} min read</span>
-            </div>
           </div>
         </div>
       </div>
@@ -193,6 +183,22 @@ export default function PostPage() {
       {/* Article Content */}
       <div className="max-w-4xl mx-auto px-4 py-12 -mt-16 md:-mt-24 relative z-30">
         <article className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-700">
+          {/* Video Player (if available) */}
+          {hasVideo && (
+            <div className="w-full bg-black">
+              <div className="max-w-4xl mx-auto">
+                <video
+                  src={post.video}
+                  controls
+                  className="w-full aspect-video"
+                  poster={post.image}
+                >
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            </div>
+          )}
+
           <div className="p-6 md:p-12">
             <div
               className="prose prose-slate dark:prose-invert prose-lg prose-img:rounded-xl prose-headings:font-serif prose-headings:tracking-tight prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline max-w-none"
@@ -222,6 +228,11 @@ export default function PostPage() {
           <div className="border-t border-slate-200 dark:border-slate-700">
             {post && <CommentSection postId={post._id} />}
           </div>
+
+          {/* Feedback Form */}
+          <div className="border-t border-slate-200 dark:border-slate-700 p-6 md:p-8">
+            <FeedbackForm />
+          </div>
         </article>
       </div>
 
@@ -229,7 +240,7 @@ export default function PostPage() {
       <div className="bg-slate-100 dark:bg-slate-900 py-20">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white mb-12 text-center">
-            More Similar Posts
+            More Similar Content
           </h2>
           {recentPosts?.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -240,7 +251,7 @@ export default function PostPage() {
           ) : (
             <div className="text-center py-10 bg-white dark:bg-slate-800 rounded-xl shadow-md">
               <p className="text-slate-600 dark:text-slate-400">No related articles found.</p>
-</div>
+            </div>
           )}
         </div>
       </div>

@@ -1,19 +1,22 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import DashSidebar from '../components/DashSideBar';
+import DashSidebar from '../components/DashSidebar';
 import DashProfile from '../components/DashProfile';
 import DashPosts from '../components/DashPosts';
 import DashUsers from '../components/DashUsers';
 import DashComments from '../components/DashComments';
 import DashboardComp from '../components/DashboardComp';
-import DashCategories from '../components/DashCategories'; // Updated import
-import UpdateCategory from './UpdateCategory';
+import DashCategories from '../components/DashCategories';
+import DashlogoCrud from '../components/DashlogoCrud';
+import CreateLogo from './CreateLogo';
 import CreatePost from './CreatePost';
 import UpdatePost from './UpdatePost';
+import UpdateCategory from './UpdateCategory';
 import LoadingSpinner from '../components/LoadingSpinner';
 import UserApproval from '../components/UserApproval';
 import DashFeedback from '../components/DashFeedback';
-import { Link } from 'react-router-dom';
+import FAQs from './FAQs';
+
 
 export default function Dashboard() {
   const location = useLocation();
@@ -27,7 +30,7 @@ export default function Dashboard() {
     const tabFromUrl = urlParams.get('tab');
     const postIdFromUrl = urlParams.get('postId');
     const categoryIdFromUrl = urlParams.get('categoryId');
-    
+
     if (tabFromUrl) {
       setTab(tabFromUrl);
     }
@@ -52,26 +55,28 @@ export default function Dashboard() {
   }
 
   return (
-    <div className='min-h-screen flex flex-col md:flex-row bg-white dark:bg-gray-900'>
+    <div className="min-h-screen flex flex-col md:flex-row bg-white dark:bg-gray-900">
       {/* Sidebar */}
-      <div className='md:w-56'>
+      <div className="md:w-56">
         <DashSidebar />
       </div>
 
       {/* Main Content */}
-      <div className='flex-1 p-4 bg-white dark:bg-gray-900'>
+      <div className="flex-1 p-4 bg-white dark:bg-gray-900">
         {tab === 'profile' && <DashProfile />}
         {tab === 'posts' && <DashPosts />}
         {tab === 'users' && <DashUsers />}
         {tab === 'comments' && <DashComments />}
         {tab === 'dash' && <DashboardComp />}
-        {tab === 'categories' && <DashCategories />} 
+        {tab === 'categories' && <DashCategories />}
+        {tab === 'dashlogocrud' && <DashlogoCrud/>}
+        {tab === 'createlogo' && <CreateLogo/>}
         {tab === 'createpost' && <CreatePost />}
         {tab === 'updatepost' && <UpdatePost postId={postId} />}
         {tab === 'updatecategory' && <UpdateCategory categoryId={categoryId} />}
         {tab === 'userapproval' && <UserApproval />}
         {tab === 'feedback' && <DashFeedback />}
-
+        {tab === 'faqs' && <FAQs />}
       </div>
     </div>
   );

@@ -88,7 +88,7 @@ export default function FooterComponent() {
               <li><Link to="/data-protection" className="text-gray-300 hover:text-teal-400 transition duration-300">Data Protection</Link></li>
             </ul>
           </div>
-       
+      
         </div>
       </div>
       
