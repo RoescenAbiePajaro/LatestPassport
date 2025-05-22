@@ -12,6 +12,7 @@ import {
   HiPencil,
   HiCloudUpload,
   HiCamera,
+  HiQuestionMarkCircle
 } from 'react-icons/hi';
 import { useEffect, useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -95,6 +96,13 @@ const sidebarItems = [
     icon: HiChatAlt,
     adminOnly: true,
     path: '/dashboard?tab=feedback',
+  },
+    {
+    id: 'dashfaqs',
+    label: 'FAQs',
+    icon: HiQuestionMarkCircle, 
+    adminOnly: true,
+    path: '/dashboard?tab=faqs',
   },
 ];
 
