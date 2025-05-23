@@ -76,7 +76,7 @@ export default function SignIn() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 px-4 py-12">
       <div className="w-full max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
         {/* Left Side - Brand */}
-        <div className="md:w-1/2 bg-gradient-to-br from-blue-600 to-purple-600 p-12 flex flex-col justify-center relative overflow-hidden">
+        <div className="md:w-1/2 bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 p-12 flex flex-col justify-center relative overflow-hidden transition-all duration-300">
           <div className="absolute -top-24 -left-24 w-64 h-64 rounded-full bg-white/10"></div>
           <div className="absolute -bottom-24 -right-24 w-64 h-64 rounded-full bg-white/10"></div>
           

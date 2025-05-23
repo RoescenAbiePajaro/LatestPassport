@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { HiOutlineClock, HiOutlineTag } from 'react-icons/hi';
 import { Link } from 'react-router-dom';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function KioskHome() {
   const [loading, setLoading] = useState(true);
@@ -95,17 +96,27 @@ export default function KioskHome() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-800 text-gray-800 dark:text-white p-6 overflow-y-auto">
-      <div className="max-w-7xl mx-auto mb-8">
+    <div className="min-h-screen bg-white dark:bg-gray-800 text-gray-800 dark:text-white p-6">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-7xl mx-auto mb-8"
+      >
         <h1 className="text-3xl font-bold text-center mb-8 text-gray-800 dark:text-white">
           {selectedCategory
             ? `${categories.find(cat => cat._id === selectedCategory)?.name || 'Category'} Content`
             : 'Featured Content'}
         </h1>
-      </div>
+      </motion.div>
       
       {/* Categories section */}
-      <div className="max-w-7xl mx-auto mb-8">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="max-w-7xl mx-auto mb-8"
+      >
         <div className="flex flex-wrap justify-center gap-3 mb-8">
           <button
             onClick={() => setSelectedCategory(null)}
@@ -133,38 +144,58 @@ export default function KioskHome() {
             </button>
           ))}
         </div>
-      </div>
+      </motion.div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredPosts.map((post) => (
-          <Link
-            key={post._id}
-            to={`/post/${post.slug}`}
-            className="relative rounded-xl overflow-hidden h-64 group transition shadow-lg hover:shadow-xl transform hover:-translate-y-1 duration-300"
-          >
-            <img
-              src={post.image}
-              alt={post.title}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent">
-              <div className="absolute bottom-0 left-0 right-0 p-4">
-                <div className="flex items-center mb-2">
-                  <span className="flex items-center bg-indigo-600 text-white text-xs px-2 py-1 rounded-full">
-                    <HiOutlineTag className="mr-1 h-3 w-3" />
-                    {categories.find(cat => cat._id === post.category)?.name || 'Uncategorized'}
-                  </span>
-                </div>
+      <AnimatePresence mode="wait">
+        <motion.div 
+          key={selectedCategory}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.3 }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-4xl mx-auto"
+        >
+          {filteredPosts.map((post, index) => (
+            <motion.div
+              key={post._id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: index * 0.1 }}
+            >
+              <Link
+                to={`/post/${post.slug}`}
+                className="relative rounded-xl overflow-hidden h-96 group transition shadow-lg hover:shadow-xl transform hover:-translate-y-1 duration-300 block"
+              >
+                <img
+                  src={post.image}
+                  alt={post.title}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent">
+                  <div className="absolute bottom-0 left-0 right-0 p-6">
+                    <div className="flex items-center mb-3">
+                      <span className="flex items-center bg-indigo-600 text-white text-sm px-3 py-1.5 rounded-full">
+                        <HiOutlineTag className="mr-1.5 h-4 w-4" />
+                        {categories.find(cat => cat._id === post.category)?.name || 'Uncategorized'}
+                      </span>
+                    </div>
 
-                <h3 className="text-lg font-bold mb-2 line-clamp-2 text-white">{post.title}</h3>
-              </div>
-            </div>
-          </Link>
-        ))}
-      </div>
+                    <h3 className="text-xl font-bold mb-2 line-clamp-2 text-white">{post.title}</h3>
+                  </div>
+                </div>
+              </Link>
+            </motion.div>
+          ))}
+        </motion.div>
+      </AnimatePresence>
       
       {filteredPosts.length === 0 && !loading && !error && (
-        <div className="flex flex-col items-center justify-center py-12 text-center text-gray-500 dark:text-gray-400">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col items-center justify-center py-12 text-center text-gray-500 dark:text-gray-400"
+        >
           <h2 className="text-2xl font-semibold mb-4">
             {selectedCategory 
               ? 'No Content Available in This Category' 
@@ -175,7 +206,7 @@ export default function KioskHome() {
               ? 'Try selecting a different category or check back later.' 
               : 'Check back later for new content.'}
           </p>
-        </div>
+        </motion.div>
       )}
     </div>
   );

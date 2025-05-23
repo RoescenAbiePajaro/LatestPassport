@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 import { HiOutlineExclamationCircle, HiOutlineUserGroup } from 'react-icons/hi';
 import { motion } from 'framer-motion';
 import LoadingSpinner from './LoadingSpinner';
-import { Clock } from 'lucide-react';
+import { Clock, Search } from 'lucide-react';
 
 // Separate component for the user table row to optimize rendering
 const UserRow = ({ user, onRoleChange, onDeleteClick }) => {
@@ -136,14 +136,16 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, confirm
 const SearchFilters = ({ searchTerm, setSearchTerm, userType, setUserType }) => {
   return (
     <div className='flex flex-col sm:flex-row gap-4 mb-6'>
-      
-      <div className='flex-1'>
+      <div className='flex-1 relative'>
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Search className="text-gray-400" size={18} />
+        </div>
         <input
           type="text"
           placeholder="Search users..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className='w-full px-4 py-2 rounded-lg border bg-white dark:bg-gray-700 focus:ring-2 focus:ring-teal-500'
+          className='w-full pl-10 pr-4 py-2 rounded-lg border bg-white dark:bg-gray-700 focus:ring-2 focus:ring-teal-500'
         />
       </div>
       <div className='w-full sm:w-48'>
@@ -297,13 +299,13 @@ export default function DashUsers() {
   }, []);
 
   return (
-    <div className='w-full max-w-full p-4'>
+    <div className="container mx-5 px-5 py-6">
       <div className="flex justify-between items-center mb-6 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6">
         <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-3">
           <HiOutlineUserGroup className="w-8 h-8 text-teal-400 dark:text-teal-500"/>
           User Management
         </h2>
-        <div className="mt-4 md:mt-0 flex items-center text-white text-sm bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm">
+        <div className="mt-3 md:mt-0 flex items-center text-sm text-gray-500 dark:text-gray-400">
           <Clock className="h-4 w-4 mr-2" />
           <span>Last updated: {new Date().toLocaleTimeString()}</span>
         </div>

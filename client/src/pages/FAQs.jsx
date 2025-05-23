@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HiOutlineChevronDown, HiOutlineChevronUp } from 'react-icons/hi';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function FAQ () {
   const [openIndex, setOpenIndex] = useState(null);
@@ -60,7 +61,7 @@ export default function FAQ () {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="text-2xl font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-3 mb-6"
+        className="text-2xl font-semibold text-gray-700 dark:text-gray-200 text-center mb-6"
       >
         Frequently Asked Questions
       </motion.h2>
@@ -78,8 +79,8 @@ export default function FAQ () {
 
       {/* Loading state */}
       {loading && (
-        <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal-500"></div>
+        <div className="flex justify-center items-center min-h-[500px]">
+          <LoadingSpinner size="lg" color="primary" />
         </div>
       )}
 

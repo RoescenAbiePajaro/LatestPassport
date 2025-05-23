@@ -430,7 +430,14 @@ export default function DashProfile() {
   return (
     <div className="max-w-3xl mx-auto p-6 w-full">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 mb-8">
-        <h1 className="text-3xl font-bold text-center mb-8 text-gray-800 dark:text-white">Your Profile</h1>
+        <div className="flex justify-center items-center mb-6 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6">
+          <h1 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-3">
+            <svg className="w-8 h-8 text-teal-400 dark:text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            Your Profile
+          </h1>
+        </div>
         
         <div className="flex flex-col md:flex-row gap-8 mb-6">
           {/* Profile Image Section */}
